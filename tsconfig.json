@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "target": "es6",
+        "lib": [
+            "ES6",
+            "DOM"
+        ],
+        "module": "amd",
+        "moduleResolution": "node",
+        "rootDir": "src/",
+        "outFile": "temp/esoextract.js",
+        "skipLibCheck": true,
+        "allowUmdGlobalAccess": true
+    },
+    "exclude": [
+        "node_modules",
+        "unused"
+    ]
+}

@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "nwjs",
+            "request": "launch",
+            "name": "Launch EsoExtract3",
+            "webRoot": "${workspaceFolder}/temp/debug",
+            "nwjsVersion": "0.44.0",
+            "preLaunchTask": "npm: watch",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Node Modules (doesn't work)",
+            "program": "cache/0.44.0-sdk/win64/nw.exe",
+            "args": ["./dist"]
+        }
+    ],
+}
