@@ -53,3 +53,9 @@ interface JSTreeSelectedEventData {
     event: Event
     instance: JSTree
 }
+
+interface JSTreeLoadEventData {
+    node: JSTreeNode
+    status: boolean
+    instance: JSTree
+}

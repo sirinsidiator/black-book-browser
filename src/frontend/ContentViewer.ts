@@ -73,8 +73,7 @@ export default class ContentViewer {
             .on('click', e => {
                 let gamePath = this.selectedNode.data.gamePath;
                 if (gamePath) {
-                    this.gameInstallManager.remove(gamePath);
-                    this.fileTree.refresh();
+                    this.fileTree.removeGameInstall(gamePath);
                 }
             });
 
@@ -257,7 +256,7 @@ export default class ContentViewer {
         })();
     }
 
-    clearSelection() {
+    clearSelection(showWelcome = false) {
         this.removeGameInstallButton.hide();
         this.scanArchiveButton.hide();
         this.extractFilesButton.hide();
@@ -272,9 +271,14 @@ export default class ContentViewer {
         this.textView.hide();
         this.debug.text('nothing to show');
 
-        this.$container.show();
-        this.$welcome.hide();
         this.$patronPanel.hide();
+        if (showWelcome) {
+            this.$container.hide();
+            this.$welcome.show();
+        } else {
+            this.$container.show();
+            this.$welcome.hide();
+        }
     }
 
     generateFolderInfo(data: JSTreeNodeData) {

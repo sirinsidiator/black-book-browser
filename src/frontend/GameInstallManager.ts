@@ -26,19 +26,29 @@ export default class GameInstallManager {
         this.lastAdded = localStorage.getItem(STORAGE_KEY_LAST_ADDED) || process.cwd();
     }
 
-    add(path: string) {
-        console.log('add install path:', path);
-        this.paths[path] = true;
-        this.save();
+    add(path: string): boolean {
+        if (!this.paths[path]) {
+            console.log('add install path:', path);
+            this.paths[path] = true;
+            this.save();
 
-        this.lastAdded = path;
-        localStorage.setItem(STORAGE_KEY_LAST_ADDED, path);
+            this.lastAdded = path;
+            localStorage.setItem(STORAGE_KEY_LAST_ADDED, path);
+            return true;
+        }
+        console.log('install path already added:', path);
+        return false;
     }
 
-    remove(path: string) {
+    remove(path: string): boolean {
         console.log('remove install path:', path);
-        delete this.paths[path];
-        this.save();
+        if (!!this.paths[path]) {
+            delete this.paths[path];
+            this.save();
+            return true;
+        }
+        console.log('install path was already removed:', path);
+        return false;
     }
 
     save() {
