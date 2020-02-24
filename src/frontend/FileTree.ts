@@ -99,6 +99,7 @@ export default class FileTree {
                 }
             });
         let $addButton = $('<button>Add Folder</button>').button()
+            .prop('title', 'Select a folder that contains depot, game, and vo_* subfolders')
             .click(() => {
                 $folderInput.val(null);
                 $folderInput.attr('nwworkingdir', this.gameInstallManager.getLastAddedPath());
