@@ -49,6 +49,13 @@ export class FieldData {
 
 }
 
+export function toHex(v: number, c = 0) {
+    return '0x' + (
+        '00'.repeat(c)
+        + v.toString(16).toUpperCase()
+    ).substr(-2 * c);
+}
+
 export default class BufferReader {
 
     buffer: Buffer;

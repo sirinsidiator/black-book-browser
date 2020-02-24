@@ -1,6 +1,6 @@
 import { basename, dirname, extname, resolve } from 'path';
 import MnfReader from '../mnf/MnfReader.js';
-import { Field, FieldData, FieldType } from '../util/BufferReader.js';
+import { Field, FieldData, FieldType, toHex } from '../util/BufferReader.js';
 import { formatFileSize, mkdir, writeFile } from '../util/FileUtil.js';
 import DDSHelper from './DDSHelper.js';
 import ExtractDialog from './ExtractDialog.js';
@@ -18,13 +18,6 @@ const CM_MODE_MAPPING: any = {
     '.geom': 'clike',
     '.comp': 'clike',
 };
-
-function toHex(v: number, c = 0) {
-    return '0x' + (
-        '00'.repeat(c)
-        + v.toString(16).toUpperCase()
-    ).substr(-2 * c);
-}
 
 const DEBUG_OUTPUT_FOLDER = 'debug';
 function saveDebugFile(archivePath: string, name: string, offset: string, ext: string, buffer: Buffer) {

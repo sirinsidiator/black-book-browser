@@ -1,4 +1,4 @@
-import BufferReader, { Field, FieldData, FieldDefinition, FieldType } from '../util/BufferReader.js';
+import BufferReader, { Field, FieldData, FieldDefinition, FieldType, toHex } from '../util/BufferReader.js';
 import { inflate, readFile } from '../util/FileUtil.js';
 import MnfArchive from './MnfArchive.js';
 import MnfEntry from './MnfEntry.js';
@@ -111,7 +111,7 @@ async function extractContent(archive: MnfArchive) {
 
         do { // need to skip empty rows
             if (!block0.hasReachedEnd()) {
-                (rowCountField.value as number)++;
+                rowCountField.value++;
                 let value = block0.readUInt32();
                 idField.value = value & 0xFFFFFF;
                 typeField.value = value >>> 24;
@@ -138,7 +138,7 @@ async function extractContent(archive: MnfArchive) {
         if (typeField.value === 0x80) {
             entry.fileName = prefix + idField.value + '.dat';
         } else {
-            entry.fileName = prefix + '@' + offset + '.dat';
+            entry.fileName = prefix + '@' + toHex(offset) + '.dat';
         }
 
         let archiveFile = archive.getArchiveFile(entry);
