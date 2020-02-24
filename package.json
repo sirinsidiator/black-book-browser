@@ -5,11 +5,11 @@
     "devDependencies": {
         "7zip-bin": "^5.0.3",
         "@types/codemirror": "0.0.84",
-        "@types/jquery": "^3.3.32",
+        "@types/jquery": "^3.3.33",
         "@types/jqueryui": "^1.12.10",
         "@types/jstree": "^3.3.39",
-        "@types/node": "^13.7.0",
-        "codemirror": "^5.51.0",
+        "@types/node": "^13.7.4",
+        "codemirror": "^5.52.0",
         "grunt": "^1.0.4",
         "grunt-contrib-clean": "^2.0.0",
         "grunt-contrib-copy": "^1.0.0",
@@ -17,14 +17,14 @@
         "grunt-line-remover": "0.0.2",
         "grunt-shell": "^3.0.1",
         "jquery": "^3.4.1",
-        "jstree": "^3.3.8",
-        "node-7z": "^2.0.5",
+        "jstree": "^3.3.9",
+        "node-7z": "^2.1.1",
         "node-ooz": "file:../node-ooz",
         "nw-builder": "^3.5.7",
         "requirejs": "^2.3.6",
         "three": "^0.112.1",
         "tslint": "^5.20.1",
-        "typescript": "^3.7.5"
+        "typescript": "^3.8.2"
     },
     "scripts": {
         "build": "grunt",

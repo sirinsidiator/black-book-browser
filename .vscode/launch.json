@@ -9,14 +9,14 @@
             "request": "launch",
             "name": "Launch EsoExtract3",
             "webRoot": "${workspaceFolder}/temp/debug",
-            "nwjsVersion": "0.44.0",
+            "nwjsVersion": "0.44.2",
             "preLaunchTask": "npm: watch",
         },
         {
             "type": "lldb",
             "request": "launch",
             "name": "Debug Node Modules (doesn't work)",
-            "program": "cache/0.44.0-sdk/win64/nw.exe",
+            "program": "cache/0.44.2-sdk/win64/nw.exe",
             "args": ["./dist"]
         }
     ],
