@@ -93,6 +93,10 @@ export default class MnfArchive {
             throw new Error('The file root does not match the arguments');
         }
 
+        if (root === fileEntry.fileName) {
+            root = dirname(root);
+        }
+
         let target = resolve(targetFolder, fileEntry.fileName.substring(root.length + 1));
         mkdir(dirname(target));
         let content = await this.getContent(fileEntry, decompress);
