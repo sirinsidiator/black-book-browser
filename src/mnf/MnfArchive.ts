@@ -33,11 +33,11 @@ export default class MnfArchive {
 
         let named = entry.data.named;
         let offset = named['offset'].value as number;
+        let compressionType = named['compressionType'].value as number;
         let fileSize = named['fileSize'].value as number;
         let compressedSize = named['compressedSize'].value as number;
 
-        if (fileSize === compressedSize || !decompress) {
-            if (decompress) console.log('file size is equal to compressed size', entry);
+        if (compressionType === 0 || !decompress) {
             return await archiveFile.loadContent(entry);
         } else {
             let decompressedBuffer = await ooz.decompress(archiveFile.path, offset, compressedSize, fileSize);

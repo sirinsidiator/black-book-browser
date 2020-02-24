@@ -63,7 +63,7 @@ const BLOCK2_FIELD_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'offset' },
     { type: FieldType.UINT8, name: 'archiveNumber' },
     { type: FieldType.UINT8 },
-    { type: FieldType.UINT16 },
+    { type: FieldType.UINT16, name: 'compressionType' },
 ];
 
 async function extractContent(archive: MnfArchive) {
