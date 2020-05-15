@@ -143,6 +143,7 @@ export default class ContentViewer {
         }
         this.clearSelection();
 
+        this.content.addClass("gameinstall");
         this.selectedNode = node;
         this.removeGameInstallButton.show();
 
@@ -158,6 +159,7 @@ export default class ContentViewer {
     selectArchive(node: JSTreeNode) {
         this.clearSelection();
 
+        this.content.addClass("archive");
         this.selectedNode = node;
         this.scanArchiveButton.show();
         this.extractFilesButton.show();
@@ -175,12 +177,14 @@ export default class ContentViewer {
             this.$container.tabs('disable', '#extract').tabs('enable', '#scan');
         }
     }
+
     selectFolder(node: JSTreeNode) {
         if (this.selectedNode === node) {
             return;
         }
         this.clearSelection();
 
+        this.content.addClass("folder");
         this.selectedNode = node;
         this.extractFilesButton.show();
 
@@ -193,6 +197,7 @@ export default class ContentViewer {
         }
         this.clearSelection();
 
+        this.content.addClass("file");
         this.selectedNode = node;
         this.selectedSingleFile = true;
         this.extractFilesButton.show();
@@ -258,6 +263,7 @@ export default class ContentViewer {
         this.selectedNode = null;
         this.selectedSingleFile = false;
 
+        this.content.removeClass("file folder archive gameinstall");
         this.selectionDetails.empty();
         this.preview.hide().text('loading ...');
         this.textHelper.setValue('');
@@ -281,7 +287,9 @@ export default class ContentViewer {
         let folders: any = {};
         let compressedSize = 0;
         let decompressedSize = 0;
+        let fileList: string[] = [];
         entries.forEach(entry => {
+            fileList.push(entry.fileName);
             let named = entry.data.named;
             compressedSize += named['fileSize'].value as number;
             decompressedSize += named['compressedSize'].value as number;
@@ -302,6 +310,12 @@ export default class ContentViewer {
         info.append($('<li></li>').append($('<b>files: </b>')).append($('<span></span>').text(entries.length.toLocaleString())));
         info.append($('<li></li>').append($('<b>compressed size: </b>')).append($('<span></span>').text(formatFileSize(compressedSize))));
         info.append($('<li></li>').append($('<b>decompressed size: </b>')).append($('<span></span>').text(formatFileSize(decompressedSize))));
+
+        fileList.sort();
+        this.textHelper.setOption('mode', 'filelist');
+        this.textHelper.setValue(fileList.join("\n"));
+        this.textView.show();
+        this.textHelper.refresh();
     }
 
     generateDebugInfo(data: FieldData, fileSize?: number, archivePath?: string) {
