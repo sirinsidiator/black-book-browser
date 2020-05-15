@@ -92,6 +92,7 @@ export default class ContentViewer {
                     this.textHelper.refresh();
                 }
             },
+            active: 0
         });
         $container.tabs('disable', '#content');
         $container.tabs('disable', '#debug');
