@@ -38,35 +38,36 @@
         <div id="filetree"></div>
     </div>
     <div id="right">
-        <div id="welcome">
-            Knowledge is only as wicked as the one who wields it.<br />
-            Forsaking learning in fear of its misuse is the ultimate sin.<br />
-            It is an unforgivable folly.<br />
-        </div>
-        <div id="contentview">
+        <div id="contentview" style="display: none">
             <ul>
+                <li style="display: none"><a href="#welcome">Welcome</a></li>
                 <li><a href="#content">Content</a></li>
                 <li><a href="#debug">Debug</a></li>
+                <li class="patreonbutton"><a href="#patrons"><img alt="Patreon" src="images/patreon.png" /></a></li>
 
                 <li class="right"><a id="remove" href="#remove">Remove Folder</a></li>
                 <li class="right"><a id="scan" href="#scan">Scan Archive</a></li>
                 <li class="right"><a id="extract" href="#extract">Extract Files</a></li>
             </ul>
+            <div id="welcome">
+                Knowledge is only as wicked as the one who wields it.<br />
+                Forsaking learning in fear of its misuse is the ultimate sin.<br />
+                It is an unforgivable folly.<br />
+            </div>
             <div id="content"></div>
             <div id="debug"></div>
-        </div>
-        <div id="patrons">
-            <h1>Patrons</h1>
-            <div id="activeList"></div>
-            <div>Thank you for your continued support!</div>
-            <div id="formerContainer">
-                <h3>Former Patrons</h3>
-                <div id="formerList"></div>
+            <div id="patrons">
+                <h1>Patrons</h1>
+                <div id="activeList"></div>
+                <div>Thank you for your continued support!</div>
+                <div id="formerContainer">
+                    <h3>Former Patrons</h3>
+                    <div id="formerList"></div>
+                </div>
+                <button id="becomePatron"><img alt="Become A Patron" src="images/patron_button.png" /></button>
             </div>
-            <button id="becomePatron"><img alt="Become A Patron" src="images/patron_button.png" /></button>
         </div>
     </div>
-    <button id="patreon"><img alt="Patreon" src="images/patreon.png" /></button>
 
     <div id="dialog">
         <div class="page1">

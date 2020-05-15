@@ -29,6 +29,6 @@ export function start() {
         contentViewer.setMnfReader(mnfReader);
 
         fileTree.initialize();
-        initializePatreon(contentViewer);
+        initializePatreon();
     });
 }

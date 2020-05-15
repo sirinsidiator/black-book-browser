@@ -224,22 +224,18 @@ html, body {
     font-weight: bold;
 }
 
-#patreon {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    position: fixed;
-    bottom: 12px;
-    left: 12px;
+.patreonbutton img {
+    width: 20px;
+    height: 20px;
+}
+.patreonbutton a {
     width: 32px;
     height: 32px;
-    padding: 5px;
-}
-
-#patreon > img,
-#patrons button > img {
-    width: 100%;
-    height: 100%;
+    background-color: #666666;
+    padding: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #patrons button {
@@ -254,8 +250,13 @@ html, body {
     margin: 0 auto;
 }
 
+#patrons button img {
+    width: 200px;
+    height: 47px;
+}
+
 #patrons {
-    height: 100%;
+    height: calc(100% - 100px);
     overflow: auto;
     text-align: center;
 }

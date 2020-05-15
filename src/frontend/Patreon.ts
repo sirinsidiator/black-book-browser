@@ -19,14 +19,9 @@ interface PatronList {
 
 const PATREON_LINK = 'https://www.patreon.com/bePatron?u=18954089';
 
-export async function initializePatreon(contentViewer: ContentViewer) {
+export async function initializePatreon() {
     let content = await readFile('patrons.json');
     let patrons = JSON.parse(content.toString('utf8')) as PatronList;
-
-    let button = $('#patreon');
-    button.click(() => {
-        contentViewer.showPatrons();
-    });
 
     let $container = $('#patrons');
     let becomePatron = $container.find('button');

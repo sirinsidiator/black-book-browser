@@ -274,7 +274,7 @@ export default class FileTree {
             if (paths.length > 0) {
                 path = paths[0];
             } else {
-                this.contentViewer.clearSelection(true);
+                this.contentViewer.clearSelection();
                 return;
             }
         }
@@ -289,7 +289,7 @@ export default class FileTree {
             }
         }
 
-        this.contentViewer.clearSelection(true);
+        this.contentViewer.clearSelection();
     }
 
 }

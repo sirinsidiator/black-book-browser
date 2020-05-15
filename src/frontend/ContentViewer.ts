@@ -49,8 +49,6 @@ export default class ContentViewer {
     selectedNode: JSTreeNode;
     selectedSingleFile: boolean;
     debug: JQuery<HTMLElement>;
-    $welcome: JQuery<HTMLElement>;
-    $patronPanel: JQuery<HTMLElement>;
     textView: JQuery<HTMLElement>;
     textHelper: CodeMirror.Editor;
     selectionDetails: JQuery<HTMLElement>;
@@ -58,8 +56,6 @@ export default class ContentViewer {
 
     constructor($container: JQuery<HTMLElement>) {
         this.$container = $container;
-        this.$welcome = $('#welcome');
-        this.$patronPanel = $('#patrons');
         this.ddsHelper = new DDSHelper();
 
         this.removeGameInstallButton = $container.find('#remove')
@@ -94,6 +90,8 @@ export default class ContentViewer {
                 }
             },
         });
+        $container.tabs('disable', '#content');
+        $container.tabs('disable', '#debug');
 
         let content = this.content = $container.find('#content');
         this.selectionDetails = $('<ul class="selectionDetails"></ul>').appendTo(content);
@@ -112,13 +110,7 @@ export default class ContentViewer {
         });
 
         this.debug = $container.find('#debug');
-        $container.hide();
-    }
-
-    showPatrons() {
-        this.$welcome.hide();
-        this.$container.hide();
-        this.$patronPanel.show();
+        $container.show();
     }
 
     setMnfReader(mnfReader: MnfReader) {
@@ -254,7 +246,7 @@ export default class ContentViewer {
         })();
     }
 
-    clearSelection(showWelcome = false) {
+    clearSelection() {
         this.removeGameInstallButton.hide();
         this.scanArchiveButton.hide();
         this.extractFilesButton.hide();
@@ -270,13 +262,8 @@ export default class ContentViewer {
         this.textView.hide();
         this.debug.text('nothing to show');
 
-        this.$patronPanel.hide();
-        if (showWelcome) {
-            this.$container.hide();
-            this.$welcome.show();
-        } else {
-            this.$container.show();
-            this.$welcome.hide();
+        if (this.$container.tabs('option', 'active') === 0) {
+            this.$container.tabs('option', 'active', 1);
         }
     }
 
