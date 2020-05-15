@@ -1,4 +1,4 @@
-import { basename, dirname, extname, resolve } from 'path';
+import { basename, dirname, extname, resolve, normalize } from 'path';
 import MnfReader from '../mnf/MnfReader.js';
 import { Field, FieldData, FieldType, toHex } from '../util/BufferReader.js';
 import { formatFileSize, mkdir, writeFile } from '../util/FileUtil.js';
@@ -38,6 +38,7 @@ export default class ContentViewer {
     removeGameInstallButton: JQuery<HTMLElement>;
     scanArchiveButton: JQuery<HTMLElement>;
     extractFilesButton: JQuery<HTMLElement>;
+    savePreviewButton: JQuery<HTMLElement>;
     content: JQuery<HTMLElement>;
 
     ddsHelper: DDSHelper;
@@ -79,6 +80,8 @@ export default class ContentViewer {
                     this.extractDialog.open(archive, data.path, this.selectedSingleFile);
                 }
             });
+
+        this.savePreviewButton = $container.find('#save');
 
         $container.tabs({
             beforeActivate: (event, ui) => {
@@ -192,7 +195,7 @@ export default class ContentViewer {
         this.content.addClass("file");
         this.selectedNode = node;
         this.selectedSingleFile = true;
-        this.extractFilesButton.show();
+        this.extractFilesButton.text("Extract File").show();
 
         let data = node.data;
         let archive = this.mnfReader.getArchive(data.archivePath);
@@ -230,8 +233,13 @@ export default class ContentViewer {
             switch (ext) {
                 case '.dds':
                     content = await archive.getContent(entry);
-                    this.preview.empty()
-                        .append(this.ddsHelper.createImage(content));
+                    let image = this.ddsHelper.createImage(content);
+                    this.preview.empty().append(image);
+                    this.savePreviewButton.on('click', async () => {
+                        let name = basename(entry.fileName, '.dds') + '.png';
+                        let data = await this.getBufferFromCanvas(image);
+                        this.requestSave(name, data);
+                    }).show();
                     break;
                 case '.text':
                     content = await archive.getContent(entry);
@@ -246,10 +254,33 @@ export default class ContentViewer {
         })();
     }
 
+    async getBufferFromCanvas(canvas: HTMLCanvasElement): Promise<Buffer> {
+        return new Promise((resolve, reject) => {
+            canvas.toBlob(async blob => {
+                let data = await blob.arrayBuffer();
+                resolve(Buffer.from(data));
+            });
+        });
+    }
+
+    async requestSave(fileName: string, content: Buffer) {
+        let saveDialog = $('<input type="file" />');
+        saveDialog.prop("nwsaveas", fileName);
+        saveDialog.on('change', async () => {
+            let path = saveDialog.val() as string;
+            if (path && path !== '') {
+                console.log("save as ", saveDialog.val(), content);
+                writeFile(path, content);
+            }
+        })
+        saveDialog.trigger('click');
+    }
+
     clearSelection() {
         this.removeGameInstallButton.hide();
         this.scanArchiveButton.hide();
-        this.extractFilesButton.hide();
+        this.extractFilesButton.text("Extract Files").hide();
+        this.savePreviewButton.text("Save Preview").hide().off('click');
         this.$container.tabs('enable');
 
         this.selectedNode = null;
@@ -303,6 +334,21 @@ export default class ContentViewer {
         this.textHelper.setValue(fileList.join("\n"));
         this.textView.show();
         this.textHelper.refresh();
+
+        this.savePreviewButton.text("Save Filelist").on('click', async () => {
+            let parts = [];
+            if (data.archivePath) {
+                parts.push(basename(data.archivePath, '.mnf'));
+            }
+            if (data.path) {
+                parts.push(data.path);
+            }
+            parts.push('filelist.txt');
+
+            let name = normalize(parts.join('/'));
+            let fileListData = Buffer.from(fileList.join('\n'));
+            this.requestSave(name, fileListData);
+        }).show();
     }
 
     generateDebugInfo(data: FieldData, fileSize?: number, archivePath?: string) {
