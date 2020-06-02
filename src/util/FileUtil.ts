@@ -85,6 +85,18 @@ export async function writeFile(path: string, content: Buffer, silent = false) {
     });
 }
 
+export async function requestSave(fileName: string, content: Buffer) {
+    let saveDialog = $('<input type="file" />');
+    saveDialog.prop("nwsaveas", fileName);
+    saveDialog.on('change', async () => {
+        let path = saveDialog.val() as string;
+        if (path && path !== '') {
+            writeFile(path, content);
+        }
+    })
+    saveDialog.trigger('click');
+}
+
 export async function readFile(path: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
         fs.readFile(path, (err, data) => {

@@ -1,3 +1,4 @@
+import { basename, dirname } from 'path';
 import MnfReader from '../mnf/MnfReader.js';
 import ContentViewer from './ContentViewer.js';
 import FileTreeEntryType from './FileTreeEntryType.js';
@@ -40,19 +41,16 @@ const TREE_OPTIONS = {
 };
 
 export default class FileTree {
-
     $container: JQuery<HTMLElement>;
     $installList: JQuery<HTMLElement>;
     contentViewer: ContentViewer;
     gameInstallManager: GameInstallManager;
     mnfReader: MnfReader;
-    enableGlobalKeybinds: boolean;
     refreshPromise: Promise<JSTree>;
     refreshPromiseResolve: (value?: JSTree | PromiseLike<JSTree>) => void;
 
     constructor($container: JQuery<HTMLElement>) {
         this.$container = $container;
-        this.enableGlobalKeybinds = true;
     }
 
     setContentViewer(contentViewer: ContentViewer) {
@@ -178,18 +176,17 @@ export default class FileTree {
         $installList.keydown(e => {
             e.stopPropagation(); // need to avoid an infinite loop
         });
-        $(document).keydown(e => {
-            if (!this.enableGlobalKeybinds) {
-                return;
-            }
-            let selection = $installList.jstree(true).get_selected();
-            let id = selection.length > 0 ? selection[0] : '#';
-            let $node = $installList.jstree(true).get_node(id, true);
-            let $anchor = $node.find('.jstree-anchor');
-            $anchor.trigger($.Event('keydown', {
-                originalEvent: e
-            }));
-        });
+    }
+
+    simulateKeyDown(e: JQuery.KeyDownEvent) {
+        let tree = this.$installList.jstree(true);
+        let selection = tree.get_selected();
+        let id = selection.length > 0 ? selection[0] : '#';
+        let $node = tree.get_node(id, true);
+        let $anchor = $node.find('.jstree-anchor');
+        $anchor.trigger($.Event('keydown', {
+            originalEvent: e
+        }));
     }
 
     async refresh(): Promise<JSTree> {
@@ -206,8 +203,11 @@ export default class FileTree {
         let children: JSTreeNodeSettings[] = [];
 
         this.gameInstallManager.getPaths().forEach(path => {
+            let directory = dirname(path);
+            let file = '/' + basename(path);
+            let text = `<span class="truncate"><span>${directory}</span><span>${file}</span></span>`;
             children.push({
-                text: path,
+                text: text,
                 state: { opened: true },
                 data: {
                     type: FileTreeEntryType.GAME_INSTALL,
@@ -262,8 +262,79 @@ export default class FileTree {
         }, 0);
     }
 
-    selectArchive(node: JSTreeNode) {
-        this.$installList.jstree(true).open_node(node);
+    selectArchive(node: JSTreeNode | string) {
+        if (typeof (node) === 'string') {
+            node = this.findNode(FileTreeEntryType.ARCHIVE, node);
+            this.selectNode(node);
+        } else {
+            this.$installList.jstree(true).open_node(node);
+        }
+    }
+
+    selectFolder(archivePath: string, path: string) {
+        let node = this.findNode(FileTreeEntryType.FOLDER, archivePath, path);
+        if (node) {
+            this.selectNode(node);
+            this.contentViewer.selectFolder(node);
+        } else {
+            this.loadNode(archivePath, path).then(() => this.selectFolder(archivePath, path));
+        }
+    }
+
+    selectFile(archivePath: string, path: string) {
+        let node = this.findNode(FileTreeEntryType.FILE, archivePath, path);
+        if (node) {
+            this.selectNode(node);
+            this.contentViewer.selectFile(node);
+        } else {
+            this.loadNode(archivePath, path).then(() => this.selectFile(archivePath, path));
+        }
+    }
+
+    selectNode(node: JSTreeNode) {
+        let tree = this.$installList.jstree(true);
+        tree.deselect_all();
+        tree.close_all();
+        tree.select_node(node);
+        let $node = $(`#${node.id}`);
+        this.$installList.scrollTop($node.prop('offsetTop') - this.$container.height() / 2);
+    }
+
+    async loadNode(archivePath: string, path: string) {
+        return new Promise((resolve, reject) => {
+            let directory = dirname(path);
+            let folderNode: JSTreeNode;
+            while (!folderNode && directory !== '/') {
+                folderNode = this.findNode(FileTreeEntryType.FOLDER, archivePath, directory);
+                directory = dirname(directory)
+            }
+
+            if (folderNode) {
+                let tree = this.$installList.jstree(true);
+                tree.load_node(folderNode, (node, status) => {
+                    resolve();
+                });
+            } else {
+                console.warn("Could not find ancestor for", archivePath, path);
+                reject();
+            }
+        });
+    }
+
+    findNode(type: FileTreeEntryType, archivePath: string, path?: string): JSTreeNode {
+        let tree = this.$installList.jstree(true);
+        let data = (tree as any)._model.data;
+
+        let nodeIds = Object.keys(data);
+        for (let id of nodeIds) {
+            let node = data[id];
+            if (node.data
+                && node.data.type === type
+                && node.data.archivePath === archivePath
+                && (!path || node.data.path === path)) {
+                return node;
+            }
+        }
     }
 
     selectGameInstall(path?: string) {

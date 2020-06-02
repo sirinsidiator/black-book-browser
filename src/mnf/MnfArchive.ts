@@ -3,6 +3,7 @@ import { basename, dirname, resolve, sep } from 'path';
 import FileTreeNodeType from '../frontend/FileTreeEntryType.js';
 import { FieldData } from '../util/BufferReader.js';
 import { mkdir, writeFile } from '../util/FileUtil.js';
+import SearchHelper from '../util/SearchHelper.js';
 import ZOSFileTable from '../zosft/ZOSFileTable.js';
 import ZOSFileTableEntry from '../zosft/ZOSFileTableEntry.js';
 import ZOSFileTableReader from '../zosft/ZOSFileTableReader.js';
@@ -16,16 +17,16 @@ export default class MnfArchive {
     archiveFiles: Map<number, MnfArchiveFile>;
     fileEntries: Map<number, MnfEntry>;
     mnfEntries: Map<number, MnfEntry>;
-    mnfEntryLookup: Map<string, MnfEntry>;
     fileTableEntry: MnfEntry;
     fileTable: ZOSFileTable;
+    searchHelper: SearchHelper;
 
     constructor(path: string) {
         this.path = path;
         this.archiveFiles = new Map();
         this.fileEntries = new Map();
         this.mnfEntries = new Map();
-        this.mnfEntryLookup = new Map();
+        this.searchHelper = new SearchHelper(path);
     }
 
     async getContent(entry: MnfEntry, decompress = true): Promise<Buffer> {
@@ -84,7 +85,7 @@ export default class MnfArchive {
     }
 
     getMnfEntry(path: string): MnfEntry {
-        return this.mnfEntryLookup.get(path);
+        return this.searchHelper.getByPath(path);
     }
 
     async extractFile(fileEntry: MnfEntry, targetFolder: string, root = '', decompress = true) {
@@ -130,7 +131,7 @@ export default class MnfArchive {
         }
 
         this.mnfEntries.forEach((entry: MnfEntry) => {
-            this.mnfEntryLookup.set(entry.fileName, entry);
+            this.searchHelper.addEntry(entry);
         });
     }
 
@@ -188,7 +189,7 @@ export default class MnfArchive {
 
     getFileEntry(file: string): JSTreeNodeSettings[] {
         let entries: JSTreeNodeSettings[] = [];
-        let fileEntry = this.mnfEntryLookup.get(file);
+        let fileEntry = this.searchHelper.getByPath(file);
         if (fileEntry) {
             entries.push({
                 id: file,

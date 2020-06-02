@@ -35,7 +35,16 @@
 
 <body>
     <div id="left">
+        <ul>
+            <li><a href="#filetree">Browse</a></li>
+            <li class="searchtab"><a href="#filesearch" draggable="false">
+                <input id="filesearchinput" type="text" placeholder="Search file..." />
+                <button class="regexButton" title="Toggle Regular Expression">.*</button>
+                <button class="clearButton" title="Clear Search">X</button>
+            </a></li>
+        </ul>
         <div id="filetree"></div>
+        <div id="filesearch"></div>
     </div>
     <div id="right">
         <div id="contentview" style="display: none">

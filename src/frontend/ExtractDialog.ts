@@ -3,7 +3,7 @@ import { basename, dirname } from "path";
 import MnfArchive from "../mnf/MnfArchive";
 import MnfEntry from "../mnf/MnfEntry";
 import { formatFileSize, getFreeDiskSpace } from "../util/FileUtil";
-import FileTree, { byTypeAndName } from "./FileTree";
+import { byTypeAndName } from "./FileTree";
 
 const STORAGE_KEY_TARGET = 'extract.target';
 const STORAGE_KEY_PRESERVE = 'extract.preserve';
@@ -182,7 +182,6 @@ class ExtractionHelper {
 }
 
 export default class ExtractDialog {
-
     extractButton: JQueryUI.DialogButtonOptions[];
     cancelButton: JQueryUI.DialogButtonOptions[];
     closeButton: JQueryUI.DialogButtonOptions[];
@@ -215,7 +214,7 @@ export default class ExtractDialog {
     currentArchive: MnfArchive;
     currentFolder: string;
 
-    constructor($container: JQuery<HTMLElement>, leftSideFileTree: FileTree) {
+    constructor($container: JQuery<HTMLElement>) {
         this.extractButton = [{
             text: 'Extract',
             click: () => this.beginExtraction()
@@ -324,9 +323,7 @@ export default class ExtractDialog {
             buttons: this.extractButton,
             close: () => {
                 this.clear();
-                leftSideFileTree.enableGlobalKeybinds = true;
             },
-            open: () => { leftSideFileTree.enableGlobalKeybinds = false; },
         });
         this.dialogCloseButton = this.dialog.parent().find('.ui-dialog-titlebar .ui-dialog-titlebar-close');
         this.buttonPane = this.dialog.parent().find('.ui-dialog-buttonpane');
@@ -562,4 +559,7 @@ export default class ExtractDialog {
         this.extraction.clear();
     }
 
+    isOpen(): boolean {
+        return this.dialog.dialog('isOpen');
+    }
 }

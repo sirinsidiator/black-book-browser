@@ -205,4 +205,8 @@ export default class MnfReader {
         return this.cache.get(path);
     }
 
+    getArchives(): Map<string, MnfArchive> {
+        return this.cache;
+    }
+
 }

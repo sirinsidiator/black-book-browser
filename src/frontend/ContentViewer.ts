@@ -1,7 +1,7 @@
-import { basename, dirname, extname, resolve, normalize } from 'path';
+import { basename, dirname, extname, normalize, resolve } from 'path';
 import MnfReader from '../mnf/MnfReader.js';
 import { Field, FieldData, FieldType, toHex } from '../util/BufferReader.js';
-import { formatFileSize, mkdir, writeFile } from '../util/FileUtil.js';
+import { formatFileSize, mkdir, requestSave, writeFile } from '../util/FileUtil.js';
 import DDSHelper from './DDSHelper.js';
 import ExtractDialog from './ExtractDialog.js';
 import FileTree from './FileTree.js';
@@ -105,12 +105,6 @@ export default class ContentViewer {
             theme: 'abcdef',
             lineNumbers: true,
             readOnly: true
-        });
-        this.textHelper.on('focus', () => {
-            this.fileTree.enableGlobalKeybinds = false;
-        });
-        this.textHelper.on('blur', () => {
-            this.fileTree.enableGlobalKeybinds = true;
         });
 
         this.debug = $container.find('#debug');
@@ -239,7 +233,7 @@ export default class ContentViewer {
                     this.savePreviewButton.on('click', async () => {
                         let name = basename(entry.fileName, '.dds') + '.png';
                         let data = await this.getBufferFromCanvas(image);
-                        this.requestSave(name, data);
+                        requestSave(name, data);
                     }).show();
                     break;
                 case '.text':
@@ -262,19 +256,6 @@ export default class ContentViewer {
                 resolve(Buffer.from(data));
             });
         });
-    }
-
-    async requestSave(fileName: string, content: Buffer) {
-        let saveDialog = $('<input type="file" />');
-        saveDialog.prop("nwsaveas", fileName);
-        saveDialog.on('change', async () => {
-            let path = saveDialog.val() as string;
-            if (path && path !== '') {
-                console.log("save as ", saveDialog.val(), content);
-                writeFile(path, content);
-            }
-        })
-        saveDialog.trigger('click');
     }
 
     clearSelection() {
@@ -348,7 +329,7 @@ export default class ContentViewer {
 
             let name = normalize(parts.join('/'));
             let fileListData = Buffer.from(fileList.join('\n'));
-            this.requestSave(name, fileListData);
+            requestSave(name, fileListData);
         }).show();
     }
 

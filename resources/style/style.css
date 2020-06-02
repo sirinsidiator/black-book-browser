@@ -5,36 +5,135 @@ html, body {
     color: #f0f0f0;
     font-family: Verdana;
     font-size: 0.9em;
+    overflow: hidden;
 }
 
 #left, #right {
     height: 100%;
+    overflow: hidden;
 }
 
 #left {
     width: 500px;
+    padding: 0;
     float: left;
     border-right: thick solid #666666;
 }
 
-#right {
-    overflow: auto;
+#left > .ui-tabs-panel {
+    width: 100%;
+    height: calc(100% - 40px);
+    overflow: hidden;
+    background-color: #333333;
+    padding: 0;
+    margin: 0;
+    position: absolute;
 }
 
 #filetree {
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: #333333;
+    z-index: 0;
 }
 
-#filetree ul {
+#filesearch {
+    z-index: 10;
+}
+
+#filetree.hidden {
+    display: block !important;
+}
+
+#left .jstree {
+    overflow: auto;
+    height: calc(100% - 50px);
+    width: 100%;
+    margin: 0;
     padding: 0;
 }
 
-#filetree button {
+.jstree-info {
+    width: 4px !important;
+}
+
+#left > .ui-tabs-panel > button {
     display: block;
-    margin: 0 auto;
+    margin: 10px auto;
+}
+
+#left > .ui-tabs-panel > button:disabled {
+    color: #666666;
+}
+
+#left .jstree-anchor {
+    width: calc(100% - 30px);
+}
+
+.truncate {
+    width: calc(100% - 35px);
+    display: inline-flex;
+}
+
+.truncate>span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: fit-content;
+    flex: 1 1 100px;
+}
+
+.searchtab {
+    width: calc(100% - 100px);
+    height: 31px;
+}
+
+.searchtab a {
+    padding: 0 !important;
+    height: 100%;
+    width: 100%;
+}
+
+.searchtab button {
+    position: absolute;
+    top: 0;
+    height: 31px;
+    width: 31px;
+    background: none;
+    border: none;
+    font-weight: bold;
+    color: #eee;
+    font-family: cursive;
+    outline: none;
+    cursor: pointer;
+}
+
+.searchtab .clearButton {
+    right: 0;
+}
+
+.searchtab .regexButton {
+    right: 32px;
+}
+
+.searchtab button.active {
+    color: #7cd3ee;
+}
+
+.searchtab button:hover {
+    color: #26b3f7;
+}
+
+#filesearchinput::placeholder {
+    color: #eeeeee;
+}
+
+#filesearchinput {
+    width: calc(100% - 80px);
+    height: 100%;
+    background: none;
+    border: none;
+    padding: 0 10px;
+    color: #eeeeee;
+    text-overflow: ellipsis;
+    outline: none;
 }
 
 #welcome {
