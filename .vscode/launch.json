@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Launch EsoExtract3",
             "webRoot": "${workspaceFolder}/temp/debug",
-            "nwjsVersion": "0.44.2",
+            "nwjsVersion": "0.46.0",
             "preLaunchTask": "npm: watch",
         },
         {
