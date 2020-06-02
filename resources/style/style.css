@@ -267,7 +267,6 @@ html, body {
     background-color: #333;
     border: thin solid #444;
     color: #fff;
-    cursor: pointer;
 }
 
 #dialog .options .checkboxLabel {

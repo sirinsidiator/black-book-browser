@@ -1,5 +1,5 @@
 import { cpus } from "os";
-import { basename, dirname } from "path";
+import { basename, dirname, resolve } from "path";
 import MnfArchive from "../mnf/MnfArchive";
 import MnfEntry from "../mnf/MnfEntry";
 import { formatFileSize, getFreeDiskSpace } from "../util/FileUtil";
@@ -237,17 +237,12 @@ export default class ExtractDialog {
         });
 
         this.extractTarget = this.options.find('#extractTarget')
-            .click(() => {
-                this.extractTargetSource.click();
+            .on('change', () => {
+                this.setTargetFolder(this.extractTarget.val() as string);
             });
         this.extractTargetSource = this.options.find('#extractTargetSource')
             .on('change', () => {
-                let target = this.extractTargetSource.val() as string;
-                if (target) {
-                    this.extractTarget.val(target);
-                    localStorage.setItem(STORAGE_KEY_TARGET, target);
-                }
-                this.setError(ErrorType.INVALID_TARGET_DIRECTORY, !target || target.length === 0);
+                this.setTargetFolder(this.extractTargetSource.val() as string);
             });
         this.options.find('#selectExtractTarget').button()
             .click(() => {
@@ -340,6 +335,32 @@ export default class ExtractDialog {
         return this.decompressCheckbox.is(':checked');
     }
 
+    setTargetFolder(path: string) {
+        let target = "";
+        if (path) {
+            target = resolve(path);
+            if (target) {
+                let name = basename(target);
+                let fileInput = (this.extractTargetSource[0] as HTMLInputElement);
+
+                let files = new FileList();
+                (files as any).append(new File(target as any, name));
+                fileInput.files = files;
+
+                this.extractTargetSource.attr('nwworkingdir', target);
+                this.extractTarget.val(target);
+                localStorage.setItem(STORAGE_KEY_TARGET, target);
+            } else {
+                console.warn("cannot resolve target folder", path);
+            }
+        }
+        this.setError(ErrorType.INVALID_TARGET_DIRECTORY, this.isInvalidPath(target));
+    }
+
+    isInvalidPath(path: string) {
+        return !path || path.length === 0 || /[a-zA-Z]:.*[<>:"|?*]/.test(path);
+    }
+
     getTargetFolder(): string {
         return this.extractTarget.val() as string;
     }
@@ -402,7 +423,7 @@ export default class ExtractDialog {
         this.diskSpaceDelta = size - freeDiskSpace;
 
         let targetFolder = this.getTargetFolder();
-        this.setError(ErrorType.INVALID_TARGET_DIRECTORY, !targetFolder || targetFolder.length === 0);
+        this.setError(ErrorType.INVALID_TARGET_DIRECTORY, this.isInvalidPath(targetFolder));
         this.setError(ErrorType.NO_FILES_SELECTED, count === 0);
         this.setError(ErrorType.NOT_ENOUGH_DISK_SPACE, size > freeDiskSpace);
     }
@@ -487,8 +508,7 @@ export default class ExtractDialog {
         this.isFile = isFile;
 
         let target = localStorage.getItem(STORAGE_KEY_TARGET) || process.cwd();
-        this.extractTarget.val(target);
-        this.extractTargetSource.attr('nwworkingdir', target);
+        this.setTargetFolder(target);
         let preserve = JSON.parse(localStorage.getItem(STORAGE_KEY_PRESERVE) || 'true');
         this.preserveParentsCheckbox.prop('checked', preserve).change();
         let decompress = JSON.parse(localStorage.getItem(STORAGE_KEY_DECOMPRESS) || 'true');
