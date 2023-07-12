@@ -1,21 +1,22 @@
 {
+    "extends": "./.svelte-kit/tsconfig.json",
     "compilerOptions": {
-        "alwaysStrict": true,
-        "noImplicitAny": true,
-        "target": "es6",
-        "lib": [
-            "ES6",
-            "DOM"
+        "useDefineForClassFields": true,
+        "baseUrl": ".",
+        "typeRoots": [
+            "./node_modules/ionic-svelte"
         ],
-        "module": "amd",
-        "moduleResolution": "node",
-        "rootDir": "src/",
-        "outFile": "temp/esoextract.js",
+        "types": [
+            "ionic-svelte"
+        ],
+        "allowJs": true,
+        "checkJs": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
         "skipLibCheck": true,
-        "allowUmdGlobalAccess": true
+        "sourceMap": true,
+        "strict": true
     },
-    "exclude": [
-        "node_modules",
-        "unused"
-    ]
+    "references": [{ "path": "./tsconfig.node.json" }]
 }
