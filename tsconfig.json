@@ -3,6 +3,14 @@
     "compilerOptions": {
         "useDefineForClassFields": true,
         "baseUrl": ".",
+		"paths": {
+			"$lib": [
+				"./src/lib"
+			],
+			"$lib/*": [
+				"./src/lib/*"
+			]
+		},
         "typeRoots": [
             "./node_modules/ionic-svelte"
         ],
