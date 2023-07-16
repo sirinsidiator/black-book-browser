@@ -110,7 +110,7 @@ async function extractContent(archive: MnfArchive) {
     } // TODO find a way to do this without hard coded values
 
     for (let i = 0; i < fileCount; ++i) {
-        const entry = new MnfEntry();
+        const entry = new MnfEntry(archive);
 
         const indexField = new Field(ENTRY_FIELD_DEFINITION_INDEX, -1);
         indexField.value = i;

@@ -247,7 +247,7 @@ export default class ContentViewer {
                 case '.dds':
                     content = await archive.getContent(entry);
                     // eslint-disable-next-line no-case-declarations
-                    const image = this.ddsHelper.createImage(content);
+                    const image = this.ddsHelper.createCanvas(content);
                     if (!image) {
                         this.preview.text('No preview available');
                         return;

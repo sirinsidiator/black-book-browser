@@ -64,6 +64,10 @@ export default class BufferReader {
         return this.data.byteLength;
     }
 
+    getRemainingSize() {
+        return this.data.byteLength - this.cursor;
+    }
+
     skip(length: number) {
         this.cursor += length;
     }
@@ -149,6 +153,15 @@ export default class BufferReader {
     readUInt32(littleEndian = true): number {
         const result = this.view.getUint32(this.cursor, littleEndian);
         this.cursor += 4;
+        return result;
+    }
+
+    readUint(byteLength: number, littleEndian = true): number {
+        const data = this.read(byteLength);
+        let result = 0;
+        for (let i = 0; i < byteLength; ++i) {
+            result += data[i] << (8 * (littleEndian ? i : byteLength - i - 1));
+        }
         return result;
     }
 
