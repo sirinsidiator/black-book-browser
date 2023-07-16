@@ -6,25 +6,36 @@ import type { GameInstallEntry } from './GameInstallEntry';
 import type MnfArchive from './mnf/MnfArchive';
 import type MnfEntry from './mnf/MnfEntry';
 import MnfReader from './mnf/MnfReader';
+import type StateManager from './StateManager';
 import type { FileBrowserEntryData } from './StateManager';
 
 export default class MnfArchiveEntry implements FileBrowserEntryData {
+    public readonly stateManager: StateManager;
     public readonly label: string;
     public readonly icon = folder;
     public readonly children: FileBrowserEntryData[] = [];
     public readonly busy: Writable<boolean> = writable(false);
+    public readonly opened: Writable<boolean> = writable(false);
     public readonly error: Writable<Error | null> = writable(null);
-    public open = false;
     private archive?: MnfArchive;
 
     constructor(private gameInstall: GameInstallEntry, public readonly path: string) {
+        this.stateManager = gameInstall.stateManager;
         this.label = path.substring(gameInstall.path.length + 1);
     }
 
-    public select() {
-        console.log('select mnf archive:', this.path, this);
-        this.gameInstall.stateManager.selectedContent.set(this);
+    public select(toggleOpen = false) {
+        this.stateManager.setActiveContent(this);
+        if (toggleOpen) {
+            this.toggleOpen();
+        } else {
+            this.load();
+        }
+    }
+
+    public toggleOpen() {
         this.load();
+        this.opened.update((opened) => !opened);
     }
 
     public load() {
@@ -52,17 +63,17 @@ export default class MnfArchiveEntry implements FileBrowserEntryData {
             if (label === '') return;
             if (index === array.length - 1) {
                 parent.children.push(new FileEntry(entry, parent, label));
-                parent.children.sort(byTypeAndName);
             } else {
                 let child = parent.children.find((c) => c.label === label);
                 if (!child) {
                     child = new FolderEntry(parent, label);
                     parent.children.push(child);
-                    parent.children.sort(byTypeAndName);
                 }
                 parent = child;
             }
         });
+
+        this.children.sort(byTypeAndName);
     }
 }
 

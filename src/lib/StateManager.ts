@@ -1,12 +1,15 @@
 import { writable, type Writable } from 'svelte/store';
 import type { GameInstallEntry } from './GameInstallEntry';
+import { goto } from '$app/navigation';
 
 export interface FileBrowserEntryData {
-    open: boolean;
+    stateManager: StateManager;
+    opened: Writable<boolean>;
     icon: string;
     label: string;
     children: FileBrowserEntryData[];
-    select: () => void;
+    select: (toggleOpen?: boolean) => void;
+    toggleOpen: () => void;
 }
 
 export interface GameVersionData {
@@ -18,4 +21,9 @@ export interface GameVersionData {
 export default class StateManager {
     public readonly gameInstalls: Writable<Map<string, GameInstallEntry>> = writable(new Map());
     public readonly selectedContent: Writable<FileBrowserEntryData | null> = writable(null);
+
+    public setActiveContent(content: FileBrowserEntryData | null) {
+        this.selectedContent.set(content);
+        goto('/content');
+    }
 }

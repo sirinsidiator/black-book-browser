@@ -8,6 +8,7 @@
     export let data: FileBrowserEntryData;
     export let level = 0;
 
+    const opened = data.opened;
     const busy = data instanceof MnfArchiveEntry ? data.busy : writable(false);
     const error = data instanceof MnfArchiveEntry ? data.error : writable(null);
 </script>
@@ -16,17 +17,14 @@
 <div class="entry" style="--level: {level}">
     <ion-button
         class="caret"
-        class:open={data.open}
-        class:hidden={($error || data instanceof FileEntry) ? true : false}
+        class:open={$opened}
+        class:hidden={$error || data instanceof FileEntry ? true : false}
         fill="clear"
         size="small"
         color="medium"
         expand="block"
         disabled={$error ? true : false}
-        on:click={() => {
-            data.open = !data.open;
-            if (data instanceof MnfArchiveEntry) data.load();
-        }}
+        on:click={() => data.toggleOpen()}
     >
         <ion-icon icon={caretForwardOutline} />
     </ion-button>
@@ -37,6 +35,7 @@
         size="small"
         color={$error ? 'danger' : 'medium'}
         on:click={() => data.select()}
+        on:dblclick={() => data.select(true)}
     >
         {#if $busy}
             <ion-spinner class="busyIcon" color="medium" />
@@ -47,8 +46,8 @@
     </ion-button>
 </div>
 
-<div class="children" class:open={data.open}>
-    {#if !$busy && data.open}
+<div class="children" class:open={$opened}>
+    {#if !$busy && $opened}
         {#each data.children as child}
             <svelte:self data={child} level={level + 1} />
         {/each}
