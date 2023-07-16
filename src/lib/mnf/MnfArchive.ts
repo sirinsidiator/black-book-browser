@@ -1,9 +1,8 @@
-import { invoke } from '@tauri-apps/api/tauri';
-import { basename, dirname, resolve, sep } from 'path';
+import { basename, dirname, resolve, sep } from '@tauri-apps/api/path';
 import FileTreeNodeType from '../frontend/FileTreeEntryType.js';
+import BufferReader from '../util/BufferReader.js';
 import type { FieldData } from '../util/BufferReader.js';
-import { mkdir, writeFile } from '../util/FileUtil.js';
-import SearchHelper from '../util/SearchHelper.js';
+import { decompress, getFileSize, mkdir, writeFile } from '../util/FileUtil.js';
 import type ZOSFileTable from '../zosft/ZOSFileTable.js';
 import type ZOSFileTableEntry from '../zosft/ZOSFileTableEntry.js';
 import ZOSFileTableReader from '../zosft/ZOSFileTableReader.js';
@@ -11,71 +10,77 @@ import MnfArchiveFile from './MnfArchiveFile.js';
 import type MnfEntry from './MnfEntry.js';
 
 export default class MnfArchive {
-    path: string;
-    fileSize?: number;
-    data?: FieldData;
+    public readonly fileSize: number;
     archiveFiles: Map<number, MnfArchiveFile>;
     fileEntries: Map<number, MnfEntry>;
     mnfEntries: Map<number, MnfEntry>;
     fileTableEntry?: MnfEntry;
     fileTable?: ZOSFileTable | null;
-    searchHelper: SearchHelper;
+    // searchHelper: SearchHelper;
 
-    constructor(path: string) {
-        this.path = path;
+    constructor(
+        public readonly path: string,
+        public readonly file: BufferReader,
+        public readonly data: FieldData
+    ) {
+        this.fileSize = file.getSize();
         this.archiveFiles = new Map();
         this.fileEntries = new Map();
         this.mnfEntries = new Map();
-        this.searchHelper = new SearchHelper(path);
+        // this.searchHelper = new SearchHelper(path);
     }
 
-    async getContent(entry?: MnfEntry, decompress = true): Promise<Buffer> {
+    async getContent(entry?: MnfEntry, doDecompress = true): Promise<Uint8Array> {
         if (!entry) {
             throw new Error('No entry provided');
         }
 
-        const archiveFile = this.getArchiveFile(entry);
-        if (!archiveFile) {
-            throw new Error('No archive file found for entry ' + entry.fileName);
-        }
-
+        const archiveFile = await this.getArchiveFile(entry);
         const named = entry.data.named;
-        const offset = named['offset'].value as number;
         const compressionType = named['compressionType'].value as number;
-        const fileSize = named['fileSize'].value as number;
-        const compressedSize = named['compressedSize'].value as number;
 
-        if (compressionType === 0 || !decompress) {
+        if (compressionType === 0 || !doDecompress) {
             return await archiveFile.loadContent(entry);
         } else {
-            const decompressedBuffer = await invoke('decompress', { path: archiveFile.path, offset, compressedSize, fileSize }) as Buffer;
-            let cursor = 0;
-            if (decompressedBuffer.length >= 16 && decompressedBuffer.readUInt32BE(cursor) === 0) {
+            const decompressedBuffer = await decompress(
+                archiveFile.path,
+                named['offset'].value as number,
+                named['compressedSize'].value as number,
+                named['fileSize'].value as number
+            );
+
+            console.log('decompressedBuffer', decompressedBuffer);
+            const reader = new BufferReader(decompressedBuffer);
+            if (reader.getSize() >= 16 && reader.readUInt32(false) === 0) {
                 // has some strange header which we skip for now (seen in game.mnf related archives)
-                cursor += 4;
-                cursor += decompressedBuffer.readUInt32BE(cursor);
-                cursor += 4;
-                cursor += decompressedBuffer.readUInt32BE(cursor);
-                cursor += 4;
+                reader.skip(reader.readUInt32(false));
+                reader.skip(reader.readUInt32(false));
+                return reader.readToEnd();
+            } else {
+                return decompressedBuffer;
             }
-            return decompressedBuffer.slice(cursor);
         }
     }
 
-    async getFileTableContent(): Promise<Buffer> {
+    async getFileTableContent(): Promise<Uint8Array> {
         return this.getContent(this.fileTableEntry);
     }
 
-    getArchiveFile(entry: MnfEntry): MnfArchiveFile | undefined {
+    async getArchiveFile(entry: MnfEntry): Promise<MnfArchiveFile> {
         const named = entry.data.named;
         const archiveNumber = named['archiveNumber'].value as number;
         if (!this.archiveFiles.has(archiveNumber)) {
-            const prefix = basename(this.path, '.mnf');
+            const prefix = await basename(this.path, '.mnf');
             const archiveName = prefix + ('0000' + archiveNumber).substr(-4) + '.dat';
-            const archivePath = dirname(this.path) + sep + archiveName;
-            this.archiveFiles.set(archiveNumber, new MnfArchiveFile(archivePath));
+            const archivePath = (await dirname(this.path)) + sep + archiveName;
+            const archivePrefix = await basename(archivePath, '.dat');
+            const size = await getFileSize(archivePath);
+            this.archiveFiles.set(
+                archiveNumber,
+                new MnfArchiveFile(archivePath, archivePrefix, size)
+            );
         }
-        return this.archiveFiles.get(archiveNumber);
+        return this.archiveFiles.get(archiveNumber) as MnfArchiveFile;
     }
 
     getMnfEntriesForFolder(path: string): MnfEntry[] {
@@ -91,8 +96,9 @@ export default class MnfArchive {
         return entries;
     }
 
-    getMnfEntry(path: string): MnfEntry {
-        return this.searchHelper.getByPath(path);
+    getMnfEntry(path: string): MnfEntry | null {
+        // return this.searchHelper.getByPath(path);
+        return null;
     }
 
     async extractFile(fileEntry: MnfEntry, targetFolder: string, root = '', decompress = true) {
@@ -102,11 +108,11 @@ export default class MnfArchive {
         }
 
         if (root === fileEntry.fileName) {
-            root = dirname(root);
+            root = await dirname(root);
         }
 
-        const target = resolve(targetFolder, fileEntry.fileName.substring(root.length + 1));
-        mkdir(dirname(target));
+        const target = await resolve(targetFolder, fileEntry.fileName.substring(root.length + 1));
+        mkdir(await dirname(target));
         const content = await this.getContent(fileEntry, decompress);
         await writeFile(target, content, true);
     }
@@ -114,7 +120,7 @@ export default class MnfArchive {
     async finalize() {
         if (this.fileTableEntry) {
             const zosftReader = new ZOSFileTableReader();
-            const fileTable = this.fileTable = await zosftReader.read(this);
+            const fileTable = (this.fileTable = await zosftReader.read(this));
 
             if (fileTable) {
                 fileTable.forEach((tableEntry: ZOSFileTableEntry) => {
@@ -122,7 +128,11 @@ export default class MnfArchive {
                     if (!fileEntry) {
                         console.warn('No mnf entry for', tableEntry.fileName, tableEntry);
                     } else if (fileEntry.tableEntry) {
-                        console.warn('Mnf entry already has a zosft entry associated', fileEntry, tableEntry);
+                        console.warn(
+                            'Mnf entry already has a zosft entry associated',
+                            fileEntry,
+                            tableEntry
+                        );
                     } else {
                         tableEntry.fileEntry = fileEntry;
                         fileEntry.fileName = tableEntry.fileName ?? 'unknown';
@@ -137,18 +147,18 @@ export default class MnfArchive {
             console.warn('no file table detected in', this.path);
         }
 
-        this.mnfEntries.forEach((entry: MnfEntry) => {
-            this.searchHelper.addEntry(entry);
-        });
+        // this.mnfEntries.forEach((entry: MnfEntry) => {
+        //     this.searchHelper.addEntry(entry);
+        // });
     }
 
-    getDirectoryEntries(folder: string, withIds = true): JSTreeNodeSettings[] {
+    async getDirectoryEntries(folder: string, withIds = true): Promise<JSTreeNodeSettings[]> {
         const entries: JSTreeNodeSettings[] = [];
         const prefix = folder === '/' ? '/' : folder + '/';
         const ids: any = {};
-        this.mnfEntries.forEach((mnfEntry: MnfEntry) => {
+        for (const mnfEntry of this.mnfEntries.values()) {
             if (mnfEntry.fileName?.startsWith(prefix)) {
-                let dir = dirname(mnfEntry.fileName);
+                let dir = await dirname(mnfEntry.fileName);
                 dir = dir.substr(prefix.length);
                 const end = dir.indexOf('/');
                 if (end > 0) {
@@ -157,14 +167,14 @@ export default class MnfArchive {
                 const id = prefix + dir;
                 if (!ids[id] && id !== prefix) {
                     const entry: JSTreeNodeSettings = {
-                        text: basename(id),
+                        text: await basename(id),
                         data: {
                             type: FileTreeNodeType.FOLDER,
                             path: id,
                             archivePath: this.path
                         },
                         children: true
-                    }
+                    };
                     entries.push(entry);
                     if (withIds) {
                         entry.id = id;
@@ -173,13 +183,13 @@ export default class MnfArchive {
                     ids[id] = true;
                 }
 
-                if (dirname(mnfEntry.fileName) === folder) {
+                if ((await dirname(mnfEntry.fileName)) === folder) {
                     const entry: JSTreeNodeSettings = {
-                        text: basename(mnfEntry.fileName),
+                        text: await basename(mnfEntry.fileName),
                         data: {
                             type: FileTreeNodeType.FILE,
                             path: mnfEntry.fileName,
-                            archivePath: this.path,
+                            archivePath: this.path
                         },
                         type: 'file'
                     };
@@ -190,25 +200,24 @@ export default class MnfArchive {
                     }
                 }
             }
-        });
+        }
         return entries;
     }
 
     getFileEntry(file: string): JSTreeNodeSettings[] {
         const entries: JSTreeNodeSettings[] = [];
-        const fileEntry = this.searchHelper.getByPath(file);
-        if (fileEntry) {
-            entries.push({
-                id: file,
-                parent: dirname(file),
-                text: basename(fileEntry.fileName ?? ''),
-                data: {
-                    type: FileTreeNodeType.FILE
-                },
-                type: 'file'
-            });
-        }
+        // const fileEntry = this.searchHelper.getByPath(file);
+        // if (fileEntry) {
+        //     entries.push({
+        //         id: file,
+        //         parent: dirname(file),
+        //         text: basename(fileEntry.fileName ?? ''),
+        //         data: {
+        //             type: FileTreeNodeType.FILE
+        //         },
+        //         type: 'file'
+        //     });
+        // }
         return entries;
     }
-
 }

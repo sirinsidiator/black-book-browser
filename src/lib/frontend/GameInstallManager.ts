@@ -1,49 +1,59 @@
-import { readdirSync, readFileSync, statSync } from "fs";
-import { resolve } from "path";
+import { GameInstallEntry } from '$lib/GameInstallEntry';
+import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
+import { resolve } from '@tauri-apps/api/path';
+import { get } from 'svelte/store';
+import type StateManager from '../StateManager';
+import type { GameVersionData } from '../StateManager';
 
-interface InstallPathSet { [key: string]: boolean; }
-interface GameVersionData {
-    version: string
-    buildDate: string
-    buildNumber: string
-}
-
-const STORAGE_KEY_LAST_ADDED = 'gameinstall.last';
-const STORAGE_KEY_PATHS = 'gameinstall.paths';
+const STORAGE_KEY_PATHS = 'gameinstalls';
 const BUILD_INFO_FILE = 'depot/_databuild/databuild.stamp';
 const DUMMY_BUILD_DATA = {
     version: '-',
     buildDate: '-',
     buildNumber: '-'
-}
+};
 
 export default class GameInstallManager {
-    paths: InstallPathSet;
-    lastAdded: string;
+    constructor(private readonly stateManager: StateManager) {}
 
-    constructor() {
-        this.paths = JSON.parse(localStorage.getItem(STORAGE_KEY_PATHS) || '{}');
-        this.lastAdded = localStorage.getItem(STORAGE_KEY_LAST_ADDED) || process.cwd();
+    public async initialize() {
+        const gameInstalls = get(this.stateManager.gameInstalls);
+        let storedPaths: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PATHS) ?? '[]');
+        if (!Array.isArray(storedPaths)) {
+            storedPaths = [];
+        }
+
+        for (const path of storedPaths) {
+            const gameInstall = await this.createGameInstall(path);
+            gameInstalls.set(path, gameInstall);
+        }
+        this.save();
     }
 
-    add(path: string): boolean {
-        if (!this.paths[path]) {
-            console.log('add install path:', path);
-            this.paths[path] = true;
-            this.save();
+    private async createGameInstall(path: string): Promise<GameInstallEntry> {
+        const version = await this.findGameVersion(path);
+        const mnfFiles = await this.findMnfFiles(path);
+        return new GameInstallEntry(path, version, mnfFiles, this.stateManager);
+    }
 
-            this.lastAdded = path;
-            localStorage.setItem(STORAGE_KEY_LAST_ADDED, path);
+    public async add(path: string): Promise<boolean> {
+        const gameInstalls = get(this.stateManager.gameInstalls);
+        if (!gameInstalls.has(path)) {
+            console.log('add install path:', path);
+            const gameInstall = await this.createGameInstall(path);
+            gameInstalls.set(path, gameInstall);
+            this.save();
             return true;
         }
         console.log('install path already added:', path);
         return false;
     }
 
-    remove(path: string): boolean {
-        console.log('remove install path:', path);
-        if (this.paths[path]) {
-            delete this.paths[path];
+    public remove(path: string): boolean {
+        const gameInstalls = get(this.stateManager.gameInstalls);
+        if (gameInstalls.has(path)) {
+            console.log('remove install path:', path);
+            gameInstalls.delete(path);
             this.save();
             return true;
         }
@@ -51,45 +61,38 @@ export default class GameInstallManager {
         return false;
     }
 
-    save() {
-        localStorage.setItem(STORAGE_KEY_PATHS, JSON.stringify(this.paths));
+    private save() {
+        const gameInstalls = get(this.stateManager.gameInstalls);
+        const paths = Array.from(gameInstalls.keys());
+        localStorage.setItem(STORAGE_KEY_PATHS, JSON.stringify(paths));
+        this.stateManager.gameInstalls.set(gameInstalls);
     }
 
-    getPaths(): string[] {
-        return Object.keys(this.paths);
-    }
-
-    getLastAddedPath(): string {
-        return this.lastAdded;
-    }
-
-    findMnfFiles(path: string): string[] {
-        const dirList = [path];
-        const mnfList = [];
-        let i, baseDir, files, file, fileStats;
-
-        while (dirList.length > 0) {
-            baseDir = dirList.shift() as string;
-            files = readdirSync(baseDir);
-            for (i = 0; i < files.length; ++i) {
-                file = baseDir + '\\' + files[i];
-                fileStats = statSync(file);
-                if (fileStats.isDirectory()) {
-                    dirList.push(file);
-                } else if (file.endsWith('.mnf')) {
-                    mnfList.push(file);
-                }
-            }
-        }
-
+    async findMnfFiles(path: string): Promise<string[]> {
+        const mnfList: string[] = [];
+        const files = await readDir(path, {
+            recursive: true
+        });
+        this.filterMnfFiles(files, mnfList);
         return mnfList;
     }
 
-    findGameVersion(path: string): GameVersionData {
+    private filterMnfFiles(files: FileEntry[], mnfList: string[], depth = 0) {
+        if (depth > 4) return;
+        for (const file of files) {
+            if (file.children) {
+                this.filterMnfFiles(file.children, mnfList, depth + 1);
+            } else if (file.name?.endsWith('.mnf')) {
+                mnfList.push(file.path);
+            }
+        }
+    }
+
+    async findGameVersion(path: string): Promise<GameVersionData> {
         let buildData = '';
         try {
-            const file = resolve(path, BUILD_INFO_FILE);
-            buildData = readFileSync(file, 'utf8');
+            const file = await resolve(path, BUILD_INFO_FILE);
+            buildData = await readTextFile(file);
         } catch (err) {
             console.warn('Could not load build data', err);
         }
@@ -103,5 +106,4 @@ export default class GameInstallManager {
         }
         return DUMMY_BUILD_DATA;
     }
-
 }

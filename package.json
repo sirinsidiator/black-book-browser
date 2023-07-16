@@ -24,6 +24,7 @@
         "ionicons": "^7.1.2",
         "jquery": "^3.7.0",
         "jstree": "^3.3.15",
+        "tauri-plugin-fs-extra-api": "github:tauri-apps/tauri-plugin-fs-extra#v1",
         "three": "^0.154.0"
     },
     "devDependencies": {

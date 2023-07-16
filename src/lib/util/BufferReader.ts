@@ -19,7 +19,7 @@ export class Field {
     definition: FieldDefinition;
     offset: number;
     name?: string;
-    value?: void | number | number[] | Buffer | string;
+    value?: void | number | number[] | Uint8Array | string;
 
     constructor(definition: FieldDefinition, offset = 0) {
         this.definition = definition;
@@ -28,7 +28,6 @@ export class Field {
 }
 
 export class FieldData {
-
     named: {
         [index: string]: Field;
     };
@@ -46,24 +45,27 @@ export class FieldData {
             this.named[field.name] = field;
         }
     }
-
 }
 
 export function toHex(v: number, c = 0) {
-    return '0x' + (
-        '00'.repeat(c)
-        + v.toString(16).toUpperCase()
-    ).substr(-2 * c);
+    return '0x' + ('00'.repeat(c) + v.toString(16).toUpperCase()).substr(-2 * c);
 }
 
 export default class BufferReader {
+    private cursor: number;
+    private view: DataView;
 
-    buffer: Buffer;
-    cursor: number;
-
-    constructor(buffer: Buffer) {
-        this.buffer = buffer;
+    constructor(private data: Uint8Array) {
+        this.view = new DataView(data.buffer);
         this.cursor = 0;
+    }
+
+    getSize() {
+        return this.data.byteLength;
+    }
+
+    skip(length: number) {
+        this.cursor += length;
     }
 
     readFields(fieldDefinitions: FieldDefinition[], data?: FieldData, prefix?: string): FieldData {
@@ -76,7 +78,9 @@ export default class BufferReader {
             const littleEndian = !definition.bigEndian;
             const field = new Field(definition, this.cursor);
             try {
-                const size = (definition.size || data.fields[data.fields.length - 1].value) as number;
+                const size =
+                    (definition.size as number) ??
+                    (data.fields ? (data.fields[data.fields.length - 1]?.value as number) : 0);
                 switch (definition.type) {
                     case FieldType.UINT8:
                         field.value = this.readUInt8();
@@ -112,38 +116,43 @@ export default class BufferReader {
         return data;
     }
 
-    read(length: number): Buffer {
-        const result = this.buffer.slice(this.cursor, this.cursor + length);
+    read(length: number): Uint8Array {
+        const result = this.data.slice(this.cursor, this.cursor + length);
         this.cursor += length;
+        return result;
+    }
+
+    readToEnd(): Uint8Array {
+        const result = this.data.slice(this.cursor);
+        this.cursor = this.data.byteLength;
         return result;
     }
 
     readString(length: number): string {
-        const result = this.buffer.toString('utf8', this.cursor, this.cursor + length);
+        const part = this.data.slice(this.cursor, this.cursor + length);
         this.cursor += length;
-        return result;
+        return new TextDecoder().decode(part);
     }
 
     readUInt8(): number {
-        const result = this.buffer.readUInt8(this.cursor);
+        const result = this.view.getUint8(this.cursor);
         this.cursor++;
         return result;
     }
 
     readUInt16(littleEndian = true): number {
-        const result = littleEndian ? this.buffer.readUInt16LE(this.cursor) : this.buffer.readUInt16BE(this.cursor);
+        const result = this.view.getUint16(this.cursor, littleEndian);
         this.cursor += 2;
         return result;
     }
 
     readUInt32(littleEndian = true): number {
-        const result = littleEndian ? this.buffer.readUInt32LE(this.cursor) : this.buffer.readUInt32BE(this.cursor);
+        const result = this.view.getUint32(this.cursor, littleEndian);
         this.cursor += 4;
         return result;
     }
 
     hasReachedEnd() {
-        return this.cursor === this.buffer.byteLength;
+        return this.cursor === this.data.byteLength;
     }
-
 }

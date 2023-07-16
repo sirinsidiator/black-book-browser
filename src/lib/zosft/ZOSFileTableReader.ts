@@ -41,6 +41,8 @@ export default class ZOSFileTableReader {
 
     async read(archive: MnfArchive): Promise<ZOSFileTable | null> {
         const content = await archive.getFileTableContent();
+        console.log('ZOSFileTableReader.read', content.length, content);
+        
         const reader = new BufferReader(content);
         const fileId = reader.readString(ZOSFT_FILE_ID.length);
         if (fileId === ZOSFT_FILE_ID) {
@@ -107,6 +109,8 @@ export default class ZOSFileTableReader {
             }
 
             return fileTable;
+        } else {
+            console.warn('incorrect fileId', fileId);
         }
         return null;
     }

@@ -1,5 +1,12 @@
-import BufferReader, { Field, FieldData, type FieldDefinition, FieldType, toHex } from '../util/BufferReader.js';
-import { inflate, readFile } from '../util/FileUtil.js';
+import { readBinaryFile } from '@tauri-apps/api/fs';
+import BufferReader, {
+    Field,
+    FieldData,
+    FieldType,
+    toHex,
+    type FieldDefinition
+} from '../util/BufferReader.js';
+import { inflate } from '../util/FileUtil.js';
 import MnfArchive from './MnfArchive.js';
 import MnfEntry from './MnfEntry.js';
 
@@ -25,9 +32,19 @@ const MNF_FIELD_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT16, name: 'blockType1', bigEndian: true },
     // when type2 = 0 there is some additional header data to read (e.g. in eso.mnf)
     { type: FieldType.UINT16, bigEndian: true, condition: hasExtraBlock },
-    { type: FieldType.UINT32, bigEndian: true, name: 'unknownBlock1Size', condition: hasExtraBlock },
+    {
+        type: FieldType.UINT32,
+        bigEndian: true,
+        name: 'unknownBlock1Size',
+        condition: hasExtraBlock
+    },
     { type: FieldType.BINARY, name: 'unknownBlock1', condition: hasExtraBlock },
-    { type: FieldType.UINT32, bigEndian: true, name: 'unknownBlock2Size', condition: hasExtraBlock },
+    {
+        type: FieldType.UINT32,
+        bigEndian: true,
+        name: 'unknownBlock2Size',
+        condition: hasExtraBlock
+    },
     { type: FieldType.BINARY, name: 'unknownBlock2', condition: hasExtraBlock },
     { type: FieldType.UINT16, bigEndian: true, name: 'blockType2', condition: hasExtraBlock },
     { type: FieldType.UINT32, bigEndian: true },
@@ -42,17 +59,20 @@ const MNF_FIELD_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.BINARY, name: 'block1' },
     { type: FieldType.UINT32, bigEndian: true, name: 'blockSize2' },
     { type: FieldType.UINT32, bigEndian: true, name: 'compressedBlockSize2' },
-    { type: FieldType.BINARY, name: 'block2' },
+    { type: FieldType.BINARY, name: 'block2' }
 ];
 
 const ENTRY_FIELD_DEFINITION_INDEX: FieldDefinition = { type: FieldType.UINT32, name: 'index' };
 const BLOCK0_FIELD_DEFINITION_ID: FieldDefinition = { type: FieldType.UINT32, name: 'id' };
 const BLOCK0_FIELD_DEFINITION_TYPE: FieldDefinition = { type: FieldType.UINT8, name: 'type' };
-const BLOCK0_FIELD_DEFINITION_ROW_COUNT: FieldDefinition = { type: FieldType.UINT8, name: 'block0Rows' };
+const BLOCK0_FIELD_DEFINITION_ROW_COUNT: FieldDefinition = {
+    type: FieldType.UINT8,
+    name: 'block0Rows'
+};
 
 const BLOCK1_FIELD_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'fileNumber' },
-    { type: FieldType.UINT32, name: 'flags' },
+    { type: FieldType.UINT32, name: 'flags' }
 ];
 
 const BLOCK2_FIELD_DEFINITIONS: FieldDefinition[] = [
@@ -62,14 +82,11 @@ const BLOCK2_FIELD_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'offset' },
     { type: FieldType.UINT8, name: 'archiveNumber' },
     { type: FieldType.UINT8 },
-    { type: FieldType.UINT16, name: 'compressionType' },
+    { type: FieldType.UINT16, name: 'compressionType' }
 ];
 
 async function extractContent(archive: MnfArchive) {
-    const named = archive.data?.named;
-    if (!named) {
-        throw new Error('Data is missing');
-    }
+    const named = archive.data.named;
     const fileCount = named['fileCount2'].value as number;
     named['block0'].value = await inflate(named['block0'].value as Buffer);
     named['block1'].value = await inflate(named['block1'].value as Buffer);
@@ -88,7 +105,7 @@ async function extractContent(archive: MnfArchive) {
     if (archive.path.endsWith('game.mnf')) {
         fileTableFileNumber = 0;
     } else if (archive.path.endsWith('eso.mnf')) {
-        fileTableFileNumber = 0xFFFFFF;
+        fileTableFileNumber = 0xffffff;
         skipFlaggedEntries = false;
     } // TODO find a way to do this without hard coded values
 
@@ -111,18 +128,23 @@ async function extractContent(archive: MnfArchive) {
         typeField.value = 0;
         entry.data.add(typeField);
 
-        do { // need to skip empty rows
+        do {
+            // need to skip empty rows
             if (!block0.hasReachedEnd()) {
                 rowCountField.value++;
                 const value = block0.readUInt32();
-                idField.value = value & 0xFFFFFF;
+                idField.value = value & 0xffffff;
                 typeField.value = value >>> 24;
-                if (!KNOWN_BLOCK0_VALUES[typeField.value] || (typeField.value !== 0x80 && idField.value > 0)) {
+                if (
+                    !KNOWN_BLOCK0_VALUES[typeField.value] ||
+                    (typeField.value !== 0x80 && idField.value > 0)
+                ) {
                     console.warn('Unexpected value in block0', entry);
                 }
-            } else { // eso.mnf doesn't seem to have enough entrys that are not 0
+            } else {
+                // eso.mnf doesn't seem to have enough entrys that are not 0
                 idField.value = -1;
-                typeField.value = -1
+                typeField.value = -1;
                 break;
             }
         } while (typeField.value === 0);
@@ -136,19 +158,16 @@ async function extractContent(archive: MnfArchive) {
         const compressedSize = named['compressedSize'].value as number;
         const flags = named['flags'].value as number;
 
-        const prefix = UNMAPPED_DIR + archive.getArchiveFile(entry)?.prefix + '/file';
+        const archiveFile = await archive.getArchiveFile(entry);
+        const prefix = UNMAPPED_DIR + archiveFile.prefix + '/file';
         if (typeField.value === 0x80) {
             entry.fileName = prefix + idField.value + '.dat';
         } else {
             entry.fileName = prefix + '@' + toHex(offset) + '.dat';
         }
 
-        const archiveFile = archive.getArchiveFile(entry);
-        if (!archiveFile) {
-            throw new Error('Archive file not found for entry ' + entry.fileName);
-        }
         entry.invalidOffset = offset > archiveFile.size;
-        entry.invalidSize = (offset + compressedSize) > archiveFile.size;
+        entry.invalidSize = offset + compressedSize > archiveFile.size;
         if (!entry.invalidOffset && !entry.invalidSize) {
             if (!skipFlaggedEntries || flags === 0) {
                 archive.fileEntries.set(fileNumber, entry);
@@ -167,51 +186,43 @@ async function extractContent(archive: MnfArchive) {
 }
 
 export default class MnfReader {
-    cache: Map<string, MnfArchive>;
-
-    constructor() {
-        this.cache = new Map();
-    }
-
     async read(path: string): Promise<MnfArchive> {
-        if (this.cache.has(path)) {
-            return Promise.resolve(this.cache.get(path) as MnfArchive);
-        }
-
-        const archive = new MnfArchive(path);
         try {
-            const content = await readFile(path);
+            const content = await readBinaryFile(path);
+            console.log('read', path, content.byteLength);
             const file = new BufferReader(content);
-            archive.fileSize = content.byteLength;
 
             const header = file.readString(FILE_ID.length);
+            console.log('header', header);
             if (header !== FILE_ID) {
                 throw new Error('Invalid .mnf file');
             }
 
             const version = file.readUInt16();
+            console.log('version', version);
             if (version !== 3) {
                 throw new Error('Unsupported .mnf version (v' + version + ')');
             }
 
-            archive.data = file.readFields(MNF_FIELD_DEFINITIONS);
+            const fields = file.readFields(MNF_FIELD_DEFINITIONS);
+            const archive = new MnfArchive(path, file, fields);
+            console.log('archive', archive);
             await extractContent(archive);
+            console.log('extracted', archive);
             await archive.finalize();
-            console.log(archive);
-            this.cache.set(path, archive);
+            console.log('finalized', archive);
             return archive;
         } catch (err) {
-            console.error('Failed to read:', err, archive);
+            console.error('Failed to read ' + path, err);
             throw err;
         }
     }
 
     getArchive(path: string): MnfArchive | undefined {
-        return this.cache.get(path);
+        return;
     }
 
     getArchives(): Map<string, MnfArchive> {
-        return this.cache;
+        return new Map();
     }
-
 }
