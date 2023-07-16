@@ -20,6 +20,7 @@
         "@types/jqueryui": "^1.12.17",
         "@types/jstree": "^3.3.43",
         "codemirror": "5.54",
+        "highlight.js": "^11.8.0",
         "ionic-svelte": "^0.5.81",
         "ionicons": "^7.1.2",
         "jquery": "^3.7.0",

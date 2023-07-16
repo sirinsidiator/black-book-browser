@@ -132,7 +132,10 @@ export default class BufferReader {
         return result;
     }
 
-    readString(length: number): string {
+    readString(length?: number): string {
+        if (!length) {
+            return new TextDecoder().decode(this.readToEnd());
+        }
         const part = this.data.slice(this.cursor, this.cursor + length);
         this.cursor += length;
         return new TextDecoder().decode(part);

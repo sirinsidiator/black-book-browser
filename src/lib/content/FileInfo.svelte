@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { FileEntry } from '$lib/FileEntry';
+    import { FileEntry, ImageFilePreview, TextFilePreview } from '$lib/FileEntry';
+    import 'highlight.js/styles/base16/classic-dark.css';
 
     export let file: FileEntry;
 
     $: previewLoader = file.getPreviewLoader();
 </script>
 
+<!-- eslint-disable svelte/no-at-html-tags -->
 <ion-list>
     <ion-item>
         <ion-label>file path</ion-label>
@@ -19,10 +21,14 @@
             {#await previewLoader}
                 loading...
             {:then preview}
-                {#if preview === null}
-                    no preview available
-                {:else}
+                {#if preview instanceof ImageFilePreview}
                     <img src={preview.getDataUrl()} />
+                {:else if preview instanceof TextFilePreview}
+                    <pre><code class="hljs language-{preview.language}"
+                            >{@html preview.getText()}</code
+                        ></pre>
+                {:else}
+                    no preview available
                 {/if}
             {/await}
         </div>
