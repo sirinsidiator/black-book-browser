@@ -23,7 +23,7 @@ export class TextFilePreview implements FilePreview {
     private result: HighlightResult;
 
     constructor(public readonly content: string, public readonly language: string) {
-        console.log('TextFilePreview',  language);
+        console.log('TextFilePreview', language);
         this.result = hljs.highlight(content, { language: language });
     }
 
@@ -41,7 +41,7 @@ const EXT_TO_LANGUAGE: { [index: string]: string } = {
     '.frag': 'c++',
     '.vert': 'c++',
     '.geom': 'c++',
-    '.comp': 'c++',
+    '.comp': 'c++'
 };
 
 export class FileEntry implements FileBrowserEntryData {
@@ -49,13 +49,23 @@ export class FileEntry implements FileBrowserEntryData {
     public readonly icon = document;
     public readonly children: FileBrowserEntryData[] = [];
     public readonly opened: Writable<boolean> = writable(false);
+    public readonly path: string;
 
     constructor(
         public readonly mnfEntry: MnfEntry,
         public readonly parent: FileBrowserEntryData,
         public readonly label: string
     ) {
+        this.path = parent.path + '/' + label;
         this.stateManager = parent.stateManager;
+    }
+
+    public get compressedSize() {
+        return this.mnfEntry.data.named['compressedSize'].value as number;
+    }
+
+    public get decompressedSize() {
+        return this.mnfEntry.data.named['fileSize'].value as number;
     }
 
     public select() {

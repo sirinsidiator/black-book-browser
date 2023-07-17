@@ -7,6 +7,7 @@ export interface FileBrowserEntryData {
     opened: Writable<boolean>;
     icon: string;
     label: string;
+    path: string;
     children: FileBrowserEntryData[];
     select: (toggleOpen?: boolean) => void;
     toggleOpen: () => void;

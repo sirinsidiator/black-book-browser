@@ -1,36 +1,77 @@
 <script lang="ts">
     import { FileEntry, ImageFilePreview, TextFilePreview } from '$lib/FileEntry';
-    import 'highlight.js/styles/base16/classic-dark.css';
+    import { formatFileSize } from '$lib/util/FileUtil';
+    import ImageViewer from '$lib/content/ImageViewer.svelte';
+    import CodeBlock from '$lib/content/CodeBlock.svelte';
 
     export let file: FileEntry;
 
     $: previewLoader = file.getPreviewLoader();
 </script>
 
-<!-- eslint-disable svelte/no-at-html-tags -->
-<ion-list>
-    <ion-item>
-        <ion-label>file path</ion-label>
-        <ion-input value={file.path} />
-    </ion-item>
-</ion-list>
-
-<ion-card>
-    <ion-card-content>
-        <div class="preview">
+<ion-grid>
+    <ion-row>
+        <ion-col size="2">
+            <ion-label>path:</ion-label>
+        </ion-col>
+        <ion-col>
+            <ion-label>{file.path}</ion-label>
+        </ion-col>
+    </ion-row>
+    <ion-row>
+        <ion-col size="2">
+            <ion-label>compressed size:</ion-label>
+        </ion-col>
+        <ion-col>
+            <ion-label>{formatFileSize(file.compressedSize)}</ion-label>
+        </ion-col>
+    </ion-row>
+    <ion-row>
+        <ion-col size="2">
+            <ion-label>decompressed size:</ion-label>
+        </ion-col>
+        <ion-col>
+            <ion-label>{formatFileSize(file.decompressedSize)}</ion-label>
+        </ion-col>
+    </ion-row>
+    <ion-row class="preview">
+        <ion-col>
             {#await previewLoader}
                 loading...
             {:then preview}
                 {#if preview instanceof ImageFilePreview}
-                    <img src={preview.getDataUrl()} />
+                    <ImageViewer image={preview} />
                 {:else if preview instanceof TextFilePreview}
-                    <pre><code class="hljs language-{preview.language}"
-                            >{@html preview.getText()}</code
-                        ></pre>
+                    <!-- eslint-disable svelte/no-at-html-tags -->
+                    <CodeBlock language={preview.language}>{@html preview.getText()}</CodeBlock>
                 {:else}
-                    no preview available
+                    <div class="no-preview">no preview available</div>
                 {/if}
             {/await}
-        </div>
-    </ion-card-content>
-</ion-card>
+        </ion-col>
+    </ion-row>
+</ion-grid>
+
+<style>
+    ion-grid {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .preview > ion-col {
+        flex-grow: 1;
+    }
+
+    .preview {
+        flex-grow: 1;
+        overflow: auto;
+    }
+
+    .no-preview {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+</style>

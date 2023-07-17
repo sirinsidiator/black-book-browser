@@ -11,6 +11,7 @@
     const opened = data.opened;
     const busy = data instanceof MnfArchiveEntry ? data.busy : writable(false);
     const error = data instanceof MnfArchiveEntry ? data.error : writable(null);
+    const selected = data.stateManager.selectedContent;
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -31,6 +32,7 @@
 
     <ion-button
         class="content"
+        class:selected={$selected === data}
         fill="clear"
         size="small"
         color={$error ? 'danger' : 'medium'}
@@ -103,6 +105,10 @@
         overflow: hidden;
         width: 100%;
         text-align: start;
+    }
+
+    .content.selected {
+        background-color: var(--ion-color-light-tint);
     }
 
     .children {
