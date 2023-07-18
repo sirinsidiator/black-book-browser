@@ -1,17 +1,17 @@
 <script lang="ts">
     import { caretForwardOutline } from 'ionicons/icons';
-    import { writable } from 'svelte/store';
     import { FileEntry } from './FileEntry';
-    import MnfArchiveEntry from './MnfArchiveEntry';
     import type { FileBrowserEntryData } from './StateManager';
 
     export let data: FileBrowserEntryData;
     export let level = 0;
 
     const opened = data.opened;
-    const busy = data instanceof MnfArchiveEntry ? data.busy : writable(false);
-    const error = data instanceof MnfArchiveEntry ? data.error : writable(null);
-    const selected = data.stateManager.selectedContent;
+    const checked = data.checked;
+    const indeterminate = data.indeterminate;
+    const busy = data.busy;
+    const failed = data.failed;
+    const selectedContent = data.stateManager.selectedContent;
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -19,25 +19,31 @@
     <ion-button
         class="caret"
         class:open={$opened}
-        class:hidden={$error || data instanceof FileEntry ? true : false}
+        class:hidden={$failed || data instanceof FileEntry ? true : false}
         fill="clear"
         size="small"
         color="medium"
         expand="block"
-        disabled={$error ? true : false}
-        on:click={() => data.toggleOpen()}
+        disabled={$failed ? true : false}
+        on:click={() => (opening = data.toggleOpen())}
     >
         <ion-icon icon={caretForwardOutline} />
     </ion-button>
 
+    <ion-checkbox
+        checked={$checked}
+        indeterminate={$indeterminate}
+        on:ionChange={data.toggleChecked()}
+    />
+
     <ion-button
         class="content"
-        class:selected={$selected === data}
+        class:selected={$selectedContent === data}
         fill="clear"
         size="small"
-        color={$error ? 'danger' : 'medium'}
+        color={$failed ? 'danger' : 'medium'}
         on:click={() => data.select()}
-        on:dblclick={() => data.select(true)}
+        on:dblclick={() => (opening = data.select(true))}
     >
         {#if $busy}
             <ion-spinner class="busyIcon" color="medium" />
@@ -49,7 +55,7 @@
 </div>
 
 <div class="children" class:open={$opened}>
-    {#if !$busy && $opened}
+    {#if !$busy}
         {#each data.children as child}
             <svelte:self data={child} level={level + 1} />
         {/each}

@@ -1,17 +1,7 @@
-import { writable, type Writable } from 'svelte/store';
-import type { GameInstallEntry } from './GameInstallEntry';
 import { goto } from '$app/navigation';
-
-export interface FileBrowserEntryData {
-    stateManager: StateManager;
-    opened: Writable<boolean>;
-    icon: string;
-    label: string;
-    path: string;
-    children: FileBrowserEntryData[];
-    select: (toggleOpen?: boolean) => void;
-    toggleOpen: () => void;
-}
+import { writable, type Writable } from 'svelte/store';
+import type FileBrowserEntryData from './FileBrowserEntryData';
+import type { GameInstallEntry } from './GameInstallEntry';
 
 export interface GameVersionData {
     version: string;

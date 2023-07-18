@@ -1,21 +1,15 @@
 import { folder } from 'ionicons/icons';
 import { get, writable, type Writable } from 'svelte/store';
+import FileBrowserEntryData, { FileBrowserEntryDataTypeOrder } from './FileBrowserEntryData';
 import { FileEntry } from './FileEntry';
 import { FolderEntry } from './FolderEntry';
 import type { GameInstallEntry } from './GameInstallEntry';
 import type MnfArchive from './mnf/MnfArchive';
 import type MnfEntry from './mnf/MnfEntry';
 import MnfReader from './mnf/MnfReader';
-import type StateManager from './StateManager';
-import type { FileBrowserEntryData } from './StateManager';
 
-export default class MnfArchiveEntry implements FileBrowserEntryData {
-    public readonly stateManager: StateManager;
-    public readonly label: string;
-    public readonly icon = folder;
-    public readonly children: FileBrowserEntryData[] = [];
+export default class MnfArchiveEntry extends FileBrowserEntryData {
     public readonly busy: Writable<boolean> = writable(false);
-    public readonly opened: Writable<boolean> = writable(false);
     public readonly error: Writable<Error | null> = writable(null);
     private archive?: MnfArchive;
     private _folderCount = 0;
@@ -24,9 +18,15 @@ export default class MnfArchiveEntry implements FileBrowserEntryData {
     private _decompressedSize = 0;
     private _fileList: string[] = ['loading...'];
 
-    constructor(private gameInstall: GameInstallEntry, public readonly path: string) {
-        this.stateManager = gameInstall.stateManager;
-        this.label = path.substring(gameInstall.path.length + 1);
+    constructor(gameInstall: GameInstallEntry, path: string) {
+        super(
+            gameInstall.stateManager,
+            FileBrowserEntryDataTypeOrder.Archive,
+            folder,
+            path.substring(gameInstall.path.length + 1),
+            path,
+            gameInstall
+        );
     }
 
     public get folderCount() {
@@ -49,46 +49,42 @@ export default class MnfArchiveEntry implements FileBrowserEntryData {
         return this._fileList.join('\n');
     }
 
-    public select(toggleOpen = false) {
-        this.stateManager.setActiveContent(this);
+    public async select(toggleOpen = false) {
         if (toggleOpen) {
-            this.toggleOpen();
+            return super.select(toggleOpen);
         } else {
-            this.load();
+            return this.load();
         }
     }
 
-    public toggleOpen() {
-        this.load();
-        this.opened.update((opened) => !opened);
+    public async toggleOpen() {
+        await this.load();
+        return super.toggleOpen();
     }
 
-    public load() {
-        if (!this.archive && !get(this.error) && !get(this.busy)) {
-            this.busy.set(true);
+    public async load() {
+        if (!this.archive && !get(this.error)) {
             console.log('Reading archive: ' + this.path);
-            const reader = new MnfReader();
-            reader.read(this.path).then(
-                (archive) => {
-                    console.log('Done reading archive: ' + this.path);
-                    this.archive = archive;
-                    this._folderCount = 0;
-                    this._fileCount = 0;
-                    this._compressedSize = 0;
-                    this._decompressedSize = 0;
-                    this._fileList.length = 0;
-                    archive.fileEntries.forEach((entry) => {
-                        this.buildTree(this, entry);
-                        this._fileList.push(entry.fileName ?? '');
-                    });
-                    this._fileList.sort();
-                    this.busy.set(false);
-                },
-                (error) => {
-                    this.error.set(error);
-                    this.busy.set(false);
-                }
-            );
+            this.busy.set(true);
+            try {
+                const reader = new MnfReader();
+                this.archive = await reader.read(this.path);
+                console.log('Done reading archive: ' + this.path);
+                this._folderCount = 0;
+                this._fileCount = 0;
+                this._compressedSize = 0;
+                this._decompressedSize = 0;
+                this._fileList.length = 0;
+                this.archive.fileEntries.forEach((entry) => {
+                    this.buildTree(this, entry);
+                    this._fileList.push(entry.fileName ?? '');
+                });
+                this._fileList.sort();
+            } catch (error) {
+                this.error.set(error as Error);
+                this.failed.set(true);
+            }
+            this.busy.set(false);
         }
     }
 
@@ -110,15 +106,5 @@ export default class MnfArchiveEntry implements FileBrowserEntryData {
                 parent = child;
             }
         });
-
-        this.children.sort(byTypeAndName);
-    }
-}
-
-function byTypeAndName(a: FileBrowserEntryData, b: FileBrowserEntryData) {
-    if (a.icon === b.icon) {
-        return a.label.localeCompare(b.label);
-    } else {
-        return a.icon === folder ? -1 : 1;
     }
 }

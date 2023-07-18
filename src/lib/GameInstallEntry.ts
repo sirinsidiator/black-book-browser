@@ -1,34 +1,18 @@
 import { folder } from 'ionicons/icons';
-import { writable, type Writable } from 'svelte/store';
+import FileBrowserEntryData, { FileBrowserEntryDataTypeOrder } from './FileBrowserEntryData';
 import MnfArchiveEntry from './MnfArchiveEntry';
 import type StateManager from './StateManager';
-import type { FileBrowserEntryData, GameVersionData } from './StateManager';
+import type { GameVersionData } from './StateManager';
 
-export class GameInstallEntry implements FileBrowserEntryData {
-    public readonly label: string;
-    public readonly icon = folder;
-    public readonly children: FileBrowserEntryData[];
-    public readonly opened: Writable<boolean> = writable(true);
-
+export class GameInstallEntry extends FileBrowserEntryData {
     constructor(
-        public readonly path: string,
+        path: string,
         public readonly version: GameVersionData,
         public readonly mnfFiles: string[],
-        public readonly stateManager: StateManager
+        stateManager: StateManager
     ) {
-        this.label = path;
-        this.children = mnfFiles.map((file) => new MnfArchiveEntry(this, file));
-    }
-
-    public select(toggleOpen = false) {
-        console.log('select game install:', this.path, this);
-        this.stateManager.setActiveContent(this);
-        if (toggleOpen) {
-            this.toggleOpen();
-        }
-    }
-
-    public toggleOpen() {
-        this.opened.update((opened) => !opened);
+        super(stateManager, FileBrowserEntryDataTypeOrder.GameInstall, folder, path, path);
+        this.children.push(...mnfFiles.map((file) => new MnfArchiveEntry(this, file)));
+        this.opened.set(true);
     }
 }
