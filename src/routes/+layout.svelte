@@ -3,6 +3,8 @@
     import { setupIonicBase } from 'ionic-svelte';
     import { bugOutline, fileTrayFullOutline } from 'ionicons/icons';
     import IonTabs from 'ionic-svelte/components/IonTabs.svelte';
+    import { onMount } from 'svelte';
+    import { createGesture } from '@ionic/core';
     /* Import all components - or do partial loading - see below */
     import 'ionic-svelte/components/all';
 
@@ -65,10 +67,25 @@
     ];
 
     export let data: LayoutData;
+
+    let splitPane: HTMLIonSplitPaneElement;
+    let divider: HTMLDivElement;
+    onMount(() => {
+        const gesture = createGesture({
+            name: 'resize-menu',
+            el: divider,
+            onMove: e => {
+                console.log("move", e);
+                splitPane.style.setProperty("--side-width", `${e.currentX}px`)
+            }
+        });
+        
+        gesture.enable(true);
+    });
 </script>
 
 <ion-app>
-    <ion-split-pane when="xs" content-id="main">
+    <ion-split-pane bind:this={splitPane} when="xs" content-id="main">
         <ion-menu content-id="main">
             <ion-header>
                 <ion-toolbar color="tertiary">
@@ -76,6 +93,8 @@
                 </ion-toolbar>
             </ion-header>
             <FileBrowser manager={data.stateManager} />
+
+            <div class="divider" bind:this={divider} />
         </ion-menu>
 
         <div id="main">
@@ -83,3 +102,25 @@
         </div>
     </ion-split-pane>
 </ion-app>
+
+<style>
+    ion-split-pane {
+        --side-min-width: 10vw;
+        --side-max-width: 90vw;
+        --side-width: 20vw;
+    }
+
+    .divider {
+        height: 100%;
+        width: 3px;
+
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+
+        z-index: 10;
+
+        cursor: col-resize;
+    }
+</style>
