@@ -17,34 +17,35 @@ export function formatFileSize(size: number, showBytes = true): string {
     return convertedString;
 }
 
-interface DiskSpaceCache {
-    [index: string]: number;
-}
-let diskSpaceCache: DiskSpaceCache;
-let lastDiskSpaceCacheRefresh = 0;
-const DISK_SPACE_REFRESH_THRESHOLD = 10000; //ms
-function refreshDiskSpaceCacheIfNeeded() {
-    if (Date.now() - lastDiskSpaceCacheRefresh < DISK_SPACE_REFRESH_THRESHOLD) {
-        return;
-    }
+// interface DiskSpaceCache {
+//     [index: string]: number;
+// }
+// let diskSpaceCache: DiskSpaceCache;
+// let lastDiskSpaceCacheRefresh = 0;
+// const DISK_SPACE_REFRESH_THRESHOLD = 10000; //ms
+// function refreshDiskSpaceCacheIfNeeded() {
+//     if (Date.now() - lastDiskSpaceCacheRefresh < DISK_SPACE_REFRESH_THRESHOLD) {
+//         return;
+//     }
 
-    // try {
-    //     let output = execSync('wmic logicaldisk get freespace,caption').toString('utf8');
-    //     let lines = output.trim().split('\n');
-    //     diskSpaceCache = {};
-    //     for (let i = 1; i < lines.length; ++i) {
-    //         let matches = lines[i].match(/([A-Z]):\s+(\d+)/);
-    //         if (matches) {
-    //             diskSpaceCache[matches[1]] = parseInt(matches[2]);
-    //         }
-    //     }
-    lastDiskSpaceCacheRefresh = Date.now();
-    // } catch (err) {
-    //     console.error('refreshDiskSpaceCache failed:', err);
-    // }
-}
+//     // try {
+//     //     let output = execSync('wmic logicaldisk get freespace,caption').toString('utf8');
+//     //     let lines = output.trim().split('\n');
+//     //     diskSpaceCache = {};
+//     //     for (let i = 1; i < lines.length; ++i) {
+//     //         let matches = lines[i].match(/([A-Z]):\s+(\d+)/);
+//     //         if (matches) {
+//     //             diskSpaceCache[matches[1]] = parseInt(matches[2]);
+//     //         }
+//     //     }
+//     lastDiskSpaceCacheRefresh = Date.now();
+//     // } catch (err) {
+//     //     console.error('refreshDiskSpaceCache failed:', err);
+//     // }
+// }
 
 export function getFreeDiskSpace(drive: string): number {
+    console.log('getFreeDiskSpace', drive);
     // if (drive && drive.charAt(1) === ':') {
     //     refreshDiskSpaceCacheIfNeeded();
     //     let free = diskSpaceCache[drive.charAt(0).toUpperCase()];
@@ -74,6 +75,8 @@ export async function inflate(buffer: Uint8Array): Promise<Uint8Array> {
 
 export async function writeFile(path: string, content: Uint8Array, silent = false) {
     return new Promise((resolve, reject) => {
+        console.log('writing to', path, content.length, silent);
+        reject(new Error('not implemented'));
         // fs.writeFile(path, content, err => {
         //     if (err) {
         //         reject(err);
@@ -88,6 +91,8 @@ export async function writeFile(path: string, content: Uint8Array, silent = fals
 }
 
 export async function requestSave(fileName: string, content: Buffer) {
+    console.log('requestSave', fileName, content.length);
+    return Promise.reject(new Error('not implemented'));
     // let saveDialog = $('<input type="file" />');
     // saveDialog.prop("nwsaveas", fileName);
     // saveDialog.on('change', async () => {
@@ -152,6 +157,8 @@ export async function decompress(
 }
 
 export function mkdir(path: string) {
+    console.log('mkdir', path);
+    return Promise.reject(new Error('not implemented'));
     // path = path.replace(/(\\|\/)+/g, '\\');
     // if (path === '') {
     //     console.warn('called mkdir for empty path');

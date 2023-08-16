@@ -10,10 +10,11 @@ const ZOSFT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT16 },
     { type: FieldType.UINT32 },
     { type: FieldType.UINT32 },
-    { type: FieldType.UINT32, name: 'entryCount' },
+    { type: FieldType.UINT32, name: 'entryCount' }
 ];
 
-const hasRows = (data: FieldData, prefix: string, fieldName: string) => (data.named[prefix + fieldName]?.value as number ?? 0) > 0;
+const hasRows = (data: FieldData, prefix: string, fieldName: string) =>
+    ((data.named[prefix + fieldName]?.value as number) ?? 0) > 0;
 
 const ZOSFT_SEGMENT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT16 },
@@ -21,28 +22,63 @@ const ZOSFT_SEGMENT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'block0Rows' },
     { type: FieldType.UINT32, name: 'block1Rows' },
     { type: FieldType.UINT32, name: 'block2Rows' },
-    { type: FieldType.UINT32, name: 'block0Size', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows') },
-    { type: FieldType.UINT32, name: 'block0CompressedSize', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows') },
-    { type: FieldType.BINARY, name: 'block0', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows') },
-    { type: FieldType.UINT32, name: 'block1Size', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows') },
-    { type: FieldType.UINT32, name: 'block1CompressedSize', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows') },
-    { type: FieldType.BINARY, name: 'block1', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows') },
-    { type: FieldType.UINT32, name: 'block2Size', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows') },
-    { type: FieldType.UINT32, name: 'block2CompressedSize', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows') },
-    { type: FieldType.BINARY, name: 'block2', condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows') },
+    {
+        type: FieldType.UINT32,
+        name: 'block0Size',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows')
+    },
+    {
+        type: FieldType.UINT32,
+        name: 'block0CompressedSize',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows')
+    },
+    {
+        type: FieldType.BINARY,
+        name: 'block0',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows')
+    },
+    {
+        type: FieldType.UINT32,
+        name: 'block1Size',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows')
+    },
+    {
+        type: FieldType.UINT32,
+        name: 'block1CompressedSize',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows')
+    },
+    {
+        type: FieldType.BINARY,
+        name: 'block1',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows')
+    },
+    {
+        type: FieldType.UINT32,
+        name: 'block2Size',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows')
+    },
+    {
+        type: FieldType.UINT32,
+        name: 'block2CompressedSize',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows')
+    },
+    {
+        type: FieldType.BINARY,
+        name: 'block2',
+        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows')
+    }
 ];
 
 const ZOSFT_FILENAME_LIST_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'fileNameListSize' },
-    { type: FieldType.STRING, name: 'fileNameList' },
+    { type: FieldType.STRING, name: 'fileNameList' }
 ];
 
 export default class ZOSFileTableReader {
-
     async read(archive: MnfArchive): Promise<ZOSFileTable | null> {
         const content = await archive.getFileTableContent();
         console.log('ZOSFileTableReader.read', content.length, content);
-        
+
         const reader = new BufferReader(content);
         const fileId = reader.readString(ZOSFT_FILE_ID.length);
         if (fileId === ZOSFT_FILE_ID) {
@@ -114,5 +150,4 @@ export default class ZOSFileTableReader {
         }
         return null;
     }
-
 }

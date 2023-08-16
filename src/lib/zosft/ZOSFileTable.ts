@@ -2,7 +2,6 @@ import type { FieldData } from '../util/BufferReader.js';
 import ZOSFileTableEntry from './ZOSFileTableEntry.js';
 
 export default class ZOSFileTable {
-
     data: FieldData;
     entries: ZOSFileTableEntry[];
 
@@ -18,8 +17,9 @@ export default class ZOSFileTable {
         return this.entries[index];
     }
 
-    forEach(callbackfn: (value: ZOSFileTableEntry, index: number, array: ZOSFileTableEntry[]) => void) {
+    forEach(
+        callbackfn: (value: ZOSFileTableEntry, index: number, array: ZOSFileTableEntry[]) => void
+    ) {
         this.entries.forEach(callbackfn);
     }
-
 }

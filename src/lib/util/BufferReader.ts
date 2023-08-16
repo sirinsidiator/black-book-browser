@@ -108,7 +108,9 @@ export default class BufferReader {
                         field.value = this.readString(size);
                         break;
                     default:
-                        throw new Error('field type "' + definition.type + '" not implemented');
+                        throw new Error(
+                            'field type "' + (definition.type as string) + '" not implemented'
+                        );
                 }
             } catch (e) {
                 console.error('Error reading field', field.definition.name, field, data, e);

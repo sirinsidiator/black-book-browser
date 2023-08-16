@@ -20,7 +20,10 @@ export class ImageFilePreview implements FilePreview {
 export class TextFilePreview implements FilePreview {
     private result: HighlightResult;
 
-    constructor(public readonly content: string, public readonly language: string) {
+    constructor(
+        public readonly content: string,
+        public readonly language: string
+    ) {
         console.log('TextFilePreview', language);
         this.result = hljs.highlight(content, { language: language });
     }
@@ -43,7 +46,11 @@ const EXT_TO_LANGUAGE: { [index: string]: string } = {
 };
 
 export class FileEntry extends FileBrowserEntryData {
-    constructor(public readonly mnfEntry: MnfEntry, parent: FileBrowserEntryData, label: string) {
+    constructor(
+        public readonly mnfEntry: MnfEntry,
+        parent: FileBrowserEntryData,
+        label: string
+    ) {
         super(
             parent.stateManager,
             FileBrowserEntryDataTypeOrder.File,

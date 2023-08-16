@@ -1,53 +1,36 @@
 import { get, writable, type Writable } from 'svelte/store';
-import type StateManager from './StateManager';
 
-export enum FileBrowserEntryDataTypeOrder {
-    Folder = 0,
-    File = 1,
-    Archive = 2,
-    GameInstall = 3
-}
-
-export default abstract class FileBrowserEntryData {
+export default class FilTreeEntryData {
     public readonly opened: Writable<boolean> = writable(false);
     public readonly checked: Writable<boolean> = writable(false);
     public readonly indeterminate: Writable<boolean> = writable(false);
     public readonly busy: Writable<boolean> = writable(false);
     public readonly failed: Writable<boolean> = writable(false);
-    public readonly children: FileBrowserEntryData[] = [];
+    public readonly children: FilTreeEntryData[] = [];
+    private parent?: FilTreeEntryData;
     private firstOpen = true;
 
     constructor(
-        public readonly stateManager: StateManager,
-        private readonly typeOrder: number,
+        public readonly id: number,
         public readonly icon: string,
         public readonly label: string,
-        public readonly path: string,
-        public readonly parent?: FileBrowserEntryData
+        public readonly path: string
     ) {}
 
     public async select(toggleOpen = false) {
-        this.stateManager.setActiveContent(this);
+        // TODO emit event
         if (toggleOpen) {
             return this.toggleOpen();
         }
+        return Promise.resolve();
     }
 
     public async toggleOpen() {
         this.opened.update((opened) => !opened);
         if (get(this.opened) && this.firstOpen) {
             this.firstOpen = false;
-            this.children.sort(this.byTypeAndName);
         }
         return Promise.resolve();
-    }
-
-    private byTypeAndName(this: void, a: FileBrowserEntryData, b: FileBrowserEntryData) {
-        if (a.typeOrder === b.typeOrder) {
-            return a.label.localeCompare(b.label);
-        } else {
-            return a.typeOrder - b.typeOrder;
-        }
     }
 
     public toggleChecked() {

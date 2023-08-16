@@ -1,5 +1,10 @@
 import type MnfEntry from '../mnf/MnfEntry.js';
-import BufferReader, { FieldData, FieldType, Field, type FieldDefinition } from '../util/BufferReader.js';
+import BufferReader, {
+    FieldData,
+    FieldType,
+    Field,
+    type FieldDefinition
+} from '../util/BufferReader.js';
 
 const ENTRY_FIELD_DEFINITION_INDEX: FieldDefinition = { type: FieldType.UINT32, name: 'index' };
 const BLOCK1_FIELD_DEFINITION_ID: FieldDefinition = { type: FieldType.UINT32, name: 'id' };
@@ -7,35 +12,44 @@ const BLOCK1_FIELD_DEFINITION_TYPE: FieldDefinition = { type: FieldType.UINT8, n
 const BLOCK1_FIELD_DEFINITION_ROW_COUNT: FieldDefinition = { type: FieldType.UINT8, name: 'rows' };
 
 const ENTRY_BLOCK_DEFINITIONS: FieldDefinition[][][] = [
-    [ // segment 0
+    [
+        // segment 0
         [], // block 0 is read separately, but we need it for the indexing
-        [ // block 1
+        [
+            // block 1
             { type: FieldType.UINT32 },
-            { type: FieldType.UINT32 },
+            { type: FieldType.UINT32 }
         ],
-        [ // block 2
-            { type: FieldType.UINT32, name: 'fileNumber' },
+        [
+            // block 2
+            { type: FieldType.UINT32, name: 'fileNumber' }
         ]
     ],
-    [ // segment 1
+    [
+        // segment 1
         [],
-        [ // block 1
-            { type: FieldType.UINT32, name: 'fileNumber' },
+        [
+            // block 1
+            { type: FieldType.UINT32, name: 'fileNumber' }
         ],
-        [ // block 2
+        [
+            // block 2
             { type: FieldType.UINT32, name: 'fileNumber' },
             { type: FieldType.UINT32, name: 'nameOffset' },
             { type: FieldType.UINT32 },
-            { type: FieldType.UINT32 },
+            { type: FieldType.UINT32 }
         ]
     ],
-    [ // segment 2
+    [
+        // segment 2
         [],
-        [ // block 1
-            { type: FieldType.UINT32 },
+        [
+            // block 1
+            { type: FieldType.UINT32 }
         ],
-        [ // block 2
-            { type: FieldType.UINT32 },
+        [
+            // block 2
+            { type: FieldType.UINT32 }
         ]
     ]
 ];
@@ -46,7 +60,6 @@ KNOWN_BLOCK1_VALUES[0x40] = true;
 KNOWN_BLOCK1_VALUES[0x00] = true;
 
 export default class ZOSFileTableEntry {
-
     data: FieldData;
     fileName?: string;
     fileEntry?: MnfEntry;
@@ -79,18 +92,23 @@ export default class ZOSFileTableEntry {
         typeField.value = 0;
         this.data.add(typeField, prefix);
 
-        do { // need to skip empty rows
+        do {
+            // need to skip empty rows
             if (!reader.hasReachedEnd()) {
-                (rowCountField.value)++;
+                rowCountField.value++;
                 const value = reader.readUInt32();
-                idField.value = value & 0xFFFFFF;
+                idField.value = value & 0xffffff;
                 typeField.value = value >>> 24;
-                if (!KNOWN_BLOCK1_VALUES[typeField.value] || (typeField.value !== 0x80 && idField.value > 0)) {
+                if (
+                    !KNOWN_BLOCK1_VALUES[typeField.value] ||
+                    (typeField.value !== 0x80 && idField.value > 0)
+                ) {
                     console.warn('Unexpected value in', prefix, this);
                 }
-            } else { // eso.mnf doesn't seem to have enough entrys that are not 0
+            } else {
+                // eso.mnf doesn't seem to have enough entrys that are not 0
                 idField.value = -1;
-                typeField.value = -1
+                typeField.value = -1;
                 break;
             }
         } while (typeField.value === 0);
@@ -106,5 +124,4 @@ export default class ZOSFileTableEntry {
     getFileNumber(): number {
         return this.data.named['segment0block2fileNumber'].value as number;
     }
-
 }

@@ -1,14 +1,14 @@
 <script lang="ts">
-    import type FolderEntry from '$lib/FolderEntry';
-    import { formatFileSize } from '$lib/util/FileUtil';
+    import type { FolderEntry } from '$lib/FolderEntry';
     import CodeBlock from '$lib/content/CodeBlock.svelte';
+    import { formatFileSize } from '$lib/util/FileUtil';
 
     export let folder: FolderEntry;
 </script>
 
 <ion-grid>
     <ion-row>
-        <ion-col size="2">
+        <ion-col size={'2'}>
             <ion-label>path:</ion-label>
         </ion-col>
         <ion-col>
@@ -16,7 +16,7 @@
         </ion-col>
     </ion-row>
     <ion-row>
-        <ion-col size="2">
+        <ion-col size={'2'}>
             <ion-label>folders:</ion-label>
         </ion-col>
         <ion-col>
@@ -24,7 +24,7 @@
         </ion-col>
     </ion-row>
     <ion-row>
-        <ion-col size="2">
+        <ion-col size={'2'}>
             <ion-label>files:</ion-label>
         </ion-col>
         <ion-col>
@@ -32,7 +32,7 @@
         </ion-col>
     </ion-row>
     <ion-row>
-        <ion-col size="2">
+        <ion-col size={'2'}>
             <ion-label>compressed size:</ion-label>
         </ion-col>
         <ion-col>
@@ -40,7 +40,7 @@
         </ion-col>
     </ion-row>
     <ion-row>
-        <ion-col size="2">
+        <ion-col size={'2'}>
             <ion-label>decompressed size:</ion-label>
         </ion-col>
         <ion-col>

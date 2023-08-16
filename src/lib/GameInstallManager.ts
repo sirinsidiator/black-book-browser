@@ -1,24 +1,35 @@
 import { GameInstallEntry } from '$lib/GameInstallEntry';
 import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
 import { resolve } from '@tauri-apps/api/path';
-import { get } from 'svelte/store';
-import type StateManager from '../StateManager';
-import type { GameVersionData } from '../StateManager';
+import { get, writable, type Writable } from 'svelte/store';
+import type StateManager from './StateManager';
+
+export interface GameVersionData {
+    version: string;
+    buildDate: string;
+    buildNumber: string;
+}
 
 const STORAGE_KEY_PATHS = 'gameinstalls';
 const BUILD_INFO_FILE = 'depot/_databuild/databuild.stamp';
-const DUMMY_BUILD_DATA = {
+const DUMMY_BUILD_DATA: GameVersionData = {
     version: '-',
     buildDate: '-',
     buildNumber: '-'
 };
 
 export default class GameInstallManager {
+    public readonly gameInstalls: Writable<Map<string, GameInstallEntry>> = writable(
+        new Map<string, GameInstallEntry>()
+    );
+
     constructor(private readonly stateManager: StateManager) {}
 
     public async initialize() {
-        const gameInstalls = get(this.stateManager.gameInstalls);
-        let storedPaths: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PATHS) ?? '[]');
+        const gameInstalls = get(this.gameInstalls);
+        let storedPaths: string[] = JSON.parse(
+            localStorage.getItem(STORAGE_KEY_PATHS) ?? '[]'
+        ) as string[];
         if (!Array.isArray(storedPaths)) {
             storedPaths = [];
         }
@@ -37,7 +48,7 @@ export default class GameInstallManager {
     }
 
     public async add(path: string): Promise<boolean> {
-        const gameInstalls = get(this.stateManager.gameInstalls);
+        const gameInstalls = get(this.gameInstalls);
         if (!gameInstalls.has(path)) {
             console.log('add install path:', path);
             const gameInstall = await this.createGameInstall(path);
@@ -50,7 +61,7 @@ export default class GameInstallManager {
     }
 
     public remove(path: string): boolean {
-        const gameInstalls = get(this.stateManager.gameInstalls);
+        const gameInstalls = get(this.gameInstalls);
         if (gameInstalls.has(path)) {
             console.log('remove install path:', path);
             gameInstalls.delete(path);
@@ -62,10 +73,10 @@ export default class GameInstallManager {
     }
 
     private save() {
-        const gameInstalls = get(this.stateManager.gameInstalls);
+        const gameInstalls = get(this.gameInstalls);
         const paths = Array.from(gameInstalls.keys());
         localStorage.setItem(STORAGE_KEY_PATHS, JSON.stringify(paths));
-        this.stateManager.gameInstalls.set(gameInstalls);
+        this.gameInstalls.set(gameInstalls);
     }
 
     async findMnfFiles(path: string): Promise<string[]> {

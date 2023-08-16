@@ -1,14 +1,13 @@
 <script lang="ts">
     import { open } from '@tauri-apps/api/dialog';
     import { add } from 'ionicons/icons';
-    import FileBrowserEntry from './FileBrowserEntry.svelte';
+    import FileTree from '$lib/tree/FileTree.svelte';
     import type StateManager from './StateManager';
-    import GameInstallManager from './frontend/GameInstallManager';
 
     export let manager: StateManager;
-    const gameInstallManager = new GameInstallManager(manager);
 
-    const gameInstalls = manager.gameInstalls;
+    const gameInstalls = manager.gameInstallManager.gameInstalls;
+    console.log($gameInstalls);
 
     async function addFolder() {
         const selected = await open({
@@ -16,36 +15,18 @@
         });
 
         if (typeof selected === 'string') {
-            gameInstallManager.add(selected);
+            manager.gameInstallManager.add(selected).catch(console.error);
         }
     }
 </script>
 
-<div class="filetree">
-    {#await gameInstallManager.initialize()}
-        loading
-    {:then}
-        {#each Array.from($gameInstalls.values()) as data}
-            <FileBrowserEntry {data} />
-        {/each}
-    {/await}
-</div>
-
 <ion-content class="ion-padding">
+    <FileTree entries={Array.from($gameInstalls)} />
+
     <ion-fab slot="fixed" vertical="bottom" horizontal="center">
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- eslint-disable-next-line svelte/valid-compile -->
         <ion-fab-button on:click={addFolder}>
             <ion-icon icon={add} />
         </ion-fab-button>
     </ion-fab>
 </ion-content>
-
-<style>
-    .filetree {
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        height: 100%;
-        padding: 0.5rem;
-    }
-</style>

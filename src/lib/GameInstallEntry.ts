@@ -1,8 +1,8 @@
 import { folder } from 'ionicons/icons';
 import FileBrowserEntryData, { FileBrowserEntryDataTypeOrder } from './FileBrowserEntryData';
+import type { GameVersionData } from './GameInstallManager';
 import MnfArchiveEntry from './MnfArchiveEntry';
 import type StateManager from './StateManager';
-import type { GameVersionData } from './StateManager';
 
 export class GameInstallEntry extends FileBrowserEntryData {
     constructor(

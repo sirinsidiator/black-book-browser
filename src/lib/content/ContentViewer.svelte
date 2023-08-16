@@ -13,7 +13,13 @@
     const content = manager.selectedContent;
 </script>
 
-{#if $content instanceof GameInstallEntry}
+{#if $content == null}
+    <ion-text color="dark" class="welcome">
+        Knowledge is only as wicked as the one who wields it.<br />
+        Forsaking learning in fear of its misuse is the ultimate sin.<br />
+        It is an unforgivable folly.<br />
+    </ion-text>
+{:else if $content instanceof GameInstallEntry}
     <GameInstallInfo gameInstall={$content} />
 {:else if $content instanceof MnfArchiveEntry}
     <MnfArchiveInfo archive={$content} />
@@ -24,3 +30,16 @@
 {:else}
     <p>Unsupported content type for {$content?.label}</p>
 {/if}
+
+<style>
+    .welcome {
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 1.6em;
+        font-style: italic;
+        font-family: serif;
+    }
+</style>

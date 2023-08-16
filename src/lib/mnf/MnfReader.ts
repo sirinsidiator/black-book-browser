@@ -16,9 +16,13 @@ export enum MnfType {
     V3
 }
 
+interface Block0Values {
+    [index: number]: boolean;
+}
+
 const FILE_ID = 'MES2';
 const UNMAPPED_DIR = '/unmapped/';
-const KNOWN_BLOCK0_VALUES: any = {};
+const KNOWN_BLOCK0_VALUES: Block0Values = {};
 KNOWN_BLOCK0_VALUES[0x80] = true;
 KNOWN_BLOCK0_VALUES[0x40] = true;
 KNOWN_BLOCK0_VALUES[0x00] = true;
@@ -219,6 +223,7 @@ export default class MnfReader {
     }
 
     getArchive(path: string): MnfArchive | undefined {
+        console.warn('getArchive not implemented', path);
         return;
     }
 

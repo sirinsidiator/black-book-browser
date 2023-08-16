@@ -1,5 +1,5 @@
-import { basename, dirname } from "path";
-import type MnfEntry from "../mnf/MnfEntry";
+import { basename, dirname } from 'path';
+import type MnfEntry from '../mnf/MnfEntry';
 
 export interface SearchResult {
     type: SearchResultType;
@@ -9,7 +9,8 @@ export interface SearchResult {
 }
 
 export enum SearchResultType {
-    DIRECTORY, FILE
+    DIRECTORY,
+    FILE
 }
 
 export default class SearchHelper {
@@ -48,30 +49,30 @@ export default class SearchHelper {
     search(input: string | RegExp): SearchResult[] {
         let isMatch: (name: string) => boolean;
         if (input instanceof RegExp) {
-            isMatch = name => input.test(name);
+            isMatch = (name) => input.test(name);
         } else {
-            isMatch = name => name.indexOf(input) >= 0;
+            isMatch = (name) => name.indexOf(input) >= 0;
         }
 
         const results: SearchResult[] = [];
-        this.directories.forEach(directory => {
+        this.directories.forEach((directory) => {
             if (isMatch(directory)) {
                 results.push({
                     type: SearchResultType.DIRECTORY,
                     archivePath: this.archivePath,
-                    path: directory,
+                    path: directory
                 });
             }
         });
 
         this.files.forEach((entries, file) => {
             if (isMatch(file)) {
-                entries.forEach(entry => {
+                entries.forEach((entry) => {
                     results.push({
                         type: SearchResultType.FILE,
                         archivePath: this.archivePath,
                         path: entry.fileName as string,
-                        entry: entry,
+                        entry: entry
                     });
                 });
             }
@@ -79,5 +80,4 @@ export default class SearchHelper {
 
         return results;
     }
-
 }

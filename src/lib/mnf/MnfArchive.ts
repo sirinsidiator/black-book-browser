@@ -1,7 +1,6 @@
 import { basename, dirname, resolve, sep } from '@tauri-apps/api/path';
-import FileTreeNodeType from '../frontend/FileTreeEntryType.js';
-import BufferReader from '../util/BufferReader.js';
 import type { FieldData } from '../util/BufferReader.js';
+import BufferReader from '../util/BufferReader.js';
 import { decompress, getFileSize, mkdir, writeFile } from '../util/FileUtil.js';
 import type ZOSFileTable from '../zosft/ZOSFileTable.js';
 import type ZOSFileTableEntry from '../zosft/ZOSFileTableEntry.js';
@@ -97,6 +96,7 @@ export default class MnfArchive {
     }
 
     getMnfEntry(path: string): MnfEntry | null {
+        console.warn('getMnfEntry not implemented', path);
         // return this.searchHelper.getByPath(path);
         return null;
     }
@@ -112,7 +112,7 @@ export default class MnfArchive {
         }
 
         const target = await resolve(targetFolder, fileEntry.fileName.substring(root.length + 1));
-        mkdir(await dirname(target));
+        await mkdir(await dirname(target));
         const content = await this.getContent(fileEntry, decompress);
         await writeFile(target, content, true);
     }
@@ -150,74 +150,5 @@ export default class MnfArchive {
         // this.mnfEntries.forEach((entry: MnfEntry) => {
         //     this.searchHelper.addEntry(entry);
         // });
-    }
-
-    async getDirectoryEntries(folder: string, withIds = true): Promise<JSTreeNodeSettings[]> {
-        const entries: JSTreeNodeSettings[] = [];
-        const prefix = folder === '/' ? '/' : folder + '/';
-        const ids: any = {};
-        for (const mnfEntry of this.mnfEntries.values()) {
-            if (mnfEntry.fileName?.startsWith(prefix)) {
-                let dir = await dirname(mnfEntry.fileName);
-                dir = dir.substr(prefix.length);
-                const end = dir.indexOf('/');
-                if (end > 0) {
-                    dir = dir.substring(0, end);
-                }
-                const id = prefix + dir;
-                if (!ids[id] && id !== prefix) {
-                    const entry: JSTreeNodeSettings = {
-                        text: await basename(id),
-                        data: {
-                            type: FileTreeNodeType.FOLDER,
-                            path: id,
-                            archivePath: this.path
-                        },
-                        children: true
-                    };
-                    entries.push(entry);
-                    if (withIds) {
-                        entry.id = id;
-                        entry.parent = folder;
-                    }
-                    ids[id] = true;
-                }
-
-                if ((await dirname(mnfEntry.fileName)) === folder) {
-                    const entry: JSTreeNodeSettings = {
-                        text: await basename(mnfEntry.fileName),
-                        data: {
-                            type: FileTreeNodeType.FILE,
-                            path: mnfEntry.fileName,
-                            archivePath: this.path
-                        },
-                        type: 'file'
-                    };
-                    entries.push(entry);
-                    if (withIds) {
-                        entry.id = mnfEntry.fileName;
-                        entry.parent = folder;
-                    }
-                }
-            }
-        }
-        return entries;
-    }
-
-    getFileEntry(file: string): JSTreeNodeSettings[] {
-        const entries: JSTreeNodeSettings[] = [];
-        // const fileEntry = this.searchHelper.getByPath(file);
-        // if (fileEntry) {
-        //     entries.push({
-        //         id: file,
-        //         parent: dirname(file),
-        //         text: basename(fileEntry.fileName ?? ''),
-        //         data: {
-        //             type: FileTreeNodeType.FILE
-        //         },
-        //         type: 'file'
-        //     });
-        // }
-        return entries;
     }
 }

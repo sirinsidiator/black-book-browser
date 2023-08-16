@@ -3,7 +3,10 @@ import FileBrowserEntryData, { FileBrowserEntryDataTypeOrder } from './FileBrows
 import { FileEntry } from './FileEntry';
 
 export class FolderEntry extends FileBrowserEntryData {
-    constructor(parent: FileBrowserEntryData, public readonly label: string) {
+    constructor(
+        parent: FileBrowserEntryData,
+        public readonly label: string
+    ) {
         super(
             parent.stateManager,
             FileBrowserEntryDataTypeOrder.Folder,

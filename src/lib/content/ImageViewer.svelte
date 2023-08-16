@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type ImageFilePreview from '$lib/ImageFilePreview';
+    import type { ImageFilePreview } from '$lib/FileEntry';
 
     export let image: ImageFilePreview;
 </script>
 
 <div class="image-viewer">
-    <img src={image.getDataUrl()} />
+    <img src={image.getDataUrl()} alt="content" />
 </div>
 
 <style>

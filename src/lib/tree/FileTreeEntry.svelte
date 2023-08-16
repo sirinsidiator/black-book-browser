@@ -1,17 +1,31 @@
 <script lang="ts">
     import { caretForwardOutline } from 'ionicons/icons';
-    import { FileEntry } from './FileEntry';
-    import type FileBrowserEntryData from './FileBrowserEntryData';
+    import FileTreeEntryData from './FileTreeEntryData';
+    import { createEventDispatcher } from 'svelte';
 
-    export let data: FileBrowserEntryData;
+    export let data: FileTreeEntryData;
     export let level = 0;
+    export let checkable = false;
 
     const opened = data.opened;
     const checked = data.checked;
     const indeterminate = data.indeterminate;
     const busy = data.busy;
     const failed = data.failed;
-    const selectedContent = data.stateManager.selectedContent;
+    // const selectedContent = data.stateManager.selectedContent;
+
+    const dispatch = createEventDispatcher();
+    function onToggleOpen() {
+        dispatch('toggleOpen', { id: data.id });
+    }
+
+    function onToggleChecked() {
+        dispatch('toggleChecked', { id: data.id });
+    }
+
+    function onSelect(toggleOpen = false) {
+        dispatch('select', { id: data.id, toggleOpen });
+    }
 </script>
 
 <div class="entry" style="--level: {level}">
@@ -19,22 +33,24 @@
     <ion-button
         class="caret"
         class:open={$opened}
-        class:hidden={$failed || data instanceof FileEntry ? true : false}
+        class:hidden={$failed}
         fill="clear"
         size="small"
         color="medium"
         expand="block"
         disabled={$failed ? true : false}
-        on:click={() => data.toggleOpen()}
+        on:click={onToggleOpen}
     >
         <ion-icon icon={caretForwardOutline} />
     </ion-button>
 
-    <ion-checkbox
-        checked={$checked}
-        indeterminate={$indeterminate}
-        on:ionChange={() => data.toggleChecked()}
-    />
+    {#if checkable}
+        <ion-checkbox
+            checked={$checked}
+            indeterminate={$indeterminate}
+            on:ionChange={onToggleChecked}
+        />
+    {/if}
 
     <!-- eslint-disable-next-line svelte/valid-compile -->
     <ion-button
@@ -43,8 +59,8 @@
         fill="clear"
         size="small"
         color={$failed ? 'danger' : 'medium'}
-        on:click={() => data.select()}
-        on:dblclick={() => data.select(true)}
+        on:click={() => onSelect()}
+        on:dblclick={() => onSelect(true)}
     >
         {#if $busy}
             <ion-spinner class="busyIcon" color="medium" />
@@ -58,7 +74,7 @@
 <div class="children" class:open={$opened}>
     {#if !$busy}
         {#each data.children as child}
-            <svelte:self data={child} level={level + 1} />
+            <svelte:self data={child} level={level + 1} {checkable} />
         {/each}
     {/if}
 </div>
