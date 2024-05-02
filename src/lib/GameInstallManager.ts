@@ -1,6 +1,5 @@
 import { GameInstallEntry } from '$lib/GameInstallEntry';
 import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
-import { resolve } from '@tauri-apps/api/path';
 import { get, writable, type Writable } from 'svelte/store';
 import type StateManager from './StateManager';
 
@@ -102,7 +101,9 @@ export default class GameInstallManager {
     async findGameVersion(path: string): Promise<GameVersionData> {
         let buildData = '';
         try {
-            const file = await resolve(path, BUILD_INFO_FILE);
+            const tauriPath = await import('@tauri-apps/api/path');
+            // https://github.com/tauri-apps/tauri/issues/5518
+            const file = await tauriPath.resolve(path, BUILD_INFO_FILE);
             buildData = await readTextFile(file);
         } catch (err) {
             console.warn('Could not load build data', err);
