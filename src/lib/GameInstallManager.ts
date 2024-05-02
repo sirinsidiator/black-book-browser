@@ -21,17 +21,31 @@ export default class GameInstallManager {
     public readonly gameInstalls: Writable<Map<string, GameInstallEntry>> = writable(
         new Map<string, GameInstallEntry>()
     );
+    private initPromise?: Promise<void>;
 
     constructor(private readonly stateManager: StateManager) {}
 
     public async initialize() {
+        if (!(this.initPromise instanceof Promise)) {
+            this.initPromise = this.load();
+        }
+        return this.initPromise;
+    }
+
+    private async load() {
         const gameInstalls = get(this.gameInstalls);
         let storedPaths: string[] = JSON.parse(
             localStorage.getItem(STORAGE_KEY_PATHS) ?? '[]'
         ) as string[];
         if (!Array.isArray(storedPaths)) {
+            console.warn(
+                'Invalid stored paths:',
+                storedPaths,
+                localStorage.getItem(STORAGE_KEY_PATHS)
+            );
             storedPaths = [];
         }
+        console.log('loaded paths:', storedPaths);
 
         for (const path of storedPaths) {
             const gameInstall = await this.createGameInstall(path);

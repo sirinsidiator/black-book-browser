@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type FileTreeEntry from './FileTreeEntry';
+    import FileTreeEntry from './FileTreeEntry.svelte';
     import type FileTreeEntryData from './FileTreeEntry';
 
     export let entries: FileTreeEntryData[];

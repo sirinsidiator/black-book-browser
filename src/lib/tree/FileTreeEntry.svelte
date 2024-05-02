@@ -12,7 +12,7 @@
     const indeterminate = data.indeterminate;
     const busy = data.busy;
     const failed = data.failed;
-    // const selectedContent = data.stateManager.selectedContent;
+    const selectedContent = data.data.stateManager.selectedContent;
 
     const dispatch = createEventDispatcher();
     function onToggleOpen() {
@@ -65,9 +65,9 @@
         {#if $busy}
             <ion-spinner class="busyIcon" color="medium" />
         {:else}
-            <ion-icon class="typeIcon" icon={data.icon} />
+            <ion-icon class="typeIcon" icon={data.data.icon} />
         {/if}
-        <ion-text>{data.label}</ion-text>
+        <ion-text>{data.data.label}</ion-text>
     </ion-button>
 </div>
 

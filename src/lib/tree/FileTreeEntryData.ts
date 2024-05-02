@@ -1,20 +1,21 @@
 import { get, writable, type Writable } from 'svelte/store';
 
-export default class FilTreeEntryData {
+export default class FileTreeEntryData {
     public readonly opened: Writable<boolean> = writable(false);
     public readonly checked: Writable<boolean> = writable(false);
     public readonly indeterminate: Writable<boolean> = writable(false);
     public readonly busy: Writable<boolean> = writable(false);
     public readonly failed: Writable<boolean> = writable(false);
-    public readonly children: FilTreeEntryData[] = [];
-    private parent?: FilTreeEntryData;
+    public readonly children: FileTreeEntryData[] = [];
+    private parent?: FileTreeEntryData;
     private firstOpen = true;
 
     constructor(
         public readonly id: number,
         public readonly icon: string,
         public readonly label: string,
-        public readonly path: string
+        public readonly path: string,
+        public readonly data: unknown,
     ) {}
 
     public async select(toggleOpen = false) {
