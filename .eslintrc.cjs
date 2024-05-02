@@ -2,14 +2,13 @@ module.exports = {
     root: true,
     parser: '@typescript-eslint/parser',
     extends: [
-        'plugin:svelte/recommended',
         'eslint:recommended',
-        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended-type-checked',
+        'plugin:svelte/recommended',
         'prettier'
     ],
     rules: {
         // these rules produce false positives in svelte files
-        'svelte/valid-compile': 'off',
         'no-inner-declarations': 'off',
         'no-undef': 'off'
     },
@@ -24,18 +23,14 @@ module.exports = {
             }
         }
     ],
-    settings: {
-        'svelte3/typescript': () => require('typescript')
-    },
     parserOptions: {
         project: 'tsconfig.json',
         extraFileExtensions: ['.svelte'],
         sourceType: 'module',
-        ecmaVersion: 2020
+        ecmaVersion: 2023
     },
     env: {
         browser: true,
-        es2017: true,
-        node: true
+        es2023: true
     }
 };

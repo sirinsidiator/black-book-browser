@@ -1,2 +1,4 @@
 #pragma once
-int Kraken_Decompress(const byte* src, size_t src_len, byte* dst, size_t dst_len);
+#include <stdint.h>
+
+int32_t Kraken_Decompress(const uint8_t* src, size_t src_len, uint8_t* dst, size_t dst_len);

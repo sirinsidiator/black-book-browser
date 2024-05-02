@@ -2,21 +2,6 @@
     "extends": "./.svelte-kit/tsconfig.json",
     "compilerOptions": {
         "useDefineForClassFields": true,
-        "baseUrl": ".",
-		"paths": {
-			"$lib": [
-				"./src/lib"
-			],
-			"$lib/*": [
-				"./src/lib/*"
-			]
-		},
-        "typeRoots": [
-            "./node_modules/ionic-svelte"
-        ],
-        "types": [
-            "ionic-svelte"
-        ],
         "allowJs": true,
         "checkJs": true,
         "esModuleInterop": true,
@@ -25,6 +10,5 @@
         "skipLibCheck": true,
         "sourceMap": true,
         "strict": true
-    },
-    "references": [{ "path": "./tsconfig.node.json" }]
+    }
 }

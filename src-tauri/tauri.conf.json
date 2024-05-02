@@ -8,7 +8,7 @@
     },
     "package": {
         "productName": "black-book-browser",
-        "version": "0.0.0"
+        "version": "4.0.0"
     },
     "tauri": {
         "allowlist": {
@@ -54,9 +54,9 @@
             {
                 "fullscreen": false,
                 "resizable": true,
-                "title": "black-book-browser",
-                "width": 800,
-                "height": 600
+                "title": "Black Book Browser",
+                "width": 1600,
+                "height": 800
             }
         ]
     }

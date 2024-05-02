@@ -3,6 +3,8 @@ node_modules
 /build
 /.svelte-kit
 /package
+/src-tauri
+svelte.config.js
 .env
 .env.*
 !.env.example

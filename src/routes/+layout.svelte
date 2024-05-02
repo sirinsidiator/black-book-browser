@@ -5,13 +5,30 @@
     import IonTabs from 'ionic-svelte/components/IonTabs.svelte';
     import { onMount } from 'svelte';
     import { createGesture } from '@ionic/core';
+    import ContentViewer from '../lib/content/ContentViewer.svelte';
+    import type { LayoutData } from './$types';
     /* Import all components - or do partial loading - see below */
     import 'ionic-svelte/components/all';
 
+    /* Core CSS required for Ionic components to work properly */
+    import '@ionic/core/css/core.css';
+
+    /* Basic CSS for apps built with Ionic */
+    import '@ionic/core/css/normalize.css';
+    import '@ionic/core/css/structure.css';
+    import '@ionic/core/css/typography.css';
+
+    /* Optional CSS utils that can be commented out */
+    import '@ionic/core/css/padding.css';
+    import '@ionic/core/css/float-elements.css';
+    import '@ionic/core/css/text-alignment.css';
+    import '@ionic/core/css/text-transformation.css';
+    import '@ionic/core/css/flex-utils.css';
+    import '@ionic/core/css/display.css';
+
     /* Theme variables */
-    import FileBrowser from '../lib/FileBrowser.svelte';
+    import '@ionic/core/css/palettes/dark.always.css';
     import '../theme/variables.css';
-    import type { LayoutData } from './$types';
     // import type { LayoutData } from './$types';
 
     /* Call Ionic's setup routine */
@@ -50,14 +67,14 @@
 
     const tabs = [
         {
-            label: 'Content',
+            label: 'Browse',
             icon: fileTrayFullOutline,
-            tab: 'content'
+            tab: ''
         },
         {
-            label: 'Debug',
+            label: 'Search',
             icon: bugOutline,
-            tab: 'debug'
+            tab: 'search'
         },
         {
             label: 'Patrons',
@@ -74,12 +91,12 @@
         const gesture = createGesture({
             name: 'resize-menu',
             el: divider,
-            onMove: e => {
-                console.log("move", e);
-                splitPane.style.setProperty("--side-width", `${e.currentX}px`)
+            onMove: (e) => {
+                console.log('move', e);
+                splitPane.style.setProperty('--side-width', `${e.currentX}px`);
             }
         });
-        
+
         gesture.enable(true);
     });
 </script>
@@ -87,18 +104,12 @@
 <ion-app>
     <ion-split-pane bind:this={splitPane} when="xs" content-id="main">
         <ion-menu content-id="main">
-            <ion-header>
-                <ion-toolbar color="tertiary">
-                    <ion-title>Browser</ion-title>
-                </ion-toolbar>
-            </ion-header>
-            <FileBrowser manager={data.stateManager} />
-
+            <IonTabs slot="bottom" {tabs}><slot /></IonTabs>
             <div class="divider" bind:this={divider} />
         </ion-menu>
 
         <div id="main">
-            <IonTabs slot="bottom" {tabs}><slot /></IonTabs>
+            <ContentViewer manager={data.stateManager} />
         </div>
     </ion-split-pane>
 </ion-app>
