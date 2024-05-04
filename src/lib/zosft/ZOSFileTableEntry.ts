@@ -117,8 +117,13 @@ export default class ZOSFileTableEntry {
 
     readFileName(fileNameList: string) {
         const nameOffset = this.data.named['segment1block2nameOffset'].value as number;
+        // beginning in version 10.0.1 the nameOffset is not always aligned correctly for entries in eso.mnf
+        let startIndex = nameOffset;
         const endIndex = fileNameList.indexOf('\0', nameOffset);
-        this.fileName = fileNameList.substring(nameOffset, endIndex);
+        while (startIndex > 0 && fileNameList[startIndex - 1] !== '\0') {
+            startIndex--;
+        }
+        this.fileName = fileNameList.substring(startIndex, endIndex);
     }
 
     getFileNumber(): number {
