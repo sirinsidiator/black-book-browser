@@ -1,4 +1,3 @@
-import { readBinaryFile } from '@tauri-apps/api/fs';
 import BufferReader, {
     Field,
     FieldData,
@@ -6,7 +5,7 @@ import BufferReader, {
     toHex,
     type FieldDefinition
 } from '../util/BufferReader.js';
-import { inflate } from '../util/FileUtil.js';
+import { getFileSize, inflate, readPartialFile } from '../util/FileUtil.js';
 import MnfArchive from './MnfArchive.js';
 import MnfEntry from './MnfEntry.js';
 
@@ -192,8 +191,18 @@ async function extractContent(archive: MnfArchive) {
 export default class MnfReader {
     async read(path: string): Promise<MnfArchive> {
         try {
-            const content = await readBinaryFile(path);
-            console.log('read', path, content.byteLength);
+            console.log('read', path);
+            const startTime = performance.now();
+            const compressedSize = await getFileSize(path);
+            const content = await readPartialFile(path, 0, compressedSize);
+            console.log(
+                'finished reading',
+                path,
+                content.length,
+                'bytes in',
+                (performance.now() - startTime).toFixed(1),
+                'ms'
+            );
             const file = new BufferReader(content);
 
             const header = file.readString(FILE_ID.length);
