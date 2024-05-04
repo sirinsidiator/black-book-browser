@@ -1,16 +1,23 @@
+import type { FileEntry } from '@tauri-apps/api/fs';
 import { writable, type Writable } from 'svelte/store';
-import type FileBrowserEntryData from './FileBrowserEntryData';
+import type { FolderEntry } from './FolderEntry';
+import type { GameInstallEntry } from './GameInstallEntry';
 import GameInstallManager from './GameInstallManager';
+import type MnfArchiveEntry from './MnfArchiveEntry';
 
 export default class StateManager {
-    public readonly selectedContent: Writable<FileBrowserEntryData | null> = writable(null);
+    public readonly selectedContent: Writable<
+        GameInstallEntry | MnfArchiveEntry | FolderEntry | FileEntry | null
+    > = writable(null);
     public readonly gameInstallManager: GameInstallManager;
 
     constructor() {
-        this.gameInstallManager = new GameInstallManager(this);
+        this.gameInstallManager = new GameInstallManager();
     }
 
-    public setActiveContent(content: FileBrowserEntryData | null) {
+    public setActiveContent(
+        content: GameInstallEntry | MnfArchiveEntry | FolderEntry | FileEntry | null
+    ) {
         this.selectedContent.set(content);
     }
 }

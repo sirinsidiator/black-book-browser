@@ -1,8 +1,11 @@
 import hljs, { type HighlightResult } from 'highlight.js';
 import { document } from 'ionicons/icons';
-import FileBrowserEntryData, { FileBrowserEntryDataTypeOrder } from './FileBrowserEntryData';
+import type { FolderEntry } from './FolderEntry';
+import type MnfArchiveEntry from './MnfArchiveEntry';
 import DDSHelper from './frontend/DDSHelper';
 import type MnfEntry from './mnf/MnfEntry';
+import type FileTreeEntryData from './tree/FileTreeEntryData';
+import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 import BufferReader from './util/BufferReader';
 
 abstract class FilePreview {}
@@ -45,20 +48,31 @@ const EXT_TO_LANGUAGE: { [index: string]: string } = {
     '.comp': 'c++'
 };
 
-export class FileEntry extends FileBrowserEntryData {
+export class FileEntry implements FileTreeEntryDataProvider {
     constructor(
         public readonly mnfEntry: MnfEntry,
-        parent: FileBrowserEntryData,
-        label: string
-    ) {
-        super(
-            parent.stateManager,
-            FileBrowserEntryDataTypeOrder.File,
-            document,
-            label,
-            parent.path + '/' + label,
-            parent
-        );
+        private readonly parent: MnfArchiveEntry | FolderEntry,
+        private readonly _label: string
+    ) {}
+
+    public get icon(): string {
+        return document;
+    }
+
+    public get label(): string {
+        return this._label;
+    }
+
+    public get path(): string {
+        return this.parent.path + '/' + this._label;
+    }
+
+    public get hasChildren(): boolean {
+        return false;
+    }
+
+    public loadChildren(): Promise<FileTreeEntryData<FileTreeEntryDataProvider>[]> {
+        return Promise.resolve([]);
     }
 
     public get compressedSize() {

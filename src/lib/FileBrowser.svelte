@@ -1,15 +1,15 @@
 <script lang="ts">
+    import FileTree from '$lib/tree/FileTree.svelte';
     import { open } from '@tauri-apps/api/dialog';
     import { add } from 'ionicons/icons';
-    import FileTree from '$lib/tree/FileTree.svelte';
+    import type { GameInstallEntry } from './GameInstallEntry';
     import type StateManager from './StateManager';
-    import type GameInstallEntry from './GameInstallEntry';
     import FileTreeEntryData from './tree/FileTreeEntryData';
+    import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
     export let manager: StateManager;
 
     const gameInstalls = manager.gameInstallManager.gameInstalls;
-    console.log($gameInstalls);
 
     async function addFolder() {
         const selected = await open({
@@ -21,20 +21,28 @@
         }
     }
 
-    function createTreeEntry(data: GameInstallEntry) {
-        return new FileTreeEntryData(data.path, data.name, data.icon, data.path, data);
+    function onSelect(event: CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>) {
+        manager.selectedContent.set(event.detail.data);
     }
+
+    function createTreeEntry(data: GameInstallEntry) {
+        const entry = new FileTreeEntryData(data);
+        entry.toggleOpen().catch(console.error);
+        return entry;
+    }
+
+    $: entries = Array.from($gameInstalls.values()).map(createTreeEntry);
 </script>
 
-<ion-content class="ion-padding">
+<ion-content>
     {#await manager.gameInstallManager.initialize()}
         <div class="status">
             <p>Loading...</p>
             <ion-progress-bar type="indeterminate" />
         </div>
     {:then}
-        <FileTree entries={$gameInstalls.values().map(createTreeEntry)} />
-    
+        <FileTree {entries} on:select={onSelect} />
+
         <ion-fab slot="fixed" vertical="bottom" horizontal="center">
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-fab-button on:click={addFolder}>

@@ -1,35 +1,40 @@
 import { get, writable, type Writable } from 'svelte/store';
+import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
-export default class FileTreeEntryData {
+export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     public readonly opened: Writable<boolean> = writable(false);
     public readonly checked: Writable<boolean> = writable(false);
     public readonly indeterminate: Writable<boolean> = writable(false);
     public readonly busy: Writable<boolean> = writable(false);
     public readonly failed: Writable<boolean> = writable(false);
-    public readonly children: FileTreeEntryData[] = [];
-    private parent?: FileTreeEntryData;
+    public readonly selected: Writable<boolean> = writable(false);
+    public readonly hasChildren: Writable<boolean> = writable(false);
+    public readonly children: FileTreeEntryData<FileTreeEntryDataProvider>[] = [];
+    private parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
     private firstOpen = true;
 
-    constructor(
-        public readonly id: number,
-        public readonly icon: string,
-        public readonly label: string,
-        public readonly path: string,
-        public readonly data: unknown,
-    ) {}
+    constructor(public readonly data: T) {
+        this.hasChildren.set(data.hasChildren);
+    }
 
-    public async select(toggleOpen = false) {
-        // TODO emit event
-        if (toggleOpen) {
-            return this.toggleOpen();
-        }
-        return Promise.resolve();
+    public get icon() {
+        return this.data.icon;
+    }
+    public get label() {
+        return this.data.label;
+    }
+    public get path() {
+        return this.data.path;
     }
 
     public async toggleOpen() {
         this.opened.update((opened) => !opened);
         if (get(this.opened) && this.firstOpen) {
             this.firstOpen = false;
+            this.busy.set(true);
+            this.children.push(...(await this.data.loadChildren()));
+            this.hasChildren.set(this.children.length > 0);
+            this.busy.set(false);
         }
         return Promise.resolve();
     }

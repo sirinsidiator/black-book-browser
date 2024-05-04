@@ -118,7 +118,8 @@
     ion-split-pane {
         --side-min-width: 10vw;
         --side-max-width: 90vw;
-        --side-width: 20vw;
+        --side-width: 30vw;
+        --border: 3px solid var(--ion-color-light);
     }
 
     .divider {

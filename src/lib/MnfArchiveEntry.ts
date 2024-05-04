@@ -1,15 +1,17 @@
 import { folder } from 'ionicons/icons';
 import { get, writable, type Writable } from 'svelte/store';
-import FileBrowserEntryData, { FileBrowserEntryDataTypeOrder } from './FileBrowserEntryData';
 import { FileEntry } from './FileEntry';
 import { FolderEntry } from './FolderEntry';
 import type { GameInstallEntry } from './GameInstallEntry';
 import type MnfArchive from './mnf/MnfArchive';
 import type MnfEntry from './mnf/MnfEntry';
 import MnfReader from './mnf/MnfReader';
+import FileTreeEntryData from './tree/FileTreeEntryData';
+import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
-export default class MnfArchiveEntry extends FileBrowserEntryData {
+export default class MnfArchiveEntry implements FileTreeEntryDataProvider {
     public readonly busy: Writable<boolean> = writable(false);
+    public readonly failed: Writable<boolean> = writable(false);
     public readonly error: Writable<Error | null> = writable(null);
     private archive?: MnfArchive;
     private _folderCount = 0;
@@ -17,16 +19,42 @@ export default class MnfArchiveEntry extends FileBrowserEntryData {
     private _compressedSize = 0;
     private _decompressedSize = 0;
     private _fileList: string[] = ['loading...'];
+    public readonly children: (MnfArchiveEntry | FolderEntry | FileEntry)[] = [];
 
-    constructor(gameInstall: GameInstallEntry, path: string) {
-        super(
-            gameInstall.stateManager,
-            FileBrowserEntryDataTypeOrder.Archive,
-            folder,
-            path.substring(gameInstall.path.length + 1),
-            path,
-            gameInstall
-        );
+    constructor(
+        private gameInstall: GameInstallEntry,
+        private _path: string
+    ) {}
+
+    public get icon(): string {
+        return folder;
+    }
+
+    public get label(): string {
+        return this._path.substring(this.gameInstall.path.length + 1);
+    }
+
+    public get path(): string {
+        return this._path;
+    }
+
+    public get hasChildren(): boolean {
+        return true;
+    }
+
+    public async loadChildren(): Promise<FileTreeEntryData<FileTreeEntryDataProvider>[]> {
+        await this.load();
+        const children = this.children.map((child) => new FileTreeEntryData(child));
+        children.sort((a, b) => {
+            if (a.data instanceof FolderEntry && b.data instanceof FileEntry) {
+                return -1;
+            } else if (a.data instanceof FileEntry && b.data instanceof FolderEntry) {
+                return 1;
+            } else {
+                return a.data.label.localeCompare(b.data.label);
+            }
+        });
+        return Promise.resolve(children);
     }
 
     public get folderCount() {
@@ -47,19 +75,6 @@ export default class MnfArchiveEntry extends FileBrowserEntryData {
 
     public get fileList() {
         return this._fileList.join('\n');
-    }
-
-    public async select(toggleOpen = false) {
-        if (toggleOpen) {
-            return super.select(toggleOpen);
-        } else {
-            return this.load();
-        }
-    }
-
-    public async toggleOpen() {
-        await this.load();
-        return super.toggleOpen();
     }
 
     public async load() {
@@ -88,7 +103,7 @@ export default class MnfArchiveEntry extends FileBrowserEntryData {
         }
     }
 
-    private buildTree(parent: FileBrowserEntryData, entry: MnfEntry) {
+    private buildTree(parent: MnfArchiveEntry | FolderEntry, entry: MnfEntry) {
         entry.fileName?.split('/')?.forEach((label, index, array) => {
             if (label === '') return;
             if (index === array.length - 1) {
@@ -103,7 +118,9 @@ export default class MnfArchiveEntry extends FileBrowserEntryData {
                     this._folderCount++;
                     parent.children.push(child);
                 }
-                parent = child;
+                if (!(child instanceof FileEntry)) {
+                    parent = child;
+                }
             }
         });
     }

@@ -1,13 +1,14 @@
 <script lang="ts">
     import FileTreeEntry from './FileTreeEntry.svelte';
-    import type FileTreeEntryData from './FileTreeEntry';
+    import type FileTreeEntryData from './FileTreeEntryData';
+    import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
-    export let entries: FileTreeEntryData[];
+    export let entries: FileTreeEntryData<FileTreeEntryDataProvider>[];
 </script>
 
 <div class="filetree">
     {#each entries as data}
-        <FileTreeEntry {data} />
+        <FileTreeEntry {data} on:select />
     {/each}
 </div>
 

@@ -1,7 +1,6 @@
 import { GameInstallEntry } from '$lib/GameInstallEntry';
 import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
 import { get, writable, type Writable } from 'svelte/store';
-import type StateManager from './StateManager';
 
 export interface GameVersionData {
     version: string;
@@ -22,8 +21,6 @@ export default class GameInstallManager {
         new Map<string, GameInstallEntry>()
     );
     private initPromise?: Promise<void>;
-
-    constructor(private readonly stateManager: StateManager) {}
 
     public async initialize() {
         if (!(this.initPromise instanceof Promise)) {
@@ -57,7 +54,7 @@ export default class GameInstallManager {
     private async createGameInstall(path: string): Promise<GameInstallEntry> {
         const version = await this.findGameVersion(path);
         const mnfFiles = await this.findMnfFiles(path);
-        return new GameInstallEntry(path, version, mnfFiles, this.stateManager);
+        return new GameInstallEntry(path, version, mnfFiles);
     }
 
     public async add(path: string): Promise<boolean> {

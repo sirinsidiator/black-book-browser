@@ -130,10 +130,11 @@ export default class MnfArchive {
             const fileTable = (this.fileTable = await zosftReader.read(this));
 
             if (fileTable) {
+                const noMnfEntryList: ZOSFileTableEntry[] = [];
                 fileTable.forEach((tableEntry: ZOSFileTableEntry) => {
                     const fileEntry = this.fileEntries.get(tableEntry.getFileNumber());
                     if (!fileEntry) {
-                        console.warn('No mnf entry for', tableEntry.fileName, tableEntry);
+                        noMnfEntryList.push(tableEntry);
                     } else if (fileEntry.tableEntry) {
                         console.warn(
                             'Mnf entry already has a zosft entry associated',
@@ -146,6 +147,12 @@ export default class MnfArchive {
                         fileEntry.tableEntry = tableEntry;
                     }
                 });
+                console.warn(
+                    'Found',
+                    noMnfEntryList.length,
+                    'entries without mnf entry',
+                    noMnfEntryList
+                );
             } else {
                 console.warn('file table is null');
             }
