@@ -116,6 +116,10 @@
 </ion-app>
 
 <style>
+    ion-app {
+        scrollbar-color: var(--ion-color-medium) transparent;
+    }
+
     ion-split-pane {
         --side-min-width: 10vw;
         --side-max-width: 90vw;
