@@ -31,8 +31,13 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
         if (get(this.opened) && this.firstOpen) {
             this.firstOpen = false;
             this.busy.set(true);
-            this.children.push(...(await this.data.loadChildren()));
-            this.hasChildren.set(this.children.length > 0);
+            try {
+                this.children.push(...(await this.data.loadChildren()));
+                this.hasChildren.set(this.children.length > 0);
+            } catch (e) {
+                console.error('error loading children', e);
+                this.failed.set(true);
+            }
             this.busy.set(false);
         }
         return Promise.resolve();

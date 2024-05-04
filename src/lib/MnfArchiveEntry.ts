@@ -1,24 +1,20 @@
 import { folder } from 'ionicons/icons';
-import { get, writable, type Writable } from 'svelte/store';
 import { FileEntry } from './FileEntry';
 import { FolderEntry } from './FolderEntry';
 import type { GameInstallEntry } from './GameInstallEntry';
-import type MnfArchive from './mnf/MnfArchive';
-import type MnfEntry from './mnf/MnfEntry';
-import MnfReader from './mnf/MnfReader';
+import BackgroundService from './backend/BackgroundService';
 import FileTreeEntryData from './tree/FileTreeEntryData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
+import { getFileSize } from './util/FileUtil';
+import type { MnfFileData } from 'd:/projects/esoextract/black-book-browser/src/lib/mnf/MnfFileData';
 
 export default class MnfArchiveEntry implements FileTreeEntryDataProvider {
-    public readonly busy: Writable<boolean> = writable(false);
-    public readonly failed: Writable<boolean> = writable(false);
-    public readonly error: Writable<Error | null> = writable(null);
-    private archive?: MnfArchive;
     private _folderCount = 0;
     private _fileCount = 0;
     private _compressedSize = 0;
     private _decompressedSize = 0;
     private _fileList: string[] = ['loading...'];
+    private files: MnfFileData[] = [];
     public readonly children: (MnfArchiveEntry | FolderEntry | FileEntry)[] = [];
 
     constructor(
@@ -78,39 +74,29 @@ export default class MnfArchiveEntry implements FileTreeEntryDataProvider {
     }
 
     public async load() {
-        if (!this.archive && !get(this.error)) {
-            console.log('Reading archive: ' + this.path);
-            this.busy.set(true);
-            try {
-                const reader = new MnfReader();
-                this.archive = await reader.read(this.path);
-                console.log('Done reading archive: ' + this.path);
-                this._folderCount = 0;
-                this._fileCount = 0;
-                this._compressedSize = 0;
-                this._decompressedSize = 0;
-                this._fileList.length = 0;
-                this.archive.fileEntries.forEach((entry) => {
-                    this.buildTree(this, entry);
-                    this._fileList.push(entry.fileName ?? '');
-                });
-                this._fileList.sort();
-            } catch (error) {
-                this.error.set(error as Error);
-                this.failed.set(true);
-            }
-            this.busy.set(false);
-        }
+        console.log('Reading archive: ' + this.path);
+        const size = await getFileSize(this.path);
+        this.files = await BackgroundService.getInstance().readMnfArchive(this.path, size);
+        console.log('Done reading archive: ' + this.path);
+        this._folderCount = 0;
+        this._fileCount = 0;
+        this._compressedSize = 0;
+        this._decompressedSize = 0;
+        this._fileList.length = 0;
+        this.files.forEach((file) => {
+            this.buildTree(this, file);
+            this._fileList.push(file.fileName);
+        });
     }
 
-    private buildTree(parent: MnfArchiveEntry | FolderEntry, entry: MnfEntry) {
-        entry.fileName?.split('/')?.forEach((label, index, array) => {
+    private buildTree(parent: MnfArchiveEntry | FolderEntry, file: MnfFileData) {
+        file.fileName.split('/')?.forEach((label, index, array) => {
             if (label === '') return;
             if (index === array.length - 1) {
                 this._fileCount++;
-                this._compressedSize += entry.data.named['compressedSize'].value as number;
-                this._decompressedSize += entry.data.named['fileSize'].value as number;
-                parent.children.push(new FileEntry(entry, parent, label));
+                this._compressedSize += file.compressedSize;
+                this._decompressedSize += file.size;
+                parent.children.push(new FileEntry(file, parent, label));
             } else {
                 let child = parent.children.find((c) => c.label === label);
                 if (!child) {

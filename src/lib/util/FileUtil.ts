@@ -1,5 +1,4 @@
-import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { metadata } from 'tauri-plugin-fs-extra-api';
+import TauriHelper from '$lib/tauri/TauriHelper';
 
 const BYTE_UNIT = ['bytes', 'kB', 'MB', 'GB', 'TB'];
 export function formatFileSize(size: number, showBytes = true): string {
@@ -60,7 +59,7 @@ export function getFreeDiskSpace(drive: string): number {
 }
 
 export async function inflate(buffer: Uint8Array): Promise<Uint8Array> {
-    const url = convertFileSrc('', 'inflate');
+    const url = TauriHelper.getInstance().getInflateUrl();
     const response = await fetch(url, {
         method: 'POST',
         body: buffer
@@ -105,7 +104,7 @@ export async function requestSave(fileName: string, content: Buffer) {
 }
 
 export async function getFileSize(path: string): Promise<number> {
-    const meta = await metadata(path);
+    const meta = await TauriHelper.getInstance().getFileMetadata(path);
     return meta.size;
 }
 
@@ -114,7 +113,7 @@ export async function readPartialFile(
     offset: number,
     length: number
 ): Promise<Uint8Array> {
-    const url = convertFileSrc('', 'read-partial-file');
+    const url = TauriHelper.getInstance().getReadPartialFileUrl();
     const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -138,7 +137,7 @@ export async function decompress(
     fileSize: number
 ): Promise<Uint8Array> {
     console.log('decompressing', path, offset, compressedSize, fileSize);
-    const url = convertFileSrc('', 'decompress');
+    const url = TauriHelper.getInstance().getDecompressUrl();
     const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -179,4 +178,16 @@ export function mkdir(path: string) {
     //         return;
     //     }
     // }
+}
+
+export function basename(path: string, ext?: string): Promise<string> {
+    return TauriHelper.getInstance().getBasename(path, ext);
+}
+
+export function dirname(path: string): Promise<string> {
+    return TauriHelper.getInstance().getDirname(path);
+}
+
+export function resolve(...paths: string[]) {
+    return TauriHelper.getInstance().resolve(...paths);
 }

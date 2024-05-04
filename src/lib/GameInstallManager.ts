@@ -1,6 +1,6 @@
-import { GameInstallEntry } from '$lib/GameInstallEntry';
 import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
 import { get, writable, type Writable } from 'svelte/store';
+import { GameInstallEntry } from './GameInstallEntry';
 
 export interface GameVersionData {
     version: string;

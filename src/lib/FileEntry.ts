@@ -3,10 +3,11 @@ import { document } from 'ionicons/icons';
 import type { FolderEntry } from './FolderEntry';
 import type MnfArchiveEntry from './MnfArchiveEntry';
 import DDSHelper from './frontend/DDSHelper';
-import type MnfEntry from './mnf/MnfEntry';
 import type FileTreeEntryData from './tree/FileTreeEntryData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 import BufferReader from './util/BufferReader';
+import type { MnfFileData } from './mnf/MnfFileData';
+import BackgroundService from './backend/BackgroundService';
 
 abstract class FilePreview {}
 
@@ -50,7 +51,7 @@ const EXT_TO_LANGUAGE: { [index: string]: string } = {
 
 export class FileEntry implements FileTreeEntryDataProvider {
     constructor(
-        public readonly mnfEntry: MnfEntry,
+        public readonly file: MnfFileData,
         private readonly parent: MnfArchiveEntry | FolderEntry,
         private readonly _label: string
     ) {}
@@ -76,11 +77,11 @@ export class FileEntry implements FileTreeEntryDataProvider {
     }
 
     public get compressedSize() {
-        return this.mnfEntry.data.named['compressedSize'].value as number;
+        return this.file.compressedSize;
     }
 
     public get decompressedSize() {
-        return this.mnfEntry.data.named['fileSize'].value as number;
+        return this.file.size;
     }
 
     public async toggleOpen() {
@@ -88,11 +89,11 @@ export class FileEntry implements FileTreeEntryDataProvider {
     }
 
     public async getPreviewLoader(): Promise<FilePreview | null> {
-        const extension =
-            this.mnfEntry.fileName?.substr(this.mnfEntry.fileName.lastIndexOf('.')) ?? '';
+        const extension = this.file.fileName.substr(this.file.fileName.lastIndexOf('.')) ?? '';
         if (extension === '.dds') {
-            console.log('getPreviewLoader', this.mnfEntry.fileName);
-            const data = await this.mnfEntry.archive.getContent(this.mnfEntry);
+            console.log('getPreviewLoader', this.file.fileName);
+
+            const data = await BackgroundService.getInstance().loadFileContent(this.file);
             if (data) {
                 const canvas = new DDSHelper().createCanvas(data);
                 if (canvas) {
@@ -101,8 +102,8 @@ export class FileEntry implements FileTreeEntryDataProvider {
                 }
             }
         } else if (EXT_TO_LANGUAGE[extension]) {
-            console.log('getPreviewLoader', this.mnfEntry.fileName);
-            const data = await this.mnfEntry.archive.getContent(this.mnfEntry);
+            console.log('getPreviewLoader', this.file.fileName);
+            const data = await BackgroundService.getInstance().loadFileContent(this.file);
             if (data) {
                 const view = new BufferReader(data);
                 return new TextFilePreview(view.readString(), EXT_TO_LANGUAGE[extension]);

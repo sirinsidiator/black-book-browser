@@ -1,3 +1,5 @@
+import { inflate, readPartialFile } from '$lib/util/FileUtil.js';
+import { metadata } from 'tauri-plugin-fs-extra-api';
 import BufferReader, {
     Field,
     FieldData,
@@ -5,7 +7,6 @@ import BufferReader, {
     toHex,
     type FieldDefinition
 } from '../util/BufferReader.js';
-import { getFileSize, inflate, readPartialFile } from '../util/FileUtil.js';
 import MnfArchive from './MnfArchive.js';
 import MnfEntry from './MnfEntry.js';
 
@@ -189,11 +190,15 @@ async function extractContent(archive: MnfArchive) {
 }
 
 export default class MnfReader {
-    async read(path: string): Promise<MnfArchive> {
+    async getFileSize(path: string): Promise<number> {
+        const meta = await metadata(path);
+        return meta.size;
+    }
+
+    async read(path: string, compressedSize: number): Promise<MnfArchive> {
         try {
             console.log('read', path);
             const startTime = performance.now();
-            const compressedSize = await getFileSize(path);
             const content = await readPartialFile(path, 0, compressedSize);
             console.log(
                 'finished reading',

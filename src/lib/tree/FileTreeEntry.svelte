@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { caretForwardOutline } from 'ionicons/icons';
+    import { caretForwardOutline, warningOutline } from 'ionicons/icons';
     import { createEventDispatcher } from 'svelte';
     import FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
@@ -68,6 +68,8 @@
     >
         {#if $busy}
             <ion-spinner class="busyIcon" color="medium" />
+        {:else if $failed}
+            <ion-icon class="typeIcon" icon={warningOutline} />
         {:else}
             <ion-icon class="typeIcon" icon={data.icon} />
         {/if}

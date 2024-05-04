@@ -1,6 +1,14 @@
 import type { FieldData } from '../util/BufferReader.js';
 import BufferReader from '../util/BufferReader.js';
-import { decompress, getFileSize, mkdir, writeFile } from '../util/FileUtil.js';
+import {
+    basename,
+    decompress,
+    dirname,
+    getFileSize,
+    mkdir,
+    resolve,
+    writeFile
+} from '../util/FileUtil.js';
 import type ZOSFileTable from '../zosft/ZOSFileTable.js';
 import type ZOSFileTableEntry from '../zosft/ZOSFileTableEntry.js';
 import ZOSFileTableReader from '../zosft/ZOSFileTableReader.js';
@@ -68,13 +76,10 @@ export default class MnfArchive {
         const named = entry.data.named;
         const archiveNumber = named['archiveNumber'].value as number;
         if (!this.archiveFiles.has(archiveNumber)) {
-            // https://github.com/tauri-apps/tauri/issues/5518
-            const tauriPath = await import('@tauri-apps/api/path');
-            const prefix = await tauriPath.basename(this.path, '.mnf');
+            const prefix = await basename(this.path, '.mnf');
             const archiveName = prefix + ('0000' + archiveNumber).substr(-4) + '.dat';
-            const dirname = (await import('@tauri-apps/api/path')).dirname;
-            const archivePath = (await dirname(this.path)) + tauriPath.sep + archiveName;
-            const archivePrefix = await tauriPath.basename(archivePath, '.dat');
+            const archivePath = await resolve(await dirname(this.path), archiveName);
+            const archivePrefix = await basename(archivePath, '.dat');
             const size = await getFileSize(archivePath);
             this.archiveFiles.set(
                 archiveNumber,
@@ -109,17 +114,12 @@ export default class MnfArchive {
             throw new Error('The file root does not match the arguments');
         }
 
-        // https://github.com/tauri-apps/tauri/issues/5518
-        const tauriPath = await import('@tauri-apps/api/path');
         if (root === fileEntry.fileName) {
-            root = await tauriPath.dirname(root);
+            root = await dirname(root);
         }
 
-        const target = await tauriPath.resolve(
-            targetFolder,
-            fileEntry.fileName.substring(root.length + 1)
-        );
-        await mkdir(await tauriPath.dirname(target));
+        const target = await resolve(targetFolder, fileEntry.fileName.substring(root.length + 1));
+        await mkdir(await dirname(target));
         const content = await this.getContent(fileEntry, decompress);
         await writeFile(target, content, true);
     }
