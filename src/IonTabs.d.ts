@@ -1,0 +1,1 @@
+declare module 'ionic-svelte/components/IonTabs.svelte';

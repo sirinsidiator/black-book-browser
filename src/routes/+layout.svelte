@@ -89,6 +89,7 @@
     let divider: HTMLDivElement;
     onMount(() => {
         const gesture = createGesture({
+            gestureName: 'resize-menu',
             name: 'resize-menu',
             el: divider,
             onMove: (e) => {
