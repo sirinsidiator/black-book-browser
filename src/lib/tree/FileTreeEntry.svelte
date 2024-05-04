@@ -1,10 +1,11 @@
 <script lang="ts">
     import { caretForwardOutline } from 'ionicons/icons';
+    import { createEventDispatcher } from 'svelte';
     import FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
-    import { createEventDispatcher } from 'svelte';
 
     export let data: FileTreeEntryData<FileTreeEntryDataProvider>;
+    export let selected: FileTreeEntryData<FileTreeEntryDataProvider>;
     export let level = 0;
     export let checkable = false;
 
@@ -13,7 +14,6 @@
     const indeterminate = data.indeterminate;
     const busy = data.busy;
     const failed = data.failed;
-    const selected = data.selected;
     const hasChildren = data.hasChildren;
 
     async function onToggleOpen() {
@@ -59,7 +59,7 @@
     <!-- eslint-disable-next-line svelte/valid-compile -->
     <ion-button
         class="content"
-        class:selected={$selected}
+        class:selected={selected === data}
         fill="clear"
         size="small"
         color={$failed ? 'danger' : 'medium'}
@@ -78,7 +78,7 @@
 <div class="children" class:open={$opened}>
     {#if !$busy}
         {#each data.children as child}
-            <svelte:self data={child} level={level + 1} {checkable} on:select />
+            <svelte:self data={child} level={level + 1} {checkable} {selected} on:select />
         {/each}
     {/if}
 </div>

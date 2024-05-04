@@ -7,7 +7,6 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     public readonly indeterminate: Writable<boolean> = writable(false);
     public readonly busy: Writable<boolean> = writable(false);
     public readonly failed: Writable<boolean> = writable(false);
-    public readonly selected: Writable<boolean> = writable(false);
     public readonly hasChildren: Writable<boolean> = writable(false);
     public readonly children: FileTreeEntryData<FileTreeEntryDataProvider>[] = [];
     private parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
