@@ -1,15 +1,24 @@
 import { folder } from 'ionicons/icons';
 import { FileEntry } from './FileEntry';
 import type MnfArchiveEntry from './MnfArchiveEntry';
+import type { ContentEntry } from './StateManager';
+import type { MnfFileData } from './mnf/MnfFileData';
 import FileTreeEntryData from './tree/FileTreeEntryData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
-export class FolderEntry implements FileTreeEntryDataProvider {
+export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
     public readonly children: (FileEntry | FolderEntry)[] = [];
+    private files: MnfFileData[] = [];
+    private _folderCount = 0;
+    private _compressedSize = 0;
+    private _decompressedSize = 0;
+    private _fileList = '';
 
     constructor(
-        private readonly _parent: MnfArchiveEntry | FolderEntry,
-        private readonly _label: string
+        public readonly archive: MnfArchiveEntry,
+        private readonly _label: string,
+        private readonly _parent?: FolderEntry,
+        private level = 1
     ) {}
 
     public get icon(): string {
@@ -21,14 +30,49 @@ export class FolderEntry implements FileTreeEntryDataProvider {
     }
 
     public get path(): string {
-        return parent instanceof FolderEntry ? parent.path + '/' + this._label : '/' + this._label;
+        const parent = this._parent;
+        if (!parent) {
+            return '/';
+        }
+        return parent.path + this._label + '/';
     }
 
     public get hasChildren(): boolean {
-        return this.children.length > 0;
+        return this.files.length > 0;
+    }
+
+    public setFiles(files: MnfFileData[]) {
+        this.files = files;
+        this._folderCount = this.countFolders();
+        if (this._parent) {
+            this._folderCount--;
+        }
+        this._compressedSize = files.reduce((size, file) => size + file.compressedSize, 0);
+        this._decompressedSize = files.reduce((size, file) => size + file.size, 0);
+        this._fileList = files.map((file) => file.fileName).join('\n');
     }
 
     public loadChildren(): Promise<FileTreeEntryData<FileTreeEntryDataProvider>[]> {
+        const folders: { [key: string]: MnfFileData[] } = {};
+        this.files.forEach((file) => {
+            const parts = file.fileName.split('/');
+            const label = parts[this.level];
+            if (this.level === parts.length - 1) {
+                this.children.push(new FileEntry(file, this, label));
+            } else {
+                if (!folders[label]) {
+                    folders[label] = [];
+                }
+                folders[label].push(file);
+            }
+        });
+
+        Object.keys(folders).forEach((label) => {
+            const folder = new FolderEntry(this.archive, label, this, this.level + 1);
+            folder.setFiles(folders[label]);
+            this.children.push(folder);
+        });
+
         const children = this.children.map((child) => new FileTreeEntryData(child));
         children.sort((a, b) => {
             if (a.data instanceof FolderEntry && b.data instanceof FileEntry) {
@@ -39,60 +83,47 @@ export class FolderEntry implements FileTreeEntryDataProvider {
                 return a.data.label.localeCompare(b.data.label);
             }
         });
+
         return Promise.resolve(children);
     }
 
-    public get folderCount() {
-        let count = 0;
-        this.children.forEach((child) => {
-            if (child instanceof FolderEntry) {
-                count += child.folderCount + 1;
+    private countFolders(files: MnfFileData[] = this.files, level = 1) {
+        const folders: { [key: string]: MnfFileData[] } = {};
+        files.forEach((file) => {
+            const parts = file.fileName.split('/');
+            const label = parts[level];
+            if (level === parts.length - 1) {
+                return;
             }
+            if (!folders[label]) {
+                folders[label] = [];
+            }
+            folders[label].push(file);
+        });
+        let count = 0;
+        Object.keys(folders).forEach((label) => {
+            count += 1 + this.countFolders(folders[label], level + 1);
         });
         return count;
+    }
+
+    public get folderCount() {
+        return this._folderCount;
     }
 
     public get fileCount() {
-        let count = 0;
-        this.children.forEach((child) => {
-            if (child instanceof FileEntry) {
-                count++;
-            } else if (child instanceof FolderEntry) {
-                count += child.fileCount;
-            }
-        });
-        return count;
+        return this.files.length;
     }
 
     public get compressedSize() {
-        let size = 0;
-        this.children.forEach((child) => {
-            if (child instanceof FileEntry || child instanceof FolderEntry) {
-                size += child.compressedSize;
-            }
-        });
-        return size;
+        return this._compressedSize;
     }
 
     public get decompressedSize() {
-        let size = 0;
-        this.children.forEach((child) => {
-            if (child instanceof FileEntry || child instanceof FolderEntry) {
-                size += child.decompressedSize;
-            }
-        });
-        return size;
+        return this._decompressedSize;
     }
 
     public get fileList() {
-        const files: string[] = [];
-        this.children.forEach((child) => {
-            if (child instanceof FileEntry) {
-                files.push(child.path);
-            } else if (child instanceof FolderEntry) {
-                files.push(...child.fileList.split('\n'));
-            }
-        });
-        return files.join('\n');
+        return this._fileList;
     }
 }

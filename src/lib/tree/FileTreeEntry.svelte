@@ -14,6 +14,7 @@
     const indeterminate = data.indeterminate;
     const busy = data.busy;
     const failed = data.failed;
+    const children = data.children;
     const hasChildren = data.hasChildren;
 
     async function onToggleOpen() {
@@ -60,6 +61,7 @@
     <ion-button
         class="content"
         class:selected={selected === data}
+        class:no-caret={!$hasChildren}
         fill="clear"
         size="small"
         color={$failed ? 'danger' : 'medium'}
@@ -77,38 +79,36 @@
     </ion-button>
 </div>
 
-<div class="children" class:open={$opened}>
-    {#if !$busy}
-        {#each data.children as child}
-            <svelte:self data={child} level={level + 1} {checkable} {selected} on:select />
-        {/each}
-    {/if}
-</div>
+{#if $hasChildren}
+    <div class="children" class:open={$opened}>
+        {#if !$busy}
+            {#each $children as child}
+                <svelte:self data={child} level={level + 1} {checkable} {selected} on:select />
+            {/each}
+        {/if}
+    </div>
+{/if}
 
 <style>
     .entry {
         display: flex;
         align-items: center;
-        padding-left: calc(var(--level) * 1.5rem);
+        padding-left: calc(var(--level) * 1.2em);
     }
 
     ion-text {
-        font-size: 1.05rem;
+        font-size: 0.95rem;
         width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
         padding: 0.1rem;
     }
 
+    .typeIcon,
     .busyIcon {
-        height: 1.4em;
-        margin-right: 0.25rem;
-        margin-left: 0.25rem;
-    }
-
-    .typeIcon {
-        margin-right: 0.5rem;
-        margin-left: 0.5rem;
+        height: 18px;
+        width: 18px;
+        margin: 0 3px;
     }
 
     .caret {
@@ -138,6 +138,10 @@
 
     .content.selected {
         background-color: var(--ion-color-light-tint);
+    }
+
+    .content.no-caret {
+        margin-left: 27.2px;
     }
 
     .children {

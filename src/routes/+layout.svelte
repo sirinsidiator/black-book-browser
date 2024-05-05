@@ -140,4 +140,21 @@
 
         cursor: col-resize;
     }
+
+    :global(ion-tabs) {
+        flex-direction: row-reverse;
+    }
+
+    :global(ion-tab-bar) {
+        height: 100%;
+        width: 75px;
+        flex-direction: column;
+        justify-content: start;
+    }
+
+    :global(ion-tab-button) {
+        width: unset;
+        max-width: unset;
+        max-height: 75px;
+    }
 </style>

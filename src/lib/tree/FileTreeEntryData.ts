@@ -8,7 +8,9 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     public readonly busy: Writable<boolean> = writable(false);
     public readonly failed: Writable<boolean> = writable(false);
     public readonly hasChildren: Writable<boolean> = writable(false);
-    public readonly children: FileTreeEntryData<FileTreeEntryDataProvider>[] = [];
+    public readonly children: Writable<FileTreeEntryData<FileTreeEntryDataProvider>[]> = writable(
+        []
+    );
     private parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
     private firstOpen = true;
 
@@ -32,8 +34,9 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
             this.firstOpen = false;
             this.busy.set(true);
             try {
-                this.children.push(...(await this.data.loadChildren()));
-                this.hasChildren.set(this.children.length > 0);
+                const children = await this.data.loadChildren();
+                this.children.set(children);
+                this.hasChildren.set(children.length > 0);
             } catch (e) {
                 console.error('error loading children', e);
                 this.failed.set(true);
@@ -49,7 +52,7 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
 
     public setChecked(checked: boolean) {
         this.checked.set(checked);
-        this.children.forEach((child) => {
+        get(this.children).forEach((child) => {
             child.setChecked(checked);
         });
         this.indeterminate.set(false);
@@ -57,13 +60,14 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     }
 
     public updateIndeterminate() {
-        const checkedCount = this.children.reduce((count, child) => {
+        const children = get(this.children);
+        const checkedCount = children.reduce((count, child) => {
             return count + (get(child.checked) ? 1 : 0);
         }, 0);
-        const indeterminateCount = this.children.reduce((count, child) => {
+        const indeterminateCount = children.reduce((count, child) => {
             return count + (get(child.indeterminate) ? 1 : 0);
         }, 0);
-        this.checked.set(checkedCount === this.children.length);
+        this.checked.set(checkedCount === children.length);
         this.indeterminate.set(!get(this.checked) && indeterminateCount + checkedCount > 0);
         this.parent?.updateIndeterminate();
     }

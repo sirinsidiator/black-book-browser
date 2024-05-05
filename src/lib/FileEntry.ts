@@ -1,13 +1,13 @@
 import hljs, { type HighlightResult } from 'highlight.js';
 import { document } from 'ionicons/icons';
 import type { FolderEntry } from './FolderEntry';
-import type MnfArchiveEntry from './MnfArchiveEntry';
+import type { ContentEntry } from './StateManager';
+import BackgroundService from './backend/BackgroundService';
 import DDSHelper from './frontend/DDSHelper';
+import type { MnfFileData } from './mnf/MnfFileData';
 import type FileTreeEntryData from './tree/FileTreeEntryData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 import BufferReader from './util/BufferReader';
-import type { MnfFileData } from './mnf/MnfFileData';
-import BackgroundService from './backend/BackgroundService';
 
 abstract class FilePreview {}
 
@@ -49,31 +49,17 @@ const EXT_TO_LANGUAGE: { [index: string]: string } = {
     '.comp': 'c++'
 };
 
-export class FileEntry implements FileTreeEntryDataProvider {
+export class FileEntry implements FileTreeEntryDataProvider, ContentEntry {
+    public readonly icon = document;
+    public readonly path: string;
+    public readonly hasChildren = false;
+
     constructor(
         public readonly file: MnfFileData,
-        private readonly parent: MnfArchiveEntry | FolderEntry,
-        private readonly _label: string
-    ) {}
-
-    public get icon(): string {
-        return document;
-    }
-
-    public get label(): string {
-        return this._label;
-    }
-
-    public get path(): string {
-        return this.parent.path + '/' + this._label;
-    }
-
-    public get hasChildren(): boolean {
-        return false;
-    }
-
-    public loadChildren(): Promise<FileTreeEntryData<FileTreeEntryDataProvider>[]> {
-        return Promise.resolve([]);
+        private readonly parent: FolderEntry,
+        public readonly label: string
+    ) {
+        this.path = parent.path + label;
     }
 
     public get compressedSize() {
@@ -84,8 +70,8 @@ export class FileEntry implements FileTreeEntryDataProvider {
         return this.file.size;
     }
 
-    public async toggleOpen() {
-        /* noop */
+    public loadChildren(): Promise<FileTreeEntryData<FileTreeEntryDataProvider>[]> {
+        return Promise.resolve([]);
     }
 
     public async getPreviewLoader(): Promise<FilePreview | null> {
@@ -110,9 +96,5 @@ export class FileEntry implements FileTreeEntryDataProvider {
             }
         }
         return null;
-    }
-
-    public updateIndeterminate() {
-        // do nothing
     }
 }

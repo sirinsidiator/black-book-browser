@@ -17,7 +17,10 @@
         });
 
         if (typeof selected === 'string') {
-            manager.gameInstallManager.add(selected).catch(console.error);
+            const gameInstall = await manager.gameInstallManager.add(selected);
+            if (gameInstall) {
+                manager.selectedContent.set(gameInstall);
+            }
         }
     }
 
@@ -41,9 +44,15 @@
             <ion-progress-bar type="indeterminate" />
         </div>
     {:then}
-        <FileTree {entries} on:select={onSelect} />
+        {#if entries.length === 0}
+            <div class="status">
+                <p>No game installs found</p>
+            </div>
+        {:else}
+            <FileTree {entries} on:select={onSelect} />
+        {/if}
 
-        <ion-fab slot="fixed" vertical="bottom" horizontal="center">
+        <ion-fab slot="fixed" vertical="bottom" horizontal="end">
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-fab-button on:click={addFolder}>
                 <ion-icon icon={add} />

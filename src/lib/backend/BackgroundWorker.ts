@@ -86,7 +86,7 @@ export default class BackgroundWorker {
             console.log('Worker readMnfArchive:', archive);
 
             const fileList: MnfFileData[] = [];
-            for (const [fileNumber, entry] of archive.fileEntries) {
+            for (const [fileNumber, entry] of archive.mnfEntries) {
                 fileList.push({
                     archivePath: path,
                     fileNumber,
@@ -122,7 +122,7 @@ export default class BackgroundWorker {
             if (!archive) {
                 throw new Error('archive not found');
             }
-            const mnfEntry = archive.fileEntries.get(file.fileNumber);
+            const mnfEntry = archive.mnfEntries.get(file.fileNumber);
             if (!mnfEntry) {
                 throw new Error('file not found');
             }

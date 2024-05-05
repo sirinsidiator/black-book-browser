@@ -1,80 +1,68 @@
 <script lang="ts">
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
-    import { formatFileSize } from '$lib/util/FileUtil';
-    import CodeBlock from '$lib/content/CodeBlock.svelte';
+    import {
+        archiveOutline,
+        folderOpenOutline,
+        folderOutline,
+        refreshOutline
+    } from 'ionicons/icons';
+    import CodeBlock from './CodeBlock.svelte';
+    import FolderDetails from './FolderDetails.svelte';
 
     export let archive: MnfArchiveEntry;
+
+    $: loaded = archive.loaded;
+    $: busy = archive.busy;
+    $: root = archive.root;
+
+    function onExtract() {}
+
+    function onLoad() {
+        archive.loadChildren().catch(console.error);
+    }
 </script>
 
-<ion-grid>
-    <ion-row>
-        <ion-col size="2">
-            <ion-label>archive path:</ion-label>
-        </ion-col>
-        <ion-col>
-            <ion-label>{archive.path}</ion-label>
-        </ion-col>
-    </ion-row>
-    <ion-row>
-        <ion-col size="2">
-            <ion-label>path:</ion-label>
-        </ion-col>
-        <ion-col>
-            <ion-label>/</ion-label>
-        </ion-col>
-    </ion-row>
-    <ion-row>
-        <ion-col size="2">
-            <ion-label>folders:</ion-label>
-        </ion-col>
-        <ion-col>
-            <ion-label>{archive.folderCount.toLocaleString()}</ion-label>
-        </ion-col>
-    </ion-row>
-    <ion-row>
-        <ion-col size="2">
-            <ion-label>files:</ion-label>
-        </ion-col>
-        <ion-col>
-            <ion-label>{archive.fileCount.toLocaleString()}</ion-label>
-        </ion-col>
-    </ion-row>
-    <ion-row>
-        <ion-col size="2">
-            <ion-label>compressed size:</ion-label>
-        </ion-col>
-        <ion-col>
-            <ion-label>{formatFileSize(archive.compressedSize)}</ion-label>
-        </ion-col>
-    </ion-row>
-    <ion-row>
-        <ion-col size="2">
-            <ion-label>decompressed size:</ion-label>
-        </ion-col>
-        <ion-col>
-            <ion-label>{formatFileSize(archive.decompressedSize)}</ion-label>
-        </ion-col>
-    </ion-row>
-    <ion-row class="filelist">
-        <ion-col>
-            <CodeBlock language="ini">{archive.fileList}</CodeBlock>
-        </ion-col>
-    </ion-row>
-</ion-grid>
+{#if $loaded}
+    <!-- eslint-disable-next-line svelte/valid-compile -->
+    <ion-button color="primary" on:click={onExtract}>
+        <ion-icon slot="start" icon={archiveOutline} />
+        extract files
+    </ion-button>
+{/if}
+<!-- eslint-disable-next-line svelte/valid-compile -->
+<ion-button color="primary" on:click={onLoad} disabled={$busy}>
+    <ion-icon slot="start" icon={refreshOutline} />
+    {#if $loaded}reload{:else}load{/if}
+</ion-button>
+<ion-list>
+    <ion-item>
+        <ion-icon icon={$loaded ? folderOpenOutline : folderOutline} />
+        <ion-label class="label">archive path</ion-label>
+        <ion-label>{archive.path}</ion-label>
+    </ion-item>
+    {#if $busy}
+        <ion-progress-bar type="indeterminate" />
+    {/if}
+    {#if $loaded && $root}
+        <FolderDetails folder={$root} />
+    {/if}
+</ion-list>
+{#if $loaded && $root}
+    <div class="filelist">
+        <CodeBlock language="ini">{$root.fileList}</CodeBlock>
+    </div>
+{/if}
 
 <style>
-    ion-grid {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .filelist > ion-col {
-        flex-grow: 1;
+    .label {
+        margin-left: 15px;
+        flex: 0 0 200px;
+        font-weight: bold;
     }
 
     .filelist {
-        flex-grow: 1;
+        margin: 15px 10px;
         overflow: auto;
+        max-height: calc(100vh - 447px);
     }
 </style>

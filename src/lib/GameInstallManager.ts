@@ -1,6 +1,7 @@
 import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
 import { get, writable, type Writable } from 'svelte/store';
 import { GameInstallEntry } from './GameInstallEntry';
+import { basename, resolve } from './util/FileUtil';
 
 export interface GameVersionData {
     version: string;
@@ -10,6 +11,7 @@ export interface GameVersionData {
 
 const STORAGE_KEY_PATHS = 'gameinstalls';
 const BUILD_INFO_FILE = 'depot/_databuild/databuild.stamp';
+const APP_SETTINGS_FILE = 'game/client/AppSettings.txt';
 const DUMMY_BUILD_DATA: GameVersionData = {
     version: '-',
     buildDate: '-',
@@ -53,21 +55,23 @@ export default class GameInstallManager {
 
     private async createGameInstall(path: string): Promise<GameInstallEntry> {
         const version = await this.findGameVersion(path);
+        const settings = await this.findAppSettings(path);
         const mnfFiles = await this.findMnfFiles(path);
-        return new GameInstallEntry(path, version, mnfFiles);
+        const label = await basename(path);
+        return new GameInstallEntry(label, path, version, settings, mnfFiles);
     }
 
-    public async add(path: string): Promise<boolean> {
+    public async add(path: string): Promise<GameInstallEntry | null> {
         const gameInstalls = get(this.gameInstalls);
         if (!gameInstalls.has(path)) {
             console.log('add install path:', path);
             const gameInstall = await this.createGameInstall(path);
             gameInstalls.set(path, gameInstall);
             this.save();
-            return true;
+            return gameInstall;
         }
         console.log('install path already added:', path);
-        return false;
+        return null;
     }
 
     public remove(path: string): boolean {
@@ -112,9 +116,7 @@ export default class GameInstallManager {
     async findGameVersion(path: string): Promise<GameVersionData> {
         let buildData = '';
         try {
-            const tauriPath = await import('@tauri-apps/api/path');
-            // https://github.com/tauri-apps/tauri/issues/5518
-            const file = await tauriPath.resolve(path, BUILD_INFO_FILE);
+            const file = await resolve(path, BUILD_INFO_FILE);
             buildData = await readTextFile(file);
         } catch (err) {
             console.warn('Could not load build data', err);
@@ -128,5 +130,27 @@ export default class GameInstallManager {
             };
         }
         return DUMMY_BUILD_DATA;
+    }
+
+    async findAppSettings(path: string): Promise<Map<string, string>> {
+        let settingsData = '';
+        try {
+            const file = await resolve(path, APP_SETTINGS_FILE);
+            settingsData = await readTextFile(file);
+        } catch (err) {
+            console.warn('Could not load app settings', err);
+        }
+        const lines = settingsData.split('\r\n');
+        const settings: Map<string, string> = new Map();
+        const regex = /^SET\s+(\S+)\s+"([^"]+)"$/;
+        console.log('settings:', lines);
+        for (const line of lines) {
+            const match = line.match(regex);
+            if (match) {
+                settings.set(match[1], match[2]);
+            }
+        }
+        console.log('parsed settings:', settings)
+        return settings;
     }
 }
