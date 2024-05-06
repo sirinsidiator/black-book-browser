@@ -1,3 +1,4 @@
+import type { ExtractFilesRequest } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { BackgroundMessageType } from './BackgroundMessageType';
 import type { BackgroundWorkerConfig } from './BackgroundWorkerConfig';
@@ -18,6 +19,11 @@ export interface BackgroundResponseMessage extends BackgroundMessage {
     error?: boolean;
 }
 
+export interface BackgroundProgressMessage extends BackgroundMessage {
+    type: BackgroundMessageType.PROGRESS;
+    progress: unknown;
+}
+
 export interface BackgroundReadMnfArchiveMessage extends BackgroundMessage {
     type: BackgroundMessageType.READ_MNF_ARCHIVE;
     archivePath: string;
@@ -27,6 +33,11 @@ export interface BackgroundReadMnfArchiveMessage extends BackgroundMessage {
 export interface BackgroundLoadFileContentMessage extends BackgroundMessage {
     type: BackgroundMessageType.LOAD_FILE_CONTENT;
     file: MnfFileData;
+}
+
+export interface BackgroundExtractFilesMessage extends BackgroundMessage {
+    type: BackgroundMessageType.EXTRACT_FILES;
+    request: ExtractFilesRequest;
 }
 
 export interface BackgroundGetFileMetaDataMessage extends BackgroundMessage {
@@ -73,4 +84,16 @@ export function isBackgroundResponseMessage(
         return false;
     }
     return 'result' in message;
+}
+
+export function isBackgroundProgressMessage(
+    message: unknown
+): message is BackgroundProgressMessage {
+    if (!isBackgroundMessage(message)) {
+        return false;
+    }
+    if (message.type !== BackgroundMessageType.PROGRESS) {
+        return false;
+    }
+    return 'progress' in message;
 }

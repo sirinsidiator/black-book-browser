@@ -7,6 +7,7 @@
     const dispatch = createEventDispatcher();
 
     export let entries: FileTreeEntryData<FileTreeEntryDataProvider>[];
+    export let checkable = false;
 
     let selected: FileTreeEntryData<FileTreeEntryDataProvider>;
 
@@ -18,7 +19,7 @@
 
 <div class="filetree">
     {#each entries as data}
-        <FileTreeEntry {data} {selected} on:select={select} />
+        <FileTreeEntry {data} {selected} {checkable} on:select={select} on:change />
     {/each}
 </div>
 

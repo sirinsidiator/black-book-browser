@@ -3,10 +3,9 @@
     import { archiveOutline, downloadOutline, folderOpenOutline } from 'ionicons/icons';
     import CodeBlock from './CodeBlock.svelte';
     import FolderDetails from './FolderDetails.svelte';
+    import ExtractDialog from './ExtractDialog.svelte';
 
     export let folder: FolderEntry;
-
-    function onExtract() {}
 
     function onSaveFilelist() {
         const a = document.createElement('a');
@@ -17,11 +16,11 @@
     }
 </script>
 
-<!-- eslint-disable-next-line svelte/valid-compile -->
-<ion-button color="primary" on:click={onExtract}>
+<ion-button color="primary" id="open-extract-dialog">
     <ion-icon slot="start" icon={archiveOutline} />
     extract files
 </ion-button>
+<ExtractDialog target={folder} />
 <!-- eslint-disable-next-line svelte/valid-compile -->
 <ion-button color="primary" on:click={onSaveFilelist}>
     <ion-icon slot="start" icon={downloadOutline} />

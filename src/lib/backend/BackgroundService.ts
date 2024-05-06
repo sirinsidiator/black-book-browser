@@ -1,7 +1,13 @@
+import type {
+    ExtractFilesProgress,
+    ExtractFilesRequest,
+    ExtractFilesResult
+} from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import TauriHelper from '$lib/tauri/TauriHelper';
 import {
     isBackgroundMessage,
+    type BackgroundExtractFilesMessage,
     type BackgroundGetBaseNameMessage,
     type BackgroundGetDirNameMessage,
     type BackgroundGetFileMetaDataMessage,
@@ -90,7 +96,8 @@ export default class BackgroundService {
                 config: {
                     readPartialFileUrl: helper.getReadPartialFileUrl(),
                     inflateUrl: helper.getInflateUrl(),
-                    decompressUrl: helper.getDecompressUrl()
+                    decompressUrl: helper.getDecompressUrl(),
+                    extractUrl: helper.getExtractUrl()
                 }
             } as BackgroundWorkerInitMessage)
             .catch((error) => {
@@ -111,5 +118,18 @@ export default class BackgroundService {
             type: BackgroundMessageType.LOAD_FILE_CONTENT,
             file: file
         } as BackgroundLoadFileContentMessage) as Promise<Uint8Array>;
+    }
+
+    public extractFiles(
+        extractionRequest: ExtractFilesRequest,
+        onprogress: (progress: ExtractFilesProgress) => void
+    ): Promise<ExtractFilesResult> {
+        return this.transceiver.sendMessage(
+            {
+                type: BackgroundMessageType.EXTRACT_FILES,
+                request: extractionRequest
+            } as BackgroundExtractFilesMessage,
+            onprogress as (progress: unknown) => void
+        ) as Promise<ExtractFilesResult>;
     }
 }

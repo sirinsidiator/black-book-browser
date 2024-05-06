@@ -4,10 +4,9 @@
     import ImageViewer from '$lib/content/ImageViewer.svelte';
     import { formatFileSize } from '$lib/util/FileUtil';
     import { archiveOutline, documentOutline, downloadOutline, scaleOutline } from 'ionicons/icons';
+    import ExtractDialog from './ExtractDialog.svelte';
 
     export let file: FileEntry;
-
-    function onExtract() {}
 
     function onSavePreview(preview: ImageFilePreview) {
         const url = preview.getDataUrl();
@@ -20,11 +19,11 @@
     $: previewLoader = file.getPreviewLoader();
 </script>
 
-<!-- eslint-disable-next-line svelte/valid-compile -->
-<ion-button color="primary" on:click={onExtract}>
+<ion-button color="primary" id="open-extract-dialog">
     <ion-icon slot="start" icon={archiveOutline} />
     extract file
 </ion-button>
+<ExtractDialog target={file} />
 {#await previewLoader then preview}
     {#if preview instanceof ImageFilePreview}
         <!-- eslint-disable-next-line svelte/valid-compile -->

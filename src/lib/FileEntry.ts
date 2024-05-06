@@ -5,7 +5,6 @@ import type { ContentEntry } from './StateManager';
 import BackgroundService from './backend/BackgroundService';
 import DDSHelper from './frontend/DDSHelper';
 import type { MnfFileData } from './mnf/MnfFileData';
-import type FileTreeEntryData from './tree/FileTreeEntryData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 import BufferReader from './util/BufferReader';
 
@@ -56,7 +55,7 @@ export class FileEntry implements FileTreeEntryDataProvider, ContentEntry {
 
     constructor(
         public readonly file: MnfFileData,
-        private readonly parent: FolderEntry,
+        public readonly parent: FolderEntry,
         public readonly label: string
     ) {
         this.path = parent.path + label;
@@ -70,7 +69,11 @@ export class FileEntry implements FileTreeEntryDataProvider, ContentEntry {
         return this.file.size;
     }
 
-    public loadChildren(): Promise<FileTreeEntryData<FileTreeEntryDataProvider>[]> {
+    public get mnfFiles() {
+        return [this.file];
+    }
+
+    public loadChildren(): Promise<FileTreeEntryDataProvider[]> {
         return Promise.resolve([]);
     }
 

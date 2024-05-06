@@ -4,16 +4,37 @@ import {
     basename,
     decompress,
     dirname,
+    extractFile,
     getFileSize,
-    mkdir,
-    resolve,
-    writeFile
+    resolve
 } from '../util/FileUtil.js';
 import type ZOSFileTable from '../zosft/ZOSFileTable.js';
 import type ZOSFileTableEntry from '../zosft/ZOSFileTableEntry.js';
 import ZOSFileTableReader from '../zosft/ZOSFileTableReader.js';
 import MnfArchiveFile from './MnfArchiveFile.js';
 import type MnfEntry from './MnfEntry.js';
+import type { MnfFileData } from './MnfFileData.js';
+
+export interface ExtractFilesRequest {
+    archivePath: string;
+    targetFolder: string;
+    rootPath: string;
+    preserveParents: boolean;
+    decompressFiles: boolean;
+    files: MnfFileData[];
+}
+
+export interface ExtractFilesProgress {
+    current: number;
+    total: number;
+    error?: unknown;
+}
+
+export interface ExtractFilesResult {
+    success: number;
+    failed: number;
+    total: number;
+}
 
 export default class MnfArchive {
     public readonly fileSize: number;
@@ -36,7 +57,7 @@ export default class MnfArchive {
         // this.searchHelper = new SearchHelper(path);
     }
 
-    async getContent(entry?: MnfEntry, doDecompress = true): Promise<Uint8Array> {
+    async getContent(entry?: MnfEntry): Promise<Uint8Array> {
         if (!entry) {
             throw new Error('No entry provided');
         }
@@ -45,26 +66,15 @@ export default class MnfArchive {
         const named = entry.data.named;
         const compressionType = named['compressionType'].value as number;
 
-        if (compressionType === 0 || !doDecompress) {
+        if (compressionType === 0) {
             return await archiveFile.loadContent(entry);
         } else {
-            const decompressedBuffer = await decompress(
+            return await decompress(
                 archiveFile.path,
                 named['offset'].value as number,
                 named['compressedSize'].value as number,
                 named['fileSize'].value as number
             );
-
-            console.log('decompressedBuffer', decompressedBuffer);
-            const reader = new BufferReader(decompressedBuffer);
-            if (reader.getSize() >= 16 && reader.readUInt32(false) === 0) {
-                // has some strange header which we skip for now (seen in game.mnf related archives)
-                reader.skip(reader.readUInt32(false));
-                reader.skip(reader.readUInt32(false));
-                return reader.readToEnd();
-            } else {
-                return decompressedBuffer;
-            }
         }
     }
 
@@ -108,20 +118,79 @@ export default class MnfArchive {
         return null;
     }
 
-    async extractFile(fileEntry: MnfEntry, targetFolder: string, root = '', decompress = true) {
-        if (!fileEntry.fileName?.startsWith(root)) {
-            console.warn('root mismatch for', fileEntry);
-            throw new Error('The file root does not match the arguments');
-        }
+    async extractFiles(
+        request: ExtractFilesRequest,
+        onprogress: (progress: ExtractFilesProgress) => void
+    ): Promise<ExtractFilesResult> {
+        let success = 0;
+        let failed = 0;
+        const total = request.files.length;
+        const targetFolder = await resolve(request.targetFolder);
+        const activeJobs: Set<Promise<void>> = new Set();
+        const MAX_CONCURRENT = 10;
+        for (let i = 0; i < total; ++i) {
+            const file = request.files[i];
+            const fileEntry = this.mnfEntries.get(file.fileNumber);
+            if (!fileEntry) {
+                console.warn('file entry not found for', file);
+                continue;
+            }
+            if (!fileEntry.fileName) {
+                console.warn('file entry has no name', fileEntry);
+                continue;
+            }
+            const target =
+                targetFolder + '/' + fileEntry.fileName.substring(request.rootPath.length);
+            const archiveFile = await this.getArchiveFile(fileEntry);
 
-        if (root === fileEntry.fileName) {
-            root = await dirname(root);
-        }
+            if (activeJobs.size >= MAX_CONCURRENT) {
+                await Promise.any(activeJobs);
+            }
 
-        const target = await resolve(targetFolder, fileEntry.fileName.substring(root.length + 1));
-        await mkdir(await dirname(target));
-        const content = await this.getContent(fileEntry, decompress);
-        await writeFile(target, content, true);
+            const job = extractFile(target, archiveFile, fileEntry, request.decompressFiles)
+                .then(
+                    (result) => {
+                        if (result) {
+                            success++;
+                        } else {
+                            failed++;
+                        }
+                        onprogress({
+                            current: success + failed,
+                            total
+                        });
+                    },
+                    (error) => {
+                        console.warn(
+                            'Failed to extract file',
+                            fileEntry.fileName,
+                            error,
+                            file,
+                            fileEntry
+                        );
+                        failed++;
+                        onprogress({
+                            current: success + failed,
+                            total,
+                            error
+                        });
+                    }
+                )
+                .finally(() => {
+                    activeJobs.delete(job);
+                });
+            activeJobs.add(job);
+        }
+        await Promise.all(activeJobs);
+        onprogress({
+            current: request.files.length,
+            total
+        });
+        return {
+            success,
+            failed,
+            total: request.files.length
+        };
     }
 
     async finalize() {

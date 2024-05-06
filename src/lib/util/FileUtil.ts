@@ -1,3 +1,5 @@
+import type MnfArchiveFile from '$lib/mnf/MnfArchiveFile';
+import type MnfEntry from '$lib/mnf/MnfEntry';
 import TauriHelper from '$lib/tauri/TauriHelper';
 
 const BYTE_UNIT = ['bytes', 'kB', 'MB', 'GB', 'TB'];
@@ -128,6 +130,38 @@ export async function readPartialFile(
     }
     const content = await response.arrayBuffer();
     return new Uint8Array(content);
+}
+
+export async function extractFile(
+    targetPath: string,
+    archiveFile: MnfArchiveFile,
+    entry: MnfEntry,
+    decompress: boolean
+): Promise<boolean> {
+    const named = entry.data.named;
+    const offset = named['offset'].value as number;
+    const compressedSize = named['compressedSize'].value as number;
+    const fileSize = named['fileSize'].value as number;
+    const compressionType = !decompress ? 0 : (named['compressionType'].value as number);
+    const url = TauriHelper.getInstance().getExtractUrl();
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'target-path': targetPath,
+            'archive-path': archiveFile.path,
+            'compressed-size': compressedSize.toString(),
+            offset: offset.toString(),
+            'file-size': fileSize.toString(),
+            'compression-type': compressionType.toString()
+        }
+    });
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+    }
+    const content = await response.arrayBuffer();
+    const result = new Uint8Array(content);
+    return result[0] !== 0;
 }
 
 export async function decompress(

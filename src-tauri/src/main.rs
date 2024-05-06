@@ -3,7 +3,8 @@
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::path::Path;
 use tauri::http::ResponseBuilder;
 use zune_inflate::DeflateDecoder;
 
@@ -73,8 +74,75 @@ fn decompress(
             ));
         }
         output.truncate(file_size);
+
+        if output.len() > 16 && output[0..4] == [0, 0, 0, 0] {
+            // output has some strange header which we skip for now (seen in game.mnf related archives)
+            let mut offset = 4;
+            offset += 4 + u32::from_be_bytes([
+                output[offset],
+                output[offset + 1],
+                output[offset + 2],
+                output[offset + 3],
+            ]) as usize;
+            offset += 4 + u32::from_be_bytes([
+                output[offset],
+                output[offset + 1],
+                output[offset + 2],
+                output[offset + 3],
+            ]) as usize;
+            output = output[offset..].to_vec();
+        }
         return Ok(output);
     }
+}
+
+fn save_file(path: &str, content: Vec<u8>) -> Result<bool, String> {
+    // try to create whole folder structure
+    let parent = Path::new(path).parent();
+    if parent.is_none() {
+        return Err(format!(
+            "Error: Failed to get parent directory of {:?}",
+            path
+        ));
+    }
+    let parent = parent.unwrap();
+    if !parent.exists() {
+        if std::fs::create_dir_all(parent).is_err() {
+            return Err(format!("Error: Failed to create directory {:?}", parent));
+        }
+    }
+
+    let file = File::create(path);
+    if file.is_err() {
+        return Err(format!("Error: Failed to create file {:?}", path));
+    }
+    let mut file = file.unwrap();
+    if file.write_all(&content).is_err() {
+        return Err(format!("Error: Failed to write file {:?}", path));
+    }
+    return Ok(true);
+}
+
+fn extract_file(
+    target_path: &str,
+    archive_path: &str,
+    offset: usize,
+    compressed_size: usize,
+    file_size: usize,
+    compression_type: u8,
+) -> Result<bool, String> {
+    let content;
+    if compression_type == 0 {
+        content = read_partial_file(archive_path, offset, compressed_size);
+    } else {
+        content = decompress(archive_path, offset, compressed_size, file_size);
+    }
+
+    if content.is_err() {
+        return Err(content.unwrap_err());
+    }
+
+    return save_file(target_path, content.unwrap());
 }
 
 fn build_basic_response(length: usize) -> ResponseBuilder {
@@ -222,6 +290,70 @@ fn main() {
 
             match decompress(path, offset, compressed_size, file_size) {
                 Ok(output) => build_ok_response(output),
+                Err(err) => build_error_response(err),
+            }
+        })
+        .register_uri_scheme_protocol("extract-file", |_app, req| {
+            if req.method() == "OPTIONS" {
+                return build_options_response();
+            }
+
+            let target_path = get_header_as_string(req, "target-path");
+            if target_path.is_err() {
+                return build_error_response(target_path.unwrap_err());
+            }
+            let target_path = target_path.unwrap();
+
+            let archive_path = get_header_as_string(req, "archive-path");
+            if archive_path.is_err() {
+                return build_error_response(archive_path.unwrap_err());
+            }
+            let archive_path = archive_path.unwrap();
+
+            let compressed_size = get_header_as_number(req, "compressed-size");
+            if compressed_size.is_err() {
+                return build_error_response(compressed_size.unwrap_err());
+            }
+            let compressed_size = compressed_size.unwrap();
+            if compressed_size == 0 || compressed_size > 1024 * 1024 * 1024 {
+                return build_error_response(format!(
+                    "Invalid compressed_size: {:?} (must be between 1 and 1024 * 1024 * 1024)",
+                    compressed_size
+                ));
+            }
+
+            let offset = get_header_as_number(req, "offset");
+            if offset.is_err() {
+                return build_error_response(offset.unwrap_err());
+            }
+            let offset = offset.unwrap();
+
+            let file_size = get_header_as_number(req, "file-size");
+            if file_size.is_err() {
+                return build_error_response(file_size.unwrap_err());
+            }
+            let file_size = file_size.unwrap();
+            if file_size == 0 {
+                return build_error_response(format!(
+                    "Invalid file_size: {:?} (must be greater than 0)",
+                    file_size
+                ));
+            }
+            let compression_type = get_header_as_number(req, "compression-type");
+            if compression_type.is_err() {
+                return build_error_response(compression_type.unwrap_err());
+            }
+            let compression_type = compression_type.unwrap();
+
+            match extract_file(
+                target_path,
+                archive_path,
+                offset,
+                compressed_size,
+                file_size,
+                compression_type as u8,
+            ) {
+                Ok(output) => build_ok_response(vec![output as u8]),
                 Err(err) => build_error_response(err),
             }
         })

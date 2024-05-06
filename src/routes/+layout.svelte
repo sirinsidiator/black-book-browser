@@ -1,10 +1,10 @@
 <script lang="ts">
     import patreonIcon from '$lib/images/patreon.svg';
-    import { setupIonicBase } from 'ionic-svelte';
-    import { bugOutline, fileTrayFullOutline } from 'ionicons/icons';
-    import IonTabs from 'ionic-svelte/components/IonTabs.svelte';
-    import { onMount } from 'svelte';
     import { createGesture } from '@ionic/core';
+    import { setupIonicBase } from 'ionic-svelte';
+    import IonTabs from 'ionic-svelte/components/IonTabs.svelte';
+    import { fileTrayFullOutline, searchOutline } from 'ionicons/icons';
+    import { onMount } from 'svelte';
     import ContentViewer from '../lib/content/ContentViewer.svelte';
     import type { LayoutData } from './$types';
     /* Import all components - or do partial loading - see below */
@@ -17,15 +17,13 @@
     import '@ionic/core/css/normalize.css';
     import '@ionic/core/css/structure.css';
     import '@ionic/core/css/typography.css';
-
     /* Optional CSS utils that can be commented out */
-    import '@ionic/core/css/padding.css';
+    import '@ionic/core/css/display.css';
+    import '@ionic/core/css/flex-utils.css';
     import '@ionic/core/css/float-elements.css';
+    import '@ionic/core/css/padding.css';
     import '@ionic/core/css/text-alignment.css';
     import '@ionic/core/css/text-transformation.css';
-    import '@ionic/core/css/flex-utils.css';
-    import '@ionic/core/css/display.css';
-
     /* Theme variables */
     import '@ionic/core/css/palettes/dark.always.css';
     import '../theme/variables.css';
@@ -73,7 +71,7 @@
         },
         {
             label: 'Search',
-            icon: bugOutline,
+            icon: searchOutline,
             tab: 'search'
         },
         {

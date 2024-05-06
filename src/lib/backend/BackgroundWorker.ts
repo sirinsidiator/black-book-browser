@@ -1,7 +1,10 @@
+import type MnfArchive from '$lib/mnf/MnfArchive';
+import type { ExtractFilesProgress } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import MnfReader from '$lib/mnf/MnfReader';
 import type { Metadata } from 'tauri-plugin-fs-extra-api';
 import type {
+    BackgroundExtractFilesMessage,
     BackgroundGetBaseNameMessage,
     BackgroundGetDirNameMessage,
     BackgroundGetFileMetaDataMessage,
@@ -14,7 +17,6 @@ import type {
 import BackgroundMessageTransceiver from './BackgroundMessageTransceiver';
 import { BackgroundMessageType } from './BackgroundMessageType';
 import type { BackgroundWorkerConfig } from './BackgroundWorkerConfig';
-import type MnfArchive from '$lib/mnf/MnfArchive';
 
 export default class BackgroundWorker {
     private static instance: BackgroundWorker;
@@ -58,6 +60,9 @@ export default class BackgroundWorker {
                 break;
             case BackgroundMessageType.LOAD_FILE_CONTENT:
                 this.onLoadFileContent(message);
+                break;
+            case BackgroundMessageType.EXTRACT_FILES:
+                this.onExtractFiles(message);
                 break;
             default:
                 this.transceiver.onMessage(message);
@@ -131,6 +136,36 @@ export default class BackgroundWorker {
             return content;
         } catch (error) {
             console.warn('Failed to load file content:', error);
+            throw error;
+        }
+    }
+
+    private onExtractFiles(message: BackgroundMessage) {
+        this.extractFiles(message as BackgroundExtractFilesMessage, (progress) =>
+            this.transceiver.sendProgressResponse(message, progress)
+        ).then(
+            (result) => {
+                this.transceiver.sendSuccessResponse(message, result);
+            },
+            (reason) => {
+                this.transceiver.sendErrorResponse(message, reason);
+            }
+        );
+    }
+
+    private async extractFiles(
+        message: BackgroundExtractFilesMessage,
+        onprogress: (progress: ExtractFilesProgress) => void
+    ) {
+        try {
+            const request = message.request;
+            const archive = this.archives.get(request.archivePath);
+            if (!archive) {
+                throw new Error('archive not found');
+            }
+            return archive.extractFiles(request, onprogress);
+        } catch (error) {
+            console.warn('Failed to extract files:', error);
             throw error;
         }
     }

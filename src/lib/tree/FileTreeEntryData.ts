@@ -1,3 +1,4 @@
+import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { get, writable, type Writable } from 'svelte/store';
 import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
@@ -11,7 +12,7 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     public readonly children: Writable<FileTreeEntryData<FileTreeEntryDataProvider>[]> = writable(
         []
     );
-    private parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
+    private _parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
     private firstOpen = true;
 
     constructor(public readonly data: T) {
@@ -21,11 +22,17 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     public get icon() {
         return this.data.icon;
     }
+
     public get label() {
         return this.data.label;
     }
+
     public get path() {
         return this.data.path;
+    }
+
+    public get parent() {
+        return this._parent;
     }
 
     public async toggleOpen() {
@@ -34,7 +41,12 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
             this.firstOpen = false;
             this.busy.set(true);
             try {
-                const children = await this.data.loadChildren();
+                const children = (await this.data.loadChildren()).map((data) => {
+                    const child = new FileTreeEntryData(data);
+                    child.setChecked(get(this.checked));
+                    child._parent = this;
+                    return child;
+                });
                 this.children.set(children);
                 this.hasChildren.set(children.length > 0);
             } catch (e) {
@@ -70,5 +82,23 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
         this.checked.set(checkedCount === children.length);
         this.indeterminate.set(!get(this.checked) && indeterminateCount + checkedCount > 0);
         this.parent?.updateIndeterminate();
+    }
+
+    public getSelectedFiles(): MnfFileData[] {
+        if (get(this.checked)) {
+            return this.data.mnfFiles;
+        } else if (get(this.indeterminate)) {
+            if (this.firstOpen) {
+                console.warn('indeterminate but not opened - should not happen');
+                return this.data.mnfFiles.filter((file) => {
+                    return file.fileName.startsWith(this.path);
+                });
+            } else {
+                return get(this.children).reduce((files, child) => {
+                    return files.concat(child.getSelectedFiles());
+                }, [] as MnfFileData[]);
+            }
+        }
+        return [];
     }
 }

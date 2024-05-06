@@ -2,12 +2,14 @@
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
     import {
         archiveOutline,
+        downloadOutline,
         folderOpenOutline,
         folderOutline,
         refreshOutline
     } from 'ionicons/icons';
     import CodeBlock from './CodeBlock.svelte';
     import FolderDetails from './FolderDetails.svelte';
+    import ExtractDialog from './ExtractDialog.svelte';
 
     export let archive: MnfArchiveEntry;
 
@@ -15,18 +17,34 @@
     $: busy = archive.busy;
     $: root = archive.root;
 
-    function onExtract() {}
-
     function onLoad() {
         archive.loadChildren().catch(console.error);
     }
+
+    function onSaveFilelist() {
+        const folder = $root;
+        if (!folder) {
+            return;
+        }
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([folder.fileList], { type: 'text/plain' }));
+        const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift();
+        a.download = archivePrefix + folder.path.replaceAll('/', '_') + 'filelist.txt';
+        a.click();
+    }
 </script>
 
-{#if $loaded}
-    <!-- eslint-disable-next-line svelte/valid-compile -->
-    <ion-button color="primary" on:click={onExtract}>
+{#if $loaded && $root}
+    <ion-button color="primary" id="open-extract-dialog">
         <ion-icon slot="start" icon={archiveOutline} />
         extract files
+    </ion-button>
+    <ExtractDialog target={$root} />
+    <!-- eslint-disable-next-line svelte/valid-compile -->
+    <ion-button color="primary" on:click={onSaveFilelist}>
+        <ion-icon slot="start" icon={downloadOutline} />
+        save filelist
     </ion-button>
 {/if}
 <!-- eslint-disable-next-line svelte/valid-compile -->

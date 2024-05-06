@@ -15,6 +15,10 @@ export default class ForegroundTauriHelper extends BaseTauriHelper {
         return convertFileSrc('', 'decompress');
     }
 
+    public getExtractUrl() {
+        return convertFileSrc('', 'extract-file');
+    }
+
     public async getFileMetadata(path: string): Promise<Metadata> {
         return metadata(path);
     }
@@ -37,5 +41,18 @@ export default class ForegroundTauriHelper extends BaseTauriHelper {
     public async resolve(...paths: string[]): Promise<string> {
         const tauriPath = await this.getTauriPathModule();
         return tauriPath.resolve(...paths);
+    }
+
+    public async getExtractionTargetFolder(): Promise<string> {
+        const folder = localStorage.getItem('extract-target-folder');
+        if (!folder) {
+            const path = await this.getTauriPathModule();
+            return path.desktopDir();
+        }
+        return folder;
+    }
+
+    public setExtractionTargetFolder(folder: string) {
+        localStorage.setItem('extract-target-folder', folder);
     }
 }

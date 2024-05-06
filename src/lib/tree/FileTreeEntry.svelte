@@ -9,13 +9,13 @@
     export let level = 0;
     export let checkable = false;
 
-    const opened = data.opened;
-    const checked = data.checked;
-    const indeterminate = data.indeterminate;
-    const busy = data.busy;
-    const failed = data.failed;
-    const children = data.children;
-    const hasChildren = data.hasChildren;
+    $: opened = data.opened;
+    $: checked = data.checked;
+    $: indeterminate = data.indeterminate;
+    $: busy = data.busy;
+    $: failed = data.failed;
+    $: children = data.children;
+    $: hasChildren = data.hasChildren;
 
     async function onToggleOpen() {
         await data.toggleOpen();
@@ -23,6 +23,7 @@
 
     function onToggleChecked() {
         data.toggleChecked();
+        dispatch('change', data);
     }
 
     const dispatch = createEventDispatcher();
@@ -32,22 +33,20 @@
 </script>
 
 <div class="entry" style="--level: {level}">
-    {#if $hasChildren}
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button
-            class="caret"
-            class:open={$opened}
-            class:hidden={$failed}
-            fill="clear"
-            size="small"
-            color="medium"
-            expand="block"
-            disabled={$failed ? true : false}
-            on:click={onToggleOpen}
-        >
-            <ion-icon icon={caretForwardOutline} />
-        </ion-button>
-    {/if}
+    <!-- eslint-disable-next-line svelte/valid-compile -->
+    <ion-button
+        class="caret"
+        class:open={$opened}
+        class:hidden={$failed || !$hasChildren}
+        fill="clear"
+        size="small"
+        color="medium"
+        expand="block"
+        disabled={$failed ? true : false}
+        on:click={onToggleOpen}
+    >
+        <ion-icon icon={caretForwardOutline} />
+    </ion-button>
 
     {#if checkable}
         <ion-checkbox
@@ -61,7 +60,6 @@
     <ion-button
         class="content"
         class:selected={selected === data}
-        class:no-caret={!$hasChildren}
         fill="clear"
         size="small"
         color={$failed ? 'danger' : 'medium'}
@@ -83,7 +81,14 @@
     <div class="children" class:open={$opened}>
         {#if !$busy}
             {#each $children as child}
-                <svelte:self data={child} level={level + 1} {checkable} {selected} on:select />
+                <svelte:self
+                    data={child}
+                    level={level + 1}
+                    {checkable}
+                    {selected}
+                    on:select
+                    on:change
+                />
             {/each}
         {/if}
     </div>
@@ -138,10 +143,6 @@
 
     .content.selected {
         background-color: var(--ion-color-light-tint);
-    }
-
-    .content.no-caret {
-        margin-left: 27.2px;
     }
 
     .children {
