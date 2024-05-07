@@ -125,4 +125,25 @@ export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
     public get fileList() {
         return this._fileList;
     }
+
+    public async getFileEntry(path: string): Promise<FileEntry | undefined> {
+        if (!path.startsWith(this.path)) {
+            return;
+        }
+
+        if (!this.loaded) {
+            await this.loadChildren();
+        }
+
+        for (const child of this.children) {
+            if (child instanceof FolderEntry) {
+                const file = await child.getFileEntry(path);
+                if (file) {
+                    return file;
+                }
+            } else if (child.path === path) {
+                return child;
+            }
+        }
+    }
 }

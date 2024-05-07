@@ -2,7 +2,6 @@
     import FileTree from '$lib/tree/FileTree.svelte';
     import { open } from '@tauri-apps/api/dialog';
     import { add } from 'ionicons/icons';
-    import type { GameInstallEntry } from './GameInstallEntry';
     import type StateManager from './StateManager';
     import FileTreeEntryData from './tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
@@ -28,13 +27,7 @@
         manager.selectedContent.set(event.detail.data);
     }
 
-    function createTreeEntry(data: GameInstallEntry) {
-        const entry = new FileTreeEntryData(data);
-        entry.toggleOpen().catch(console.error);
-        return entry;
-    }
-
-    $: entries = Array.from($gameInstalls.values()).map(createTreeEntry);
+    $: entries = Array.from($gameInstalls.values()).map((install) => install.fileTreeEntry);
 </script>
 
 <ion-content>

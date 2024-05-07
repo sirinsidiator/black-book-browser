@@ -1,12 +1,6 @@
 <script lang="ts">
     import patreonIcon from '$lib/images/patreon.svg';
-    import { createGesture } from '@ionic/core';
     import { setupIonicBase } from 'ionic-svelte';
-    import IonTabs from 'ionic-svelte/components/IonTabs.svelte';
-    import { fileTrayFullOutline, searchOutline } from 'ionicons/icons';
-    import { onMount } from 'svelte';
-    import ContentViewer from '../lib/content/ContentViewer.svelte';
-    import type { LayoutData } from './$types';
     /* Import all components - or do partial loading - see below */
     import 'ionic-svelte/components/all';
 
@@ -26,7 +20,9 @@
     import '@ionic/core/css/text-transformation.css';
     /* Theme variables */
     import '@ionic/core/css/palettes/dark.always.css';
+    import { fileTrayFullOutline, searchOutline } from 'ionicons/icons';
     import '../theme/variables.css';
+    import { page } from '$app/stores';
     // import type { LayoutData } from './$types';
 
     /* Call Ionic's setup routine */
@@ -62,97 +58,69 @@
         Want to know what is happening more - follow me on Twitter - https://twitter.com/Tommertomm
         Discord channel on Ionic server - https://discordapp.com/channels/520266681499779082/1049388501629681675
     */
-
-    const tabs = [
-        {
-            label: 'Browse',
-            icon: fileTrayFullOutline,
-            tab: ''
-        },
-        {
-            label: 'Search',
-            icon: searchOutline,
-            tab: 'search'
-        },
-        {
-            label: 'Patrons',
-            icon: patreonIcon,
-            tab: 'patrons'
-        }
-    ];
-
-    export let data: LayoutData;
-
-    let splitPane: HTMLIonSplitPaneElement;
-    let divider: HTMLDivElement;
-    onMount(() => {
-        const gesture = createGesture({
-            gestureName: 'resize-menu',
-            name: 'resize-menu',
-            el: divider,
-            onMove: (e) => {
-                console.log('move', e);
-                splitPane.style.setProperty('--side-width', `${e.currentX}px`);
-            }
-        });
-
-        gesture.enable(true);
-    });
 </script>
 
 <ion-app>
-    <ion-split-pane bind:this={splitPane} when="xs" content-id="main">
-        <ion-menu content-id="main">
-            <IonTabs slot="bottom" {tabs}><slot /></IonTabs>
-            <div class="divider" bind:this={divider} />
-        </ion-menu>
-
-        <div id="main">
-            <ContentViewer manager={data.stateManager} />
-        </div>
-    </ion-split-pane>
+    <ion-buttons>
+        <ion-button href="/" class:selected={$page.route.id === '/'}>
+            <div slot="icon-only">
+                <ion-icon icon={fileTrayFullOutline} />
+                <div class="label">browse</div>
+            </div></ion-button
+        >
+        <ion-button href="/search" class:selected={$page.route.id === '/search'}>
+            <div slot="icon-only">
+                <ion-icon icon={searchOutline} />
+                <div class="label">search</div>
+            </div>
+        </ion-button>
+        <ion-button href="/patrons" class:selected={$page.route.id === '/patrons'}>
+            <div slot="icon-only">
+                <ion-icon icon={patreonIcon} />
+                <div class="label">patrons</div>
+            </div>
+        </ion-button>
+    </ion-buttons>
+    <ion-content>
+        <slot />
+    </ion-content>
 </ion-app>
 
 <style>
     ion-app {
         scrollbar-color: var(--ion-color-medium) transparent;
+        flex-direction: row;
+        --main-menu-width: 70px;
     }
 
-    ion-split-pane {
-        --side-min-width: 10vw;
-        --side-max-width: 90vw;
-        --side-width: 30vw;
-        --border: 3px solid var(--ion-color-light);
-    }
-
-    .divider {
-        height: 100%;
-        width: 3px;
-
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-
-        z-index: 10;
-
-        cursor: col-resize;
-    }
-
-    :global(ion-tabs) {
-        flex-direction: row-reverse;
-    }
-
-    :global(ion-tab-bar) {
-        height: 100%;
-        width: 75px;
+    ion-buttons {
+        width: var(--main-menu-width);
+        height: 100vh;
         flex-direction: column;
-        justify-content: start;
+        background-color: var(--ion-background-color-step-100);
     }
 
-    :global(ion-tab-button) {
-        width: unset;
-        max-width: unset;
-        max-height: 75px;
+    ion-button {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 0.6em;
+        color: var(--ion-color-medium);
+    }
+
+    ion-button.selected {
+        color: var(--ion-color-primary);
+    }
+
+    ion-icon {
+        font-size: 2.5em;
+    }
+
+    .label {
+        margin-top: 3px;
+    }
+
+    ion-content {
+        background-color: var(--ion-background-color);
+        height: 100vh;
     }
 </style>

@@ -1,6 +1,8 @@
 import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
 import { get, writable, type Writable } from 'svelte/store';
+import type FileSearchEntry from './FileSearchEntry';
 import { GameInstallEntry } from './GameInstallEntry';
+import BackgroundService from './backend/BackgroundService';
 import { basename, resolve } from './util/FileUtil';
 
 export interface GameVersionData {
@@ -22,6 +24,12 @@ export default class GameInstallManager {
     public readonly gameInstalls: Writable<Map<string, GameInstallEntry>> = writable(
         new Map<string, GameInstallEntry>()
     );
+    public readonly searchTerm: Writable<string> = writable('');
+    public readonly searchResults: Writable<Fuzzysort.KeysResults<FileSearchEntry> | null> =
+        writable(null);
+    public readonly searchDuration: Writable<number> = writable(0);
+    public readonly searching: Writable<boolean> = writable(false);
+    private searchCache = new Map<string, WeakRef<Fuzzysort.KeysResults<FileSearchEntry>>>();
     private initPromise?: Promise<void>;
 
     public async initialize() {
@@ -58,7 +66,7 @@ export default class GameInstallManager {
         const settings = await this.findAppSettings(path);
         const mnfFiles = await this.findMnfFiles(path);
         const label = await basename(path);
-        return new GameInstallEntry(label, path, version, settings, mnfFiles);
+        return new GameInstallEntry(this, label, path, version, settings, mnfFiles);
     }
 
     public async add(path: string): Promise<GameInstallEntry | null> {
@@ -150,7 +158,48 @@ export default class GameInstallManager {
                 settings.set(match[1], match[2]);
             }
         }
-        console.log('parsed settings:', settings)
+        console.log('parsed settings:', settings);
         return settings;
+    }
+
+    public async submitFileSearch(searchTerm: string) {
+        if (searchTerm === '') {
+            this.clearFileSearch();
+            return;
+        }
+
+        const start = performance.now();
+        const ref = this.searchCache.get(searchTerm);
+        let result = ref?.deref();
+        if (!result) {
+            this.searching.set(true);
+            result = await BackgroundService.getInstance().searchFiles(searchTerm);
+            this.searchCache.set(searchTerm, new WeakRef(result));
+            this.searching.set(false);
+        }
+        this.searchResults.set(result);
+        this.searchTerm.set(searchTerm);
+        this.searchDuration.set(performance.now() - start);
+    }
+
+    public clearFileSearch() {
+        this.searchResults.set(null);
+        this.searchTerm.set('');
+    }
+
+    public clearFileSearchCache() {
+        this.searchResults.set(null);
+        this.searchDuration.set(0);
+        this.searchCache.clear();
+        this.submitFileSearch(get(this.searchTerm)).catch(console.error);
+    }
+
+    public getGameInstallForArchive(path: string): GameInstallEntry | undefined {
+        const gameInstalls = get(this.gameInstalls);
+        for (const gameInstall of gameInstalls.values()) {
+            if (path.startsWith(gameInstall.path)) {
+                return gameInstall;
+            }
+        }
     }
 }

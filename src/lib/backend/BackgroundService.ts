@@ -1,3 +1,4 @@
+import type FileSearchEntry from '$lib/FileSearchEntry';
 import type {
     ExtractFilesProgress,
     ExtractFilesRequest,
@@ -15,6 +16,7 @@ import {
     type BackgroundMessage,
     type BackgroundReadMnfArchiveMessage,
     type BackgroundResolvePathMessage,
+    type BackgroundSearchFilesMessage,
     type BackgroundWorkerInitMessage
 } from './BackgroundMessage';
 import BackgroundMessageTransceiver from './BackgroundMessageTransceiver';
@@ -131,5 +133,12 @@ export default class BackgroundService {
             } as BackgroundExtractFilesMessage,
             onprogress as (progress: unknown) => void
         ) as Promise<ExtractFilesResult>;
+    }
+
+    public searchFiles(searchTerm: string): Promise<Fuzzysort.KeysResults<FileSearchEntry>> {
+        return this.transceiver.sendMessage({
+            type: BackgroundMessageType.SEARCH_FILES,
+            searchTerm: searchTerm
+        } as BackgroundSearchFilesMessage) as Promise<Fuzzysort.KeysResults<FileSearchEntry>>;
     }
 }

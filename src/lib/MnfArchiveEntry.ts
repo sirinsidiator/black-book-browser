@@ -1,5 +1,6 @@
 import { fileTrayFull } from 'ionicons/icons';
-import { writable, type Writable } from 'svelte/store';
+import { get, writable, type Writable } from 'svelte/store';
+import type { FileEntry } from './FileEntry';
 import { FolderEntry } from './FolderEntry';
 import type { GameInstallEntry } from './GameInstallEntry';
 import type { ContentEntry } from './StateManager';
@@ -29,6 +30,7 @@ export default class MnfArchiveEntry implements FileTreeEntryDataProvider, Conte
     public get path(): string {
         return this._path;
     }
+
     public async loadChildren(): Promise<FileTreeEntryDataProvider[]> {
         this.busy.set(true);
         console.log('Reading archive: ' + this.path);
@@ -37,11 +39,16 @@ export default class MnfArchiveEntry implements FileTreeEntryDataProvider, Conte
         console.log('Done reading archive: ' + this.path);
         const rootFolder = new FolderEntry(this, '/');
         rootFolder.setFiles(this.files);
+        this.gameInstall.addFiles(this.files);
         this.root.set(rootFolder);
         this.loaded.set(true);
 
         const children = await rootFolder.loadChildren();
         this.busy.set(false);
         return Promise.resolve(children);
+    }
+
+    public async getFileEntry(path: string): Promise<FileEntry | undefined> {
+        return get(this.root)?.getFileEntry(path);
     }
 }

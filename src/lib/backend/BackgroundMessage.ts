@@ -61,6 +61,11 @@ export interface BackgroundResolvePathMessage extends BackgroundMessage {
     paths: string[];
 }
 
+export interface BackgroundSearchFilesMessage extends BackgroundMessage {
+    type: BackgroundMessageType.SEARCH_FILES;
+    searchTerm: string;
+}
+
 export function isBackgroundMessage(message: unknown): message is BackgroundMessage {
     if (typeof message !== 'object' || message === null) {
         return false;

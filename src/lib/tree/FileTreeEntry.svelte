@@ -114,6 +114,7 @@
         height: 18px;
         width: 18px;
         margin: 0 3px;
+        flex-shrink: 0;
     }
 
     .caret {

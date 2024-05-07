@@ -2,6 +2,7 @@ import type MnfArchive from '$lib/mnf/MnfArchive';
 import type { ExtractFilesProgress } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import MnfReader from '$lib/mnf/MnfReader';
+import fuzzysort from 'fuzzysort';
 import type { Metadata } from 'tauri-plugin-fs-extra-api';
 import type {
     BackgroundExtractFilesMessage,
@@ -12,11 +13,13 @@ import type {
     BackgroundMessage,
     BackgroundReadMnfArchiveMessage,
     BackgroundResolvePathMessage,
+    BackgroundSearchFilesMessage,
     BackgroundWorkerInitMessage
 } from './BackgroundMessage';
 import BackgroundMessageTransceiver from './BackgroundMessageTransceiver';
 import { BackgroundMessageType } from './BackgroundMessageType';
 import type { BackgroundWorkerConfig } from './BackgroundWorkerConfig';
+import type FileSearchEntry from '$lib/FileSearchEntry';
 
 export default class BackgroundWorker {
     private static instance: BackgroundWorker;
@@ -63,6 +66,9 @@ export default class BackgroundWorker {
                 break;
             case BackgroundMessageType.EXTRACT_FILES:
                 this.onExtractFiles(message);
+                break;
+            case BackgroundMessageType.SEARCH_FILES:
+                this.onSearchFiles(message);
                 break;
             default:
                 this.transceiver.onMessage(message);
@@ -167,6 +173,32 @@ export default class BackgroundWorker {
         } catch (error) {
             console.warn('Failed to extract files:', error);
             throw error;
+        }
+    }
+
+    private onSearchFiles(message: BackgroundMessage) {
+        const data = message as BackgroundSearchFilesMessage;
+        try {
+            const searchEntries: FileSearchEntry[] = [];
+            this.archives.forEach((archive) => {
+                archive.mnfEntries.forEach((entry) => {
+                    if (entry.fileName)
+                        searchEntries.push({
+                            archive: archive.path,
+                            file: entry.fileName
+                        });
+                });
+            });
+
+            const result = fuzzysort.go(data.searchTerm, searchEntries, {
+                keys: ['file'],
+                limit: 10000,
+                threshold: -10000
+            });
+            this.transceiver.sendSuccessResponse(message, result);
+        } catch (error) {
+            console.warn('Failed to search files:', error);
+            this.transceiver.sendErrorResponse(message, error);
         }
     }
 

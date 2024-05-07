@@ -15,7 +15,9 @@
     },
     "dependencies": {
         "@ionic/core": "^8.1.0",
+        "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@tauri-apps/api": "^1.5.4",
+        "fuzzysort": "^2.0.4",
         "highlight.js": "^11.9.0",
         "ionic-svelte": "^0.5.82",
         "ionicons": "^7.3.1",
