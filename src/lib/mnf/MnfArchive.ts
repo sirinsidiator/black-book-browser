@@ -127,7 +127,7 @@ export default class MnfArchive {
         const total = request.files.length;
         const targetFolder = await resolve(request.targetFolder);
         const activeJobs: Set<Promise<void>> = new Set();
-        const MAX_CONCURRENT = 10;
+        const MAX_CONCURRENT = 200;
         for (let i = 0; i < total; ++i) {
             const file = request.files[i];
             const fileEntry = this.mnfEntries.get(file.fileNumber);

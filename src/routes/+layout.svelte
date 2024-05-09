@@ -1,5 +1,4 @@
 <script lang="ts">
-    import patreonIcon from '$lib/images/patreon.svg';
     import { setupIonicBase } from 'ionic-svelte';
     /* Import all components - or do partial loading - see below */
     import 'ionic-svelte/components/all';
@@ -20,10 +19,9 @@
     import '@ionic/core/css/text-transformation.css';
     /* Theme variables */
     import '@ionic/core/css/palettes/dark.always.css';
-    import { fileTrayFullOutline, searchOutline } from 'ionicons/icons';
     import '../theme/variables.css';
-    import { page } from '$app/stores';
-    // import type { LayoutData } from './$types';
+    /* Import the main menu */
+    import MainMenu from '$lib/frontend/MainMenu.svelte';
 
     /* Call Ionic's setup routine */
     setupIonicBase();
@@ -61,26 +59,7 @@
 </script>
 
 <ion-app>
-    <ion-buttons>
-        <ion-button href="/" class:selected={$page.route.id === '/'}>
-            <div slot="icon-only">
-                <ion-icon icon={fileTrayFullOutline} />
-                <div class="label">browse</div>
-            </div></ion-button
-        >
-        <ion-button href="/search" class:selected={$page.route.id === '/search'}>
-            <div slot="icon-only">
-                <ion-icon icon={searchOutline} />
-                <div class="label">search</div>
-            </div>
-        </ion-button>
-        <ion-button href="/patrons" class:selected={$page.route.id === '/patrons'}>
-            <div slot="icon-only">
-                <ion-icon icon={patreonIcon} />
-                <div class="label">patrons</div>
-            </div>
-        </ion-button>
-    </ion-buttons>
+    <MainMenu />
     <ion-content>
         <slot />
     </ion-content>
@@ -91,32 +70,6 @@
         scrollbar-color: var(--ion-color-medium) transparent;
         flex-direction: row;
         --main-menu-width: 70px;
-    }
-
-    ion-buttons {
-        width: var(--main-menu-width);
-        height: 100vh;
-        flex-direction: column;
-        background-color: var(--ion-background-color-step-100);
-    }
-
-    ion-button {
-        width: 60px !important;
-        height: 60px !important;
-        font-size: 0.6em;
-        color: var(--ion-color-medium);
-    }
-
-    ion-button.selected {
-        color: var(--ion-color-primary);
-    }
-
-    ion-icon {
-        font-size: 2.5em;
-    }
-
-    .label {
-        margin-top: 3px;
     }
 
     ion-content {

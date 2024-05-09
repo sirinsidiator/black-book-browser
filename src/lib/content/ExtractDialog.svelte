@@ -9,7 +9,7 @@
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
     import { formatFileSize } from '$lib/util/FileUtil';
     import type { InputChangeEventDetail } from '@ionic/core';
-    import { open } from '@tauri-apps/api/dialog';
+    import { open } from '@tauri-apps/plugin-dialog';
     import { closeOutline } from 'ionicons/icons';
     import { get } from 'svelte/store';
 

@@ -1,67 +1,48 @@
 {
-    "build": {
-        "beforeDevCommand": "npm run dev",
-        "beforeBuildCommand": "npm run build",
-        "devPath": "http://localhost:1420",
-        "distDir": "../build",
-        "withGlobalTauri": false
-    },
-    "package": {
-        "productName": "bbb",
-        "version": "4.0.0"
-    },
-    "tauri": {
-        "allowlist": {
-            "all": false,
-            "shell": {
-                "all": false,
-                "open": true
-            },
-            "dialog": {
-                "open": true
-            },
-            "fs": {
-                "readDir": true,
-                "readFile": true,
-                "scope": [
-                    "**"
-                ]
-            },
-            "path": {
-                "all": true
-            }
-        },
-        "bundle": {
-            "active": false,
-            "targets": "all",
-            "identifier": "at.insidi.black-book-browser",
-            "publisher": "sirinsidiator",
-            "copyright": "sirinsidiator",
-            "category": "DeveloperTool",
-            "shortDescription": "Black Book Browser - Elder Scrolls Online Game Archive Viewer",
-            "icon": [
-                "icons/32x32.png",
-                "icons/128x128.png",
-                "icons/128x128@2x.png",
-                "icons/icon.icns",
-                "icons/icon.ico"
-            ]
-        },
-        "security": {
-            "csp": {
-                "default-src": "'none'",
-                "style-src": "'self'",
-                "connect-src": "inflate: https://inflate.localhost read-partial-file: https://read-partial-file.localhost decompress: https://decompress.localhost"
-            }
-        },
-        "windows": [
-            {
-                "fullscreen": false,
-                "resizable": true,
-                "title": "Black Book Browser",
-                "width": 1600,
-                "height": 800
-            }
-        ]
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../build",
+    "devUrl": "http://localhost:1420"
+  },
+  "bundle": {
+    "active": false,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "sirinsidiator",
+    "copyright": "sirinsidiator",
+    "category": "DeveloperTool",
+    "shortDescription": "Black Book Browser - Elder Scrolls Online Game Archive Viewer"
+  },
+  "productName": "bbb",
+  "version": "4.0.0",
+  "identifier": "at.insidi.black-book-browser",
+  "plugins": {},
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "Black Book Browser",
+        "width": 1600,
+        "height": 800
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'none'",
+        "img-src": "'self' data:",
+        "style-src": "'self' 'unsafe-inline'",
+        "worker-src": "'self'",
+        "connect-src": "bbb: https://bbb.localhost ipc: http://ipc.localhost data:"
+      }
     }
+  }
 }

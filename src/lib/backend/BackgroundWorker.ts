@@ -1,9 +1,10 @@
+import type FileSearchEntry from '$lib/FileSearchEntry';
 import type MnfArchive from '$lib/mnf/MnfArchive';
 import type { ExtractFilesProgress } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import MnfReader from '$lib/mnf/MnfReader';
+import type { FileInfo } from '@tauri-apps/plugin-fs';
 import fuzzysort from 'fuzzysort';
-import type { Metadata } from 'tauri-plugin-fs-extra-api';
 import type {
     BackgroundExtractFilesMessage,
     BackgroundGetBaseNameMessage,
@@ -19,7 +20,6 @@ import type {
 import BackgroundMessageTransceiver from './BackgroundMessageTransceiver';
 import { BackgroundMessageType } from './BackgroundMessageType';
 import type { BackgroundWorkerConfig } from './BackgroundWorkerConfig';
-import type FileSearchEntry from '$lib/FileSearchEntry';
 
 export default class BackgroundWorker {
     private static instance: BackgroundWorker;
@@ -202,11 +202,11 @@ export default class BackgroundWorker {
         }
     }
 
-    public async getFileMetadata(path: string): Promise<Metadata> {
+    public async getFileMetadata(path: string): Promise<FileInfo> {
         return this.transceiver.sendMessage({
             type: BackgroundMessageType.GET_FILE_METADATA,
             filePath: path
-        } as BackgroundGetFileMetaDataMessage) as Promise<Metadata>;
+        } as BackgroundGetFileMetaDataMessage) as Promise<FileInfo>;
     }
 
     public async getBasename(path: string, ext?: string): Promise<string> {

@@ -1,5 +1,5 @@
 fn main() {
-    cxx_build::bridge("src/main.rs")
+    cxx_build::bridge("src/bbb.rs")
         .include("include")
         .file("src/kraken.cpp")
         .file("src/bitknit.cpp")

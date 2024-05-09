@@ -1,6 +1,6 @@
 <script lang="ts">
     import FileTree from '$lib/tree/FileTree.svelte';
-    import { open } from '@tauri-apps/api/dialog';
+    import { open } from '@tauri-apps/plugin-dialog';
     import { add } from 'ionicons/icons';
     import type StateManager from './StateManager';
     import FileTreeEntryData from './tree/FileTreeEntryData';

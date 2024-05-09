@@ -21,6 +21,7 @@ import {
 } from './BackgroundMessage';
 import BackgroundMessageTransceiver from './BackgroundMessageTransceiver';
 import { BackgroundMessageType } from './BackgroundMessageType';
+import workerUrl from './worker?worker&url';
 
 export default class BackgroundService {
     private static instance: BackgroundService;
@@ -41,7 +42,7 @@ export default class BackgroundService {
 
     private constructor() {
         console.log('creating background worker...');
-        this.backgroundWorker = new window.Worker(new URL('./worker.ts', import.meta.url), {
+        this.backgroundWorker = new window.Worker(workerUrl, {
             type: 'module'
         });
         this.transceiver = new BackgroundMessageTransceiver(this.backgroundWorker);

@@ -1,53 +1,45 @@
-import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { metadata, type Metadata } from 'tauri-plugin-fs-extra-api';
+import { convertFileSrc } from '@tauri-apps/api/core';
+import { basename, desktopDir, dirname, resolve } from '@tauri-apps/api/path';
+import { stat, type FileInfo } from '@tauri-apps/plugin-fs';
 import BaseTauriHelper from './BaseTauriHelper';
 
 export default class ForegroundTauriHelper extends BaseTauriHelper {
     public getInflateUrl() {
-        return convertFileSrc('', 'inflate');
+        return convertFileSrc('inflate', 'bbb');
     }
 
     public getReadPartialFileUrl() {
-        return convertFileSrc('', 'read-partial-file');
+        return convertFileSrc('read-partial-file', 'bbb');
     }
 
     public getDecompressUrl() {
-        return convertFileSrc('', 'decompress');
+        return convertFileSrc('decompress', 'bbb');
     }
 
     public getExtractUrl() {
-        return convertFileSrc('', 'extract-file');
+        return convertFileSrc('extract-file', 'bbb');
     }
 
-    public async getFileMetadata(path: string): Promise<Metadata> {
-        return metadata(path);
-    }
-
-    private async getTauriPathModule() {
-        // https://github.com/tauri-apps/tauri/issues/5518
-        return import('@tauri-apps/api/path');
+    public async getFileMetadata(path: string): Promise<FileInfo> {
+        return stat(path);
     }
 
     public async getBasename(path: string, ext?: string): Promise<string> {
-        const tauriPath = await this.getTauriPathModule();
-        return tauriPath.basename(path, ext);
+        return basename(path, ext);
     }
 
     public async getDirname(path: string): Promise<string> {
-        const tauriPath = await this.getTauriPathModule();
-        return tauriPath.dirname(path);
+        return dirname(path);
     }
 
     public async resolve(...paths: string[]): Promise<string> {
-        const tauriPath = await this.getTauriPathModule();
-        return tauriPath.resolve(...paths);
+        return resolve(...paths);
     }
 
     public async getExtractionTargetFolder(): Promise<string> {
         const folder = localStorage.getItem('extract-target-folder');
         if (!folder) {
-            const path = await this.getTauriPathModule();
-            return path.desktopDir();
+            return desktopDir();
         }
         return folder;
     }

@@ -1,4 +1,5 @@
-import { readDir, readTextFile, type FileEntry } from '@tauri-apps/api/fs';
+import { invoke } from '@tauri-apps/api/core';
+import { readTextFile } from '@tauri-apps/plugin-fs';
 import { get, writable, type Writable } from 'svelte/store';
 import type FileSearchEntry from './FileSearchEntry';
 import { GameInstallEntry } from './GameInstallEntry';
@@ -102,23 +103,7 @@ export default class GameInstallManager {
     }
 
     async findMnfFiles(path: string): Promise<string[]> {
-        const mnfList: string[] = [];
-        const files = await readDir(path, {
-            recursive: true
-        });
-        this.filterMnfFiles(files, mnfList);
-        return mnfList;
-    }
-
-    private filterMnfFiles(files: FileEntry[], mnfList: string[], depth = 0) {
-        if (depth > 4) return;
-        for (const file of files) {
-            if (file.children) {
-                this.filterMnfFiles(file.children, mnfList, depth + 1);
-            } else if (file.name?.endsWith('.mnf')) {
-                mnfList.push(file.path);
-            }
-        }
+        return invoke('find_mnf_files_in_dir', { path });
     }
 
     async findGameVersion(path: string): Promise<GameVersionData> {

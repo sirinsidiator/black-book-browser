@@ -11,11 +11,13 @@ edition = "2021"
 
 [build-dependencies]
 cxx-build = "1.0.121"
-tauri-build = { version = "1.5.1", features = [] }
+tauri-build = { version = "2.0.0-beta", features = [] }
 
 [dependencies]
-tauri = { version = "1.6.2", features = ["shell-open", "dialog-open", "fs-read-dir", "fs-read-file", "path-all"] }
-tauri-plugin-fs-extra = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri = { version = "2.0.0-beta", features = [] }
+tauri-plugin-fs = "2.0.0-beta"
+tauri-plugin-dialog = "2.0.0-beta"
+tauri-plugin-shell = "2.0.0-beta"
 serde = { version = "1.0.199", features = ["derive"] }
 serde_json = "1.0.116"
 zune-inflate = "0.2.54"

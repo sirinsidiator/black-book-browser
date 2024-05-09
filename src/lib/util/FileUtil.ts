@@ -119,9 +119,7 @@ export async function readPartialFile(
     const response = await fetch(url, {
         method: 'GET',
         headers: {
-            path: path,
-            offset: offset.toString(),
-            length: length.toString()
+            params: JSON.stringify({ path, offset, length })
         }
     });
     if (!response.ok) {
@@ -139,6 +137,7 @@ export async function extractFile(
     decompress: boolean
 ): Promise<boolean> {
     const named = entry.data.named;
+    const archivePath = archiveFile.path;
     const offset = named['offset'].value as number;
     const compressedSize = named['compressedSize'].value as number;
     const fileSize = named['fileSize'].value as number;
@@ -147,21 +146,21 @@ export async function extractFile(
     const response = await fetch(url, {
         method: 'GET',
         headers: {
-            'target-path': targetPath,
-            'archive-path': archiveFile.path,
-            'compressed-size': compressedSize.toString(),
-            offset: offset.toString(),
-            'file-size': fileSize.toString(),
-            'compression-type': compressionType.toString()
+            params: JSON.stringify({
+                targetPath,
+                archivePath,
+                offset,
+                compressedSize,
+                fileSize,
+                compressionType
+            })
         }
     });
     if (!response.ok) {
         const error = await response.text();
         throw new Error(error);
     }
-    const content = await response.arrayBuffer();
-    const result = new Uint8Array(content);
-    return result[0] !== 0;
+    return true;
 }
 
 export async function decompress(
@@ -175,10 +174,12 @@ export async function decompress(
     const response = await fetch(url, {
         method: 'GET',
         headers: {
-            path: path,
-            offset: offset.toString(),
-            'compressed-size': compressedSize.toString(),
-            'file-size': fileSize.toString()
+            params: JSON.stringify({
+                path,
+                offset,
+                compressedSize,
+                fileSize
+            })
         }
     });
     if (!response.ok) {

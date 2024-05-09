@@ -15,12 +15,16 @@ const config = {
         }),
         typescript: {
             config: (tsconfig) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 tsconfig.exclude.push('../src-tauri/**');
                 return tsconfig;
             }
         }
+    },
+
+    onwarn: (warning, handler) => {
+        if (!warning.code.startsWith('a11y-')) {
+            handler(warning);
+        }
     }
 };
-
 export default config;
