@@ -1,3 +1,5 @@
+import type FileSearchEntry from '$lib/FileSearchEntry.js';
+import fuzzysort from 'fuzzysort';
 import type { FieldData } from '../util/BufferReader.js';
 import BufferReader from '../util/BufferReader.js';
 import {
@@ -43,7 +45,7 @@ export default class MnfArchive {
     mnfEntries: Map<number, MnfEntry>;
     fileTableEntry?: MnfEntry;
     fileTable?: ZOSFileTable | null;
-    // searchHelper: SearchHelper;
+    private searchEntries?: FileSearchEntry[];
 
     constructor(
         public readonly path: string,
@@ -198,9 +200,22 @@ export default class MnfArchive {
         } else {
             console.warn('no file table detected in', this.path);
         }
+    }
 
-        // this.mnfEntries.forEach((entry: MnfEntry) => {
-        //     this.searchHelper.addEntry(entry);
-        // });
+    getSearchEntries(): FileSearchEntry[] {
+        if (!this.searchEntries) {
+            const searchEntries: FileSearchEntry[] = [];
+            this.mnfEntries.forEach((entry: MnfEntry) => {
+                if (entry.fileName) {
+                    searchEntries.push({
+                        archive: this.path,
+                        file: entry.fileName,
+                        data: fuzzysort.prepare(entry.fileName)
+                    });
+                }
+            });
+            this.searchEntries = searchEntries;
+        }
+        return this.searchEntries;
     }
 }

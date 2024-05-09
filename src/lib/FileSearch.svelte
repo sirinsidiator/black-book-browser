@@ -105,7 +105,7 @@
             {#if $searching}
                 Searching...
             {:else}
-                {$searchResults.length.toLocaleString()} results found in {$searchDuration.toLocaleString()}ms
+            found {$searchResults.length.toLocaleString()} results in {$searchDuration.toLocaleString()}ms
             {/if}
         </ion-chip>
     {/if}

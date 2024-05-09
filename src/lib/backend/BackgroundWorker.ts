@@ -179,19 +179,13 @@ export default class BackgroundWorker {
     private onSearchFiles(message: BackgroundMessage) {
         const data = message as BackgroundSearchFilesMessage;
         try {
-            const searchEntries: FileSearchEntry[] = [];
+            let searchEntries: FileSearchEntry[] = [];
             this.archives.forEach((archive) => {
-                archive.mnfEntries.forEach((entry) => {
-                    if (entry.fileName)
-                        searchEntries.push({
-                            archive: archive.path,
-                            file: entry.fileName
-                        });
-                });
+                searchEntries = searchEntries.concat(archive.getSearchEntries());
             });
 
             const result = fuzzysort.go(data.searchTerm, searchEntries, {
-                keys: ['file'],
+                keys: ['data'],
                 limit: 10000,
                 threshold: -10000
             });
