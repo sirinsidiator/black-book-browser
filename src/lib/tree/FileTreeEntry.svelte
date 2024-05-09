@@ -6,7 +6,6 @@
 
     export let data: FileTreeEntryData<FileTreeEntryDataProvider>;
     export let selected: FileTreeEntryData<FileTreeEntryDataProvider>;
-    export let level = 0;
     export let checkable = false;
 
     $: opened = data.opened;
@@ -14,11 +13,11 @@
     $: indeterminate = data.indeterminate;
     $: busy = data.busy;
     $: failed = data.failed;
-    $: children = data.children;
     $: hasChildren = data.hasChildren;
 
     async function onToggleOpen() {
         await data.toggleOpen();
+        dispatch('refresh');
     }
 
     function onToggleChecked() {
@@ -32,7 +31,7 @@
     }
 </script>
 
-<div class="entry" style="--level: {level}">
+<div class="entry" style="--level: {data.level}">
     <!-- eslint-disable-next-line svelte/valid-compile -->
     <ion-button
         class="caret"
@@ -77,28 +76,12 @@
     </ion-button>
 </div>
 
-{#if $hasChildren}
-    <div class="children" class:open={$opened}>
-        {#if !$busy}
-            {#each $children as child}
-                <svelte:self
-                    data={child}
-                    level={level + 1}
-                    {checkable}
-                    {selected}
-                    on:select
-                    on:change
-                />
-            {/each}
-        {/if}
-    </div>
-{/if}
-
 <style>
     .entry {
         display: flex;
         align-items: center;
         padding-left: calc(var(--level) * 1.2em);
+        height: 27px;
     }
 
     ion-text {
@@ -144,16 +127,5 @@
 
     .content.selected {
         background-color: var(--ion-color-light-tint);
-    }
-
-    .children {
-        max-height: 0;
-        transition: max-height 0.2s ease-in-out;
-        overflow: hidden;
-        flex: 0 0 auto;
-    }
-
-    .children.open {
-        max-height: max-content;
     }
 </style>

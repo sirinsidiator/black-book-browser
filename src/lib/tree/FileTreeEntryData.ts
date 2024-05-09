@@ -15,7 +15,7 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     private _parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
     private firstOpen = true;
 
-    constructor(public readonly data: T) {
+    constructor(public readonly data: T, public readonly level = 0) {
         this.hasChildren.set(data.hasChildren);
     }
 
@@ -42,7 +42,7 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
             this.busy.set(true);
             try {
                 const children = (await this.data.loadChildren()).map((data) => {
-                    const child = new FileTreeEntryData(data);
+                    const child = new FileTreeEntryData(data, this.level + 1);
                     child.setChecked(get(this.checked));
                     child._parent = this;
                     return child;

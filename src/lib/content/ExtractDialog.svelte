@@ -100,7 +100,9 @@
                 (result) => {
                     const duration = performance.now() - startTime;
                     const durationString =
-                        duration < 1000 ? duration + 'ms' : (duration / 1000).toFixed(1) + 's';
+                        duration < 1000
+                            ? duration.toFixed(1) + 'ms'
+                            : (duration / 1000).toFixed(1) + 's';
                     queueAddLogEntry(
                         `Finished extracting ${result.success.toLocaleString()} files in ${durationString}` +
                             (result.failed > 0 ? ` (${result.failed.toLocaleString()} failed)` : '')
@@ -197,7 +199,6 @@
     }
 
     function refreshSummary() {
-        console.log('refreshing summary');
         const root = getRootEntry();
         const selectedFiles = root.getSelectedFiles();
         fileCount = selectedFiles.length;
@@ -237,75 +238,80 @@
         </ion-toolbar>
     </ion-header>
     <ion-content>
-        <ion-card color="light" class:hidden={extracting}>
-            <ion-card-header>
-                <ion-card-title>Options</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-                <ion-item>
-                    <ion-input
-                        label="Extract to"
-                        value={targetFolder}
-                        on:ionChange={onTargetFolderChanged}
-                    />
-                    <!-- eslint-disable-next-line svelte/valid-compile -->
-                    <ion-button slot="end" fill="clear" color="primary" on:click={selectLocation}
-                        >Choose</ion-button
-                    >
-                </ion-item>
-                <ion-item>
-                    <ion-toggle
-                        bind:this={preserveParents}
-                        checked={true}
-                        on:ionChange={onPreserveParentFoldersChanged}
-                        >Preserve parent folders</ion-toggle
-                    >
-                </ion-item>
-                <ion-item>
-                    <ion-toggle
-                        bind:this={decompressFiles}
-                        checked={true}
-                        on:ionChange={onDecompressFilesChanged}>Decompress files</ion-toggle
-                    >
-                </ion-item>
-            </ion-card-content>
-        </ion-card>
+        <div class="inner">
+            <ion-card class="options" color="light" class:hidden={extracting}>
+                <ion-card-header>
+                    <ion-card-title>Options</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                    <ion-item>
+                        <ion-input
+                            label="Extract to"
+                            value={targetFolder}
+                            on:ionChange={onTargetFolderChanged}
+                        />
+                        <!-- eslint-disable-next-line svelte/valid-compile -->
+                        <ion-button
+                            slot="end"
+                            fill="clear"
+                            color="primary"
+                            on:click={selectLocation}>Choose</ion-button
+                        >
+                    </ion-item>
+                    <ion-item>
+                        <ion-toggle
+                            bind:this={preserveParents}
+                            checked={true}
+                            on:ionChange={onPreserveParentFoldersChanged}
+                            >Preserve parent folders</ion-toggle
+                        >
+                    </ion-item>
+                    <ion-item>
+                        <ion-toggle
+                            bind:this={decompressFiles}
+                            checked={true}
+                            on:ionChange={onDecompressFilesChanged}>Decompress files</ion-toggle
+                        >
+                    </ion-item>
+                </ion-card-content>
+            </ion-card>
 
-        <ion-card color="light" class:hidden={extracting}>
-            <ion-card-header>
-                <ion-card-title>Files</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-                {#await entries}
-                    <div class="status">
-                        <p>Loading...</p>
+            <ion-card class="files" color="light" class:hidden={extracting}>
+                <ion-card-header>
+                    <ion-card-title>Files</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                    {#await entries}
+                        <div class="status">
+                            <p>Loading...</p>
+                            <ion-progress-bar type="indeterminate" />
+                        </div>
+                    {:then entries}
+                        <FileTree {entries} checkable={true} on:change={refreshSummary} />
+                    {/await}
+                </ion-card-content>
+            </ion-card>
+
+            <ion-card color="light" class="progress" class:hidden={!extracting}>
+                <ion-card-content>
+                    <div class="extraction-log" bind:this={logContainer}>
+                        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                        <pre>{@html extractionLog}</pre>
+                    </div>
+
+                    {#if extractionProgress && extractionProgress.done > 0}
+                        <div class="progress-text">
+                            {extractionProgress.done.toLocaleString()} / {extractionTotal.toLocaleString()}
+                            files processed
+                        </div>
+                        <ion-progress-bar value={extractionProgress.done / extractionTotal} />
+                    {:else}
+                        <div class="progress-text">starting...</div>
                         <ion-progress-bar type="indeterminate" />
-                    </div>
-                {:then entries}
-                    <FileTree {entries} checkable={true} on:change={refreshSummary} />
-                {/await}
-            </ion-card-content>
-        </ion-card>
-
-        <ion-card color="light" class="progress" class:hidden={!extracting}>
-            <ion-card-content>
-                <div class="extraction-log" bind:this={logContainer}>
-                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                    <pre>{@html extractionLog}</pre>
-                </div>
-
-                {#if extractionProgress && extractionProgress.done > 0}
-                    <div class="progress-text">
-                        {extractionProgress.done.toLocaleString()} / {extractionTotal.toLocaleString()}
-                        files processed
-                    </div>
-                    <ion-progress-bar value={extractionProgress.done / extractionTotal} />
-                {:else}
-                    <div class="progress-text">starting...</div>
-                    <ion-progress-bar type="indeterminate" />
-                {/if}
-            </ion-card-content>
-        </ion-card>
+                    {/if}
+                </ion-card-content>
+            </ion-card>
+        </div>
     </ion-content>
 
     <ion-card>
@@ -315,7 +321,12 @@
                     {fileCount.toLocaleString()} files selected | {formatFileSize(totalSize)}
                 </ion-label>
                 <!-- eslint-disable-next-line svelte/valid-compile -->
-                <ion-button expand="block" color="primary" on:click={doExtract}>extract</ion-button>
+                <ion-button
+                    expand="block"
+                    color="primary"
+                    disabled={fileCount === 0}
+                    on:click={doExtract}>extract</ion-button
+                >
             {:else}
                 <!-- eslint-disable-next-line svelte/valid-compile -->
                 <ion-button
@@ -331,12 +342,37 @@
 
 <style>
     ion-modal {
-        --width: 80vw;
-        --height: 80vh;
+        --width: 60vw;
+        --height: 90vh;
+    }
+
+    .inner {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .options {
+        flex-shrink: 0;
+    }
+
+    .files {
+        flex-grow: 1;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .files ion-card-content {
+        height: calc(100% - 42px);
     }
 
     ion-item {
         --background: none;
+        --min-height: 30px;
+    }
+
+    ion-toggle {
+        --min-height: 30px;
     }
 
     .summary {
