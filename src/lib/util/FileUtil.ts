@@ -1,3 +1,4 @@
+import type { ExtractFilesProgress, ExtractFilesResult } from '$lib/mnf/MnfArchive';
 import type MnfArchiveFile from '$lib/mnf/MnfArchiveFile';
 import type MnfEntry from '$lib/mnf/MnfEntry';
 import TauriHelper from '$lib/tauri/TauriHelper';
@@ -117,10 +118,8 @@ export async function readPartialFile(
 ): Promise<Uint8Array> {
     const url = TauriHelper.getInstance().getReadPartialFileUrl();
     const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            params: JSON.stringify({ path, offset, length })
-        }
+        method: 'POST',
+        body: JSON.stringify({ path, offset, length })
     });
     if (!response.ok) {
         const error = await response.text();
@@ -130,37 +129,45 @@ export async function readPartialFile(
     return new Uint8Array(content);
 }
 
-export async function extractFile(
-    targetPath: string,
-    archiveFile: MnfArchiveFile,
-    entry: MnfEntry,
+export async function extractFiles(
+    files: {
+        target: string;
+        archiveFile: MnfArchiveFile;
+        fileEntry: MnfEntry;
+    }[],
     decompress: boolean
-): Promise<boolean> {
-    const named = entry.data.named;
-    const archivePath = archiveFile.path;
-    const offset = named['offset'].value as number;
-    const compressedSize = named['compressedSize'].value as number;
-    const fileSize = named['fileSize'].value as number;
-    const compressionType = !decompress ? 0 : (named['compressionType'].value as number);
+): Promise<ExtractFilesResult> {
     const url = TauriHelper.getInstance().getExtractUrl();
     const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            params: JSON.stringify({
-                targetPath,
-                archivePath,
-                offset,
-                compressedSize,
-                fileSize,
-                compressionType
-            })
-        }
+        method: 'POST',
+        body: JSON.stringify(
+            files.map((file) => ({
+                targetPath: file.target,
+                archivePath: file.archiveFile.path,
+                offset: file.fileEntry.data.named['offset'].value as number,
+                compressedSize: file.fileEntry.data.named['compressedSize'].value as number,
+                fileSize: file.fileEntry.data.named['fileSize'].value as number,
+                compressionType: !decompress
+                    ? 0
+                    : (file.fileEntry.data.named['compressionType'].value as number)
+            }))
+        )
     });
     if (!response.ok) {
         const error = await response.text();
         throw new Error(error);
     }
-    return true;
+    return response.json() as Promise<ExtractFilesResult>;
+}
+
+export async function getExtractFileProgress(): Promise<ExtractFilesProgress> {
+    const url = TauriHelper.getInstance().getExtractProgressUrl();
+    const response = await fetch(url);
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+    }
+    return response.json() as Promise<ExtractFilesProgress>;
 }
 
 export async function decompress(
@@ -169,18 +176,10 @@ export async function decompress(
     compressedSize: number,
     fileSize: number
 ): Promise<Uint8Array> {
-    console.log('decompressing', path, offset, compressedSize, fileSize);
     const url = TauriHelper.getInstance().getDecompressUrl();
     const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            params: JSON.stringify({
-                path,
-                offset,
-                compressedSize,
-                fileSize
-            })
-        }
+        method: 'POST',
+        body: JSON.stringify({ path, offset, compressedSize, fileSize })
     });
     if (!response.ok) {
         const error = await response.text();

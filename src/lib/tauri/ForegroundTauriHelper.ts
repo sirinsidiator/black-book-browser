@@ -17,7 +17,11 @@ export default class ForegroundTauriHelper extends BaseTauriHelper {
     }
 
     public getExtractUrl() {
-        return convertFileSrc('extract-file', 'bbb');
+        return convertFileSrc('extract-files', 'bbb');
+    }
+
+    public getExtractProgressUrl() {
+        return convertFileSrc('extract-files-progress', 'bbb');
     }
 
     public async getFileMetadata(path: string): Promise<FileInfo> {

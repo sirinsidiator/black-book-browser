@@ -28,6 +28,7 @@
     let pendingLogEntries: string[] = [];
     let logFlushHandle: NodeJS.Timeout | null = null;
     let extractionLog: string = '';
+    let extractionTotal = 0;
     let extractionProgress: ExtractFilesProgress | null = null;
     let extractionDone = false;
 
@@ -49,14 +50,21 @@
         logContainer.scrollTop = logContainer.scrollHeight;
     }
 
-    function queueAddLogEntry(entry: unknown) {
+    function queueAddLogEntry(entry: unknown, isError = false) {
+        let message: string;
         if (entry instanceof Error) {
-            pendingLogEntries.push(entry.message);
+            message = entry.message;
         } else if (typeof entry === 'string') {
-            pendingLogEntries.push(entry);
+            message = entry;
         } else {
-            pendingLogEntries.push(String(entry));
+            message = String(entry);
         }
+
+        if (isError) {
+            message = `<ion-label color="danger">${message}</ion-label>`;
+        }
+
+        pendingLogEntries.push(message);
 
         if (logFlushHandle === null) {
             logFlushHandle = setTimeout(flushLogEntries, 100);
@@ -78,17 +86,15 @@
         extracting = true;
         extractionLog = '';
         extractionProgress = null;
+        extractionTotal = details.files.length;
         extractionDone = false;
-        queueAddLogEntry(`begin extracting ${currentEntry.path} to ${targetFolder}`);
+        queueAddLogEntry(`Begin extracting ${currentEntry.path} to ${targetFolder}`);
         BackgroundService.getInstance()
             .extractFiles(details, (progress) => {
-                extractionProgress = progress;
-                if (progress.error) {
-                    queueAddLogEntry(
-                        'Failed to extract ' + details.files[progress.current].fileName + ':'
-                    );
-                    queueAddLogEntry(progress.error);
+                if (progress.done > 0) {
+                    extractionProgress = progress;
                 }
+                progress.errors.forEach((error) => queueAddLogEntry(error, true));
             })
             .then(
                 (result) => {
@@ -96,13 +102,17 @@
                     const durationString =
                         duration < 1000 ? duration + 'ms' : (duration / 1000).toFixed(1) + 's';
                     queueAddLogEntry(
-                        `finished extracting ${result.success.toLocaleString()} files in ${durationString}` +
+                        `Finished extracting ${result.success.toLocaleString()} files in ${durationString}` +
                             (result.failed > 0 ? ` (${result.failed.toLocaleString()} failed)` : '')
                     );
+                    extractionProgress = {
+                        done: extractionTotal,
+                        errors: []
+                    };
                     console.log('extraction complete', result);
                 },
                 (error) => {
-                    queueAddLogEntry(error);
+                    queueAddLogEntry(error, true);
                     console.error('extraction failed', error);
                 }
             )
@@ -278,24 +288,18 @@
         </ion-card>
 
         <ion-card color="light" class="progress" class:hidden={!extracting}>
-            <ion-card-header>
-                <ion-card-title>Extraction in progress...</ion-card-title>
-            </ion-card-header>
             <ion-card-content>
                 <div class="extraction-log" bind:this={logContainer}>
-                    <pre>{extractionLog}</pre>
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    <pre>{@html extractionLog}</pre>
                 </div>
 
-                {#if extractionProgress}
+                {#if extractionProgress && extractionProgress.done > 0}
                     <div class="progress-text">
-                        {extractionProgress.current.toLocaleString()} / {extractionProgress.total.toLocaleString()}
+                        {extractionProgress.done.toLocaleString()} / {extractionTotal.toLocaleString()}
                         files processed
                     </div>
-                    <ion-progress-bar
-                        value={extractionProgress.current}
-                        buffer={extractionProgress.total}
-                    >
-                    </ion-progress-bar>
+                    <ion-progress-bar value={extractionProgress.done / extractionTotal} />
                 {:else}
                     <div class="progress-text">starting...</div>
                     <ion-progress-bar type="indeterminate" />
@@ -349,11 +353,11 @@
     }
 
     .progress ion-card-content {
-        height: calc(100% - 56px);
+        height: calc(100% - 42px);
     }
 
     .extraction-log {
-        height: calc(100% - 40px);
+        height: 100%;
         overflow-y: auto;
         background-color: var(--ion-background-color);
         padding: 0 10px;

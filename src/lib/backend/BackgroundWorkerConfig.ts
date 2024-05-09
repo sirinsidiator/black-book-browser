@@ -3,4 +3,5 @@ export interface BackgroundWorkerConfig {
     inflateUrl: string;
     decompressUrl: string;
     extractUrl: string;
+    extractProgressUrl: string;
 }

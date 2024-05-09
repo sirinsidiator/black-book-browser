@@ -100,7 +100,8 @@ export default class BackgroundService {
                     readPartialFileUrl: helper.getReadPartialFileUrl(),
                     inflateUrl: helper.getInflateUrl(),
                     decompressUrl: helper.getDecompressUrl(),
-                    extractUrl: helper.getExtractUrl()
+                    extractUrl: helper.getExtractUrl(),
+                    extractProgressUrl: helper.getExtractProgressUrl()
                 }
             } as BackgroundWorkerInitMessage)
             .catch((error) => {

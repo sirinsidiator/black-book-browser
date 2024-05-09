@@ -4,7 +4,8 @@ import {
     basename,
     decompress,
     dirname,
-    extractFile,
+    extractFiles,
+    getExtractFileProgress,
     getFileSize,
     resolve
 } from '../util/FileUtil.js';
@@ -25,9 +26,8 @@ export interface ExtractFilesRequest {
 }
 
 export interface ExtractFilesProgress {
-    current: number;
-    total: number;
-    error?: unknown;
+    done: number;
+    errors: string[];
 }
 
 export interface ExtractFilesResult {
@@ -122,14 +122,13 @@ export default class MnfArchive {
         request: ExtractFilesRequest,
         onprogress: (progress: ExtractFilesProgress) => void
     ): Promise<ExtractFilesResult> {
-        let success = 0;
-        let failed = 0;
-        const total = request.files.length;
         const targetFolder = await resolve(request.targetFolder);
-        const activeJobs: Set<Promise<void>> = new Set();
-        const MAX_CONCURRENT = 200;
-        for (let i = 0; i < total; ++i) {
-            const file = request.files[i];
+        const files: {
+            target: string;
+            archiveFile: MnfArchiveFile;
+            fileEntry: MnfEntry;
+        }[] = [];
+        for (const file of request.files) {
             const fileEntry = this.mnfEntries.get(file.fileNumber);
             if (!fileEntry) {
                 console.warn('file entry not found for', file);
@@ -142,55 +141,25 @@ export default class MnfArchive {
             const target =
                 targetFolder + '/' + fileEntry.fileName.substring(request.rootPath.length);
             const archiveFile = await this.getArchiveFile(fileEntry);
-
-            if (activeJobs.size >= MAX_CONCURRENT) {
-                await Promise.any(activeJobs);
-            }
-
-            const job = extractFile(target, archiveFile, fileEntry, request.decompressFiles)
-                .then(
-                    (result) => {
-                        if (result) {
-                            success++;
-                        } else {
-                            failed++;
-                        }
-                        onprogress({
-                            current: success + failed,
-                            total
-                        });
-                    },
-                    (error) => {
-                        console.warn(
-                            'Failed to extract file',
-                            fileEntry.fileName,
-                            error,
-                            file,
-                            fileEntry
-                        );
-                        failed++;
-                        onprogress({
-                            current: success + failed,
-                            total,
-                            error
-                        });
-                    }
-                )
-                .finally(() => {
-                    activeJobs.delete(job);
-                });
-            activeJobs.add(job);
+            files.push({ target, archiveFile, fileEntry });
         }
-        await Promise.all(activeJobs);
+
         onprogress({
-            current: request.files.length,
-            total
+            done: 0,
+            errors: []
         });
-        return {
-            success,
-            failed,
-            total: request.files.length
-        };
+        const handle = setInterval(() => {
+            getExtractFileProgress().then((progress) => {
+                onprogress(progress);
+            }, console.error);
+        }, 200);
+        const result = await extractFiles(files, request.decompressFiles);
+        clearInterval(handle);
+
+        // make sure we got all errors
+        const progress = await getExtractFileProgress();
+        onprogress(progress);
+        return result;
     }
 
     async finalize() {

@@ -5,6 +5,7 @@ export default abstract class BaseTauriHelper {
     public abstract getReadPartialFileUrl(): string;
     public abstract getDecompressUrl(): string;
     public abstract getExtractUrl(): string;
+    public abstract getExtractProgressUrl(): string;
     public abstract getFileMetadata(path: string): Promise<FileInfo>;
     public abstract getBasename(path: string, ext?: string): Promise<string>;
     public abstract getDirname(path: string): Promise<string>;

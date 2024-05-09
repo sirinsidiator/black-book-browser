@@ -1,7 +1,10 @@
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 use tauri::http;
+use work_queue::{LocalQueue, Queue};
 use zune_inflate::DeflateDecoder;
 
 #[cxx::bridge]
@@ -176,54 +179,133 @@ pub fn build_options_response() -> Result<http::Response<Vec<u8>>, http::Error> 
     build_basic_response(0).status(200).body(vec![])
 }
 
-// fn get_header_as_string<'a>(req: &'a http::Request, key: &'a str) -> Result<&'a str, String> {
-//     let header = req.headers().get(key);
-//     if header.is_none() {
-//         return Err(format!("Header {:?} not found", key));
-//     }
-//     let header = header.unwrap().to_str();
-//     if header.is_err() {
-//         return Err(format!("Header {:?} not found", key));
-//     }
-//     return Ok(header.unwrap());
-// }
-
-// fn get_header_as_number(req: &http::Request, key: &str) -> Result<usize, String> {
-//     let header = req.headers().get(key);
-//     if header.is_none() {
-//         return Err(format!("Header {:?} not found", key));
-//     }
-//     let header = header.unwrap().to_str();
-//     if header.is_err() {
-//         return Err(format!("Header {:?} not found", key));
-//     }
-//     let header = header.unwrap();
-//     let header = header.parse::<usize>();
-//     if header.is_err() {
-//         return Err(format!("Header {:?} not found", key));
-//     }
-//     return Ok(header.unwrap());
-// }
-
 fn get_params_from_request(req: http::Request<Vec<u8>>) -> Result<serde_json::Value, String> {
-    let params = req.headers().get("params");
-    if params.is_none() {
-        return Err("Error: Header 'params' not found".to_string());
-    }
-    let params = params.unwrap().to_str();
+    let params = req.body().to_vec();
+    let params = serde_json::from_slice(&params);
     if params.is_err() {
-        return Err("Error: Header 'params' not found".to_string());
+        return Err(format!(
+            "Error: Failed to parse JSON: {:?}",
+            params.unwrap_err()
+        ));
     }
-    let params = params.unwrap();
-    let params = serde_json::from_str(params);
-    if params.is_err() {
-        return Err("Error: Failed to parse 'params' as JSON".to_string());
-    }
+
     return Ok(params.unwrap());
+}
+
+struct Task(Box<dyn Fn(&mut LocalQueue<Task>, &mut LocalExtractionProgress) + Send>);
+
+pub struct ExtractionProgress {
+    pub(crate) done: Arc<AtomicUsize>,
+    pub(crate) errors: Arc<Mutex<Vec<String>>>,
+    pub(crate) successes: Arc<AtomicUsize>,
+    pub(crate) failures: Arc<AtomicUsize>,
+}
+
+impl ExtractionProgress {
+    pub(crate) fn clone(&self) -> ExtractionProgress {
+        ExtractionProgress {
+            done: Arc::clone(&self.done),
+            errors: Arc::clone(&self.errors),
+            successes: Arc::clone(&self.successes),
+            failures: Arc::clone(&self.failures),
+        }
+    }
+}
+
+struct LocalExtractionProgress {
+    done: usize,
+    successes: usize,
+    failures: usize,
+}
+
+fn extract_files_parallel(files: &Vec<serde_json::Value>, progress: ExtractionProgress) {
+    let threads = num_cpus::get();
+    let queue: Queue<Task> = Queue::new(threads, 16);
+
+    for file in files {
+        let target_path = file["targetPath"].as_str().unwrap().to_owned();
+        let archive_path = file["archivePath"].as_str().unwrap().to_owned();
+        let offset = file["offset"].as_u64().unwrap() as usize;
+        let compressed_size = file["compressedSize"].as_u64().unwrap() as usize;
+        let file_size = file["fileSize"].as_u64().unwrap() as usize;
+        let compression_type = file["compressionType"].as_u64().unwrap() as u8;
+        let progress = progress.clone();
+
+        queue.push(Task(Box::new(
+            move |_local: &mut LocalQueue<Task>, local_progress: &mut LocalExtractionProgress| {
+                match extract_file(
+                    &target_path,
+                    &archive_path,
+                    offset,
+                    compressed_size,
+                    file_size,
+                    compression_type,
+                ) {
+                    Ok(_) => {
+                        local_progress.successes += 1;
+                    }
+                    Err(err) => {
+                        local_progress.failures += 1;
+                        progress
+                            .errors
+                            .lock()
+                            .unwrap()
+                            .push(format!("Failed to extract {:?}: {:?}", target_path, err));
+                    }
+                }
+                local_progress.done += 1;
+                if local_progress.done > 50 {
+                    progress
+                        .done
+                        .fetch_add(local_progress.done, Ordering::Relaxed);
+                    progress
+                        .successes
+                        .fetch_add(local_progress.successes, Ordering::Relaxed);
+                    progress
+                        .failures
+                        .fetch_add(local_progress.failures, Ordering::Relaxed);
+                    local_progress.done = 0;
+                    local_progress.successes = 0;
+                    local_progress.failures = 0;
+                }
+            },
+        )));
+    }
+
+    let handles: Vec<_> = queue
+    .local_queues()
+    .map(move |mut local_queue| {
+        let progress = progress.clone();
+        std::thread::spawn(move || {
+            let mut local_progress = LocalExtractionProgress {
+                done: 0,
+                successes: 0,
+                failures: 0,
+                };
+                while let Some(task) = local_queue.pop() {
+                    task.0(&mut local_queue, &mut local_progress);
+                }
+                progress
+                    .done
+                    .fetch_add(local_progress.done, Ordering::SeqCst);
+                progress
+                    .successes
+                    .fetch_add(local_progress.successes, Ordering::SeqCst);
+                progress
+                    .failures
+                    .fetch_add(local_progress.failures, Ordering::SeqCst);
+            })
+        })
+        .collect();
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
 }
 
 pub fn handle_ipc_message(
     req: http::Request<Vec<u8>>,
+    extraction_progress: ExtractionProgress,
 ) -> Result<http::Response<Vec<u8>>, http::Error> {
     let result: Result<Vec<u8>, String>;
 
@@ -256,28 +338,37 @@ pub fn handle_ipc_message(
                 return build_error_response(err);
             }
         }
-    } else if path == "/extract-file" {
+    } else if path == "/extract-files" {
+        let progress = extraction_progress.clone();
         match get_params_from_request(req) {
             Ok(params) => {
-                let target_path = params["targetPath"].as_str().unwrap();
-                let archive_path = params["archivePath"].as_str().unwrap();
-                let offset = params["offset"].as_u64().unwrap() as usize;
-                let compressed_size = params["compressedSize"].as_u64().unwrap() as usize;
-                let file_size = params["fileSize"].as_u64().unwrap() as usize;
-                let compression_type = params["compressionType"].as_u64().unwrap() as u8;
-                result = extract_file(
-                    target_path,
-                    archive_path,
-                    offset,
-                    compressed_size,
-                    file_size,
-                    compression_type,
-                );
+                let files = params.as_array().unwrap();
+                extract_files_parallel(files, extraction_progress);
+                let successes = progress.successes.load(Ordering::SeqCst);
+                let failures = progress.failures.load(Ordering::SeqCst);
+                let response = serde_json::json!({
+                    "success": successes,
+                    "failed": failures,
+                    "total": files.len(),
+                });
+                progress.done.store(0, Ordering::SeqCst);
+                progress.successes.store(0, Ordering::SeqCst);
+                progress.failures.store(0, Ordering::SeqCst);
+                result = Ok(response.to_string().into_bytes());
             }
             Err(err) => {
                 return build_error_response(err);
             }
         }
+    } else if path == "/extract-files-progress" {
+        let done = extraction_progress.done.load(Ordering::SeqCst);
+        let mut errors = extraction_progress.errors.lock().unwrap();
+        let response = serde_json::json!({
+            "done": done,
+            "errors": errors.clone(),
+        });
+        errors.clear();
+        result = Ok(response.to_string().into_bytes());
     } else {
         return build_error_response(format!("Error: Unknown path {:?}", path));
     }

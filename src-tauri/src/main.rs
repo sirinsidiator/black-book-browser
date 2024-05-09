@@ -1,6 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::sync::{atomic::AtomicUsize, Arc, Mutex};
+
 #[path = "bbb.rs"]
 mod bbb;
 
@@ -31,12 +33,19 @@ fn scan_for_mnf_files_recursivly(path: &str, mnf_files: &mut Vec<String>, level:
 }
 
 fn main() {
+    let extraction_progress = bbb::ExtractionProgress {
+        done: Arc::new(AtomicUsize::new(0)),
+        errors: Arc::new(Mutex::new(Vec::new())),
+        successes: Arc::new(AtomicUsize::new(0)),
+        failures: Arc::new(AtomicUsize::new(0)),
+    };
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![find_mnf_files_in_dir])
-        .register_asynchronous_uri_scheme_protocol("bbb", |_app, req, res| {
+        .register_asynchronous_uri_scheme_protocol("bbb", move |_app, req, res| {
             if req.method() == "OPTIONS" {
                 match bbb::build_options_response() {
                     Ok(result) => res.respond(result),
@@ -45,8 +54,9 @@ fn main() {
                     }
                 }
             } else {
+                let extraction_progress = extraction_progress.clone();
                 tauri::async_runtime::spawn(async move {
-                    match bbb::handle_ipc_message(req) {
+                    match bbb::handle_ipc_message(req, extraction_progress) {
                         Ok(result) => res.respond(result),
                         Err(err) => {
                             eprintln!("Error: {:?}", err);
