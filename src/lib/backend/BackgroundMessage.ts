@@ -66,6 +66,12 @@ export interface BackgroundSearchFilesMessage extends BackgroundMessage {
     searchTerm: string;
 }
 
+export interface BackgroundGetFolderStatsMessage extends BackgroundMessage {
+    type: BackgroundMessageType.GET_FOLDER_STATS;
+    archive: string;
+    path: string;
+}
+
 export function isBackgroundMessage(message: unknown): message is BackgroundMessage {
     if (typeof message !== 'object' || message === null) {
         return false;

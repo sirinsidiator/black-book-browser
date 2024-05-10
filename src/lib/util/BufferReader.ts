@@ -18,7 +18,6 @@ export interface FieldDefinition {
 export class Field {
     definition: FieldDefinition;
     offset: number;
-    name?: string;
     value?: void | number | number[] | Uint8Array | string;
 
     constructor(definition: FieldDefinition, offset = 0) {
@@ -41,8 +40,7 @@ export class FieldData {
     add(field: Field, prefix = '') {
         this.fields.push(field);
         if (field.definition.name) {
-            field.name = prefix + field.definition.name;
-            this.named[field.name] = field;
+            this.named[prefix + field.definition.name] = field;
         }
     }
 }

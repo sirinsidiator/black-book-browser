@@ -4,20 +4,28 @@ import type MnfArchiveEntry from './MnfArchiveEntry';
 import type { ContentEntry } from './StateManager';
 import type { MnfFileData } from './mnf/MnfFileData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
+import BackgroundService from './backend/BackgroundService';
+
+export interface FolderStats {
+    folderCount: number;
+    compressedSize: number;
+    decompressedSize: number;
+}
 
 export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
     public readonly icon = folder;
     public readonly children: (FileEntry | FolderEntry)[] = [];
-    private files: MnfFileData[] = [];
     private _folderCount = 0;
     private _compressedSize = 0;
     private _decompressedSize = 0;
     private _fileList = '';
     private loaded = false;
+    private statsLoaded = false;
 
     constructor(
         public readonly archive: MnfArchiveEntry,
         public readonly label: string,
+        private readonly files: MnfFileData[],
         public readonly parent?: FolderEntry,
         private level = 1
     ) {}
@@ -38,22 +46,26 @@ export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
         return this.files;
     }
 
-    public setFiles(files: MnfFileData[]) {
-        this.files = files;
-        this._folderCount = this.countFolders();
-        if (this.parent) {
-            this._folderCount--;
+    public async initStats() {
+        if (!this.statsLoaded) {
+            this.statsLoaded = true;
+            const stats = await BackgroundService.getInstance().getFolderStats(
+                this.archive.path,
+                this.path
+            );
+            this._folderCount = stats.folderCount;
+            this._compressedSize = stats.compressedSize;
+            this._decompressedSize = stats.decompressedSize;
+            this._fileList = this.files.map((file) => file.fileName).join('\n');
         }
-        this._compressedSize = files.reduce((size, file) => size + file.compressedSize, 0);
-        this._decompressedSize = files.reduce((size, file) => size + file.size, 0);
-        this._fileList = files.map((file) => file.fileName).join('\n');
+        return this;
     }
 
     public loadChildren(): Promise<FileTreeEntryDataProvider[]> {
         if (!this.loaded) {
             this.loaded = true;
             const folders: { [key: string]: MnfFileData[] } = {};
-            this.files.forEach((file) => {
+            for (const file of this.files) {
                 const parts = file.fileName.split('/');
                 const label = parts[this.level];
                 if (this.level === parts.length - 1) {
@@ -64,13 +76,18 @@ export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
                     }
                     folders[label].push(file);
                 }
-            });
+            }
 
-            Object.keys(folders).forEach((label) => {
-                const folder = new FolderEntry(this.archive, label, this, this.level + 1);
-                folder.setFiles(folders[label]);
+            for (const label in folders) {
+                const folder = new FolderEntry(
+                    this.archive,
+                    label,
+                    folders[label],
+                    this,
+                    this.level + 1
+                );
                 this.children.push(folder);
-            });
+            }
 
             this.children.sort((a, b) => {
                 if (a instanceof FolderEntry && b instanceof FileEntry) {
@@ -84,26 +101,6 @@ export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
         }
 
         return Promise.resolve(this.children);
-    }
-
-    private countFolders(files: MnfFileData[] = this.files, level = 1) {
-        const folders: { [key: string]: MnfFileData[] } = {};
-        files.forEach((file) => {
-            const parts = file.fileName.split('/');
-            const label = parts[level];
-            if (level === parts.length - 1) {
-                return;
-            }
-            if (!folders[label]) {
-                folders[label] = [];
-            }
-            folders[label].push(file);
-        });
-        let count = 0;
-        Object.keys(folders).forEach((label) => {
-            count += 1 + this.countFolders(folders[label], level + 1);
-        });
-        return count;
     }
 
     public get folderCount() {

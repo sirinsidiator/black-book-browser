@@ -40,8 +40,7 @@ export default class MnfArchiveEntry implements FileTreeEntryDataProvider, Conte
             const size = await getFileSize(this.path);
             this.files = await BackgroundService.getInstance().readMnfArchive(this.path, size);
             console.log('Done reading archive: ' + this.path);
-            rootFolder = new FolderEntry(this, '/');
-            rootFolder.setFiles(this.files);
+            rootFolder = new FolderEntry(this, '/', this.files);
             this.gameInstall.addFiles(this.files);
             this.root.set(rootFolder);
             this.loaded.set(true);

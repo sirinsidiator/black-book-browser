@@ -72,14 +72,12 @@ export default class ZOSFileTableEntry {
         this.data.add(indexField);
     }
 
-    readBlock(segment: number, block: number, reader: BufferReader) {
+    readBlock(segment: number, block: number, reader: BufferReader, prefix: string) {
         const definitions = ENTRY_BLOCK_DEFINITIONS[segment][block];
-        reader.readFields(definitions, this.data, 'segment' + segment + 'block' + block);
+        reader.readFields(definitions, this.data, prefix);
     }
 
-    readBlock0(segment: number, reader: BufferReader): number {
-        const prefix = 'segment' + segment + 'block0';
-
+    readBlock0(segment: number, reader: BufferReader, prefix: string): number {
         const rowCountField = new Field(BLOCK1_FIELD_DEFINITION_ROW_COUNT, -1);
         rowCountField.value = 0;
         this.data.add(rowCountField, prefix);

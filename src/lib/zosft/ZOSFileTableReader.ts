@@ -82,57 +82,96 @@ export default class ZOSFileTableReader {
         const reader = new BufferReader(content);
         const fileId = reader.readString(ZOSFT_FILE_ID.length);
         if (fileId === ZOSFT_FILE_ID) {
+            const start1 = performance.now();
             const data = reader.readFields(ZOSFT_HEADER_DEFINITIONS);
             const named = data.named;
             const fileTable = new ZOSFileTable(data);
 
+            const blocks: {
+                namePrefix: string;
+                segment: number;
+                block: number;
+                rows: number;
+                data: Buffer;
+                inflated?: Uint8Array;
+            }[] = [];
             for (let i = 0; i < SEGMENT_COUNT; ++i) {
                 const prefix = 'segment' + i;
                 reader.readFields(ZOSFT_SEGMENT_HEADER_DEFINITIONS, data, prefix);
 
                 const block0Rows = named[prefix + 'block0Rows'].value as number;
                 if (block0Rows > 0) {
-                    const block0 = named[prefix + 'block0'].value as Buffer;
-                    const block0Reader = new BufferReader(await inflate(block0));
-
-                    for (let j = 0; j < block0Rows; j++) {
-                        if (fileTable.get(j)) {
-                            fileTable.get(j).readBlock0(i, block0Reader);
-                        }
-                    }
-                    if (!block0Reader.hasReachedEnd()) {
-                        console.warn('not all data read for block0 in', prefix, block0Reader);
-                    }
+                    const namePrefix = prefix + 'block0';
+                    blocks.push({
+                        namePrefix,
+                        segment: i,
+                        block: 0,
+                        rows: block0Rows,
+                        data: named[namePrefix].value as Buffer
+                    });
                 }
 
                 const block1Rows = named[prefix + 'block1Rows'].value as number;
                 if (block1Rows > 0) {
-                    const block1 = named[prefix + 'block1'].value as Buffer;
-                    const block1Reader = new BufferReader(await inflate(block1));
-                    for (let j = 0; j < block1Rows; j++) {
-                        if (fileTable.get(j)) {
-                            fileTable.get(j).readBlock(i, 1, block1Reader);
-                        }
-                    }
-                    if (!block1Reader.hasReachedEnd()) {
-                        console.warn('not all data read for block1 in', prefix, block1Reader);
-                    }
+                    const namePrefix = prefix + 'block1';
+                    blocks.push({
+                        namePrefix,
+                        segment: i,
+                        block: 1,
+                        rows: block1Rows,
+                        data: named[namePrefix].value as Buffer
+                    });
                 }
 
                 const block2Rows = named[prefix + 'block2Rows'].value as number;
                 if (block2Rows > 0) {
-                    const block2 = named[prefix + 'block2'].value as Buffer;
-                    const block2Reader = new BufferReader(await inflate(block2));
-                    for (let j = 0; j < block2Rows; j++) {
-                        if (fileTable.get(j)) {
-                            fileTable.get(j).readBlock(i, 2, block2Reader);
-                        }
-                    }
-                    if (!block2Reader.hasReachedEnd()) {
-                        console.warn('not all data read for block2 in', prefix, block2Reader);
-                    }
+                    const namePrefix = prefix + 'block2';
+                    blocks.push({
+                        namePrefix,
+                        segment: i,
+                        block: 2,
+                        rows: block2Rows,
+                        data: named[namePrefix].value as Buffer
+                    });
                 }
             }
+            const start2 = performance.now();
+            console.log('block data collected in', start2 - start1);
+
+            await Promise.all(
+                blocks.map((block) =>
+                    inflate(block.data).then((inflated) => {
+                        block.inflated = inflated;
+                    })
+                )
+            );
+
+            const start3 = performance.now();
+            console.log('block data inflated in', start3 - start2);
+
+            for (const block of blocks) {
+                const blockReader = new BufferReader(block.inflated!);
+                for (let j = 0; j < block.rows; j++) {
+                    const file = fileTable.get(j);
+                    if (file) {
+                        if (block.block === 0) {
+                            file.readBlock0(block.segment, blockReader, block.namePrefix);
+                        } else {
+                            file.readBlock(
+                                block.segment,
+                                block.block,
+                                blockReader,
+                                block.namePrefix
+                            );
+                        }
+                    }
+                }
+                if (!blockReader.hasReachedEnd()) {
+                    console.warn('not all data read', block, blockReader);
+                }
+            }
+            const start4 = performance.now();
+            console.log('block data read in', start4 - start3);
 
             reader.readFields(ZOSFT_FILENAME_LIST_DEFINITIONS, data);
             for (let i = 0; i < (data.named['entryCount'].value as number); ++i) {
@@ -143,6 +182,7 @@ export default class ZOSFileTableReader {
             if (eofMarker !== ZOSFT_FILE_ID) {
                 console.warn('incorrect eof marker', eofMarker);
             }
+            console.log('file table read in', performance.now() - start4);
 
             return fileTable;
         } else {

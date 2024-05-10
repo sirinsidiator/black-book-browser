@@ -1,4 +1,5 @@
 import type FileSearchEntry from '$lib/FileSearchEntry';
+import type { FolderStats } from '$lib/FolderEntry';
 import type {
     ExtractFilesProgress,
     ExtractFilesRequest,
@@ -12,6 +13,7 @@ import {
     type BackgroundGetBaseNameMessage,
     type BackgroundGetDirNameMessage,
     type BackgroundGetFileMetaDataMessage,
+    type BackgroundGetFolderStatsMessage,
     type BackgroundLoadFileContentMessage,
     type BackgroundMessage,
     type BackgroundReadMnfArchiveMessage,
@@ -142,5 +144,13 @@ export default class BackgroundService {
             type: BackgroundMessageType.SEARCH_FILES,
             searchTerm: searchTerm
         } as BackgroundSearchFilesMessage) as Promise<Fuzzysort.KeysResults<FileSearchEntry>>;
+    }
+
+    public getFolderStats(archive: string, path: string): Promise<FolderStats> {
+        return this.transceiver.sendMessage({
+            type: BackgroundMessageType.GET_FOLDER_STATS,
+            archive,
+            path
+        } as BackgroundGetFolderStatsMessage) as Promise<FolderStats>;
     }
 }

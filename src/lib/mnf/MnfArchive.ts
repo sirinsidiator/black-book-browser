@@ -17,6 +17,7 @@ import ZOSFileTableReader from '../zosft/ZOSFileTableReader.js';
 import MnfArchiveFile from './MnfArchiveFile.js';
 import type MnfEntry from './MnfEntry.js';
 import type { MnfFileData } from './MnfFileData.js';
+import type { FolderStats } from '$lib/FolderEntry.js';
 
 export interface ExtractFilesRequest {
     archivePath: string;
@@ -56,7 +57,18 @@ export default class MnfArchive {
         this.archiveFiles = new Map();
         this.fileEntries = new Map();
         this.mnfEntries = new Map();
-        // this.searchHelper = new SearchHelper(path);
+    }
+
+    async initArchiveFiles() {
+        const numArchiveFiles = this.data.named['numArchiveFiles'].value as number;
+        for (let i = 0; i < numArchiveFiles; i++) {
+            const prefix = await basename(this.path, '.mnf');
+            const archiveName = prefix + i.toString().padStart(4, '0') + '.dat';
+            const archivePath = await resolve(await dirname(this.path), archiveName);
+            const archivePrefix = await basename(archivePath, '.dat');
+            const size = await getFileSize(archivePath);
+            this.archiveFiles.set(i, new MnfArchiveFile(archivePath, archivePrefix, size));
+        }
     }
 
     async getContent(entry?: MnfEntry): Promise<Uint8Array> {
@@ -64,7 +76,7 @@ export default class MnfArchive {
             throw new Error('No entry provided');
         }
 
-        const archiveFile = await this.getArchiveFile(entry);
+        const archiveFile = this.getArchiveFile(entry);
         const named = entry.data.named;
         const compressionType = named['compressionType'].value as number;
 
@@ -84,21 +96,15 @@ export default class MnfArchive {
         return this.getContent(this.fileTableEntry);
     }
 
-    async getArchiveFile(entry: MnfEntry): Promise<MnfArchiveFile> {
+    getArchiveFile(entry: MnfEntry): MnfArchiveFile {
         const named = entry.data.named;
         const archiveNumber = named['archiveNumber'].value as number;
-        if (!this.archiveFiles.has(archiveNumber)) {
-            const prefix = await basename(this.path, '.mnf');
-            const archiveName = prefix + ('0000' + archiveNumber).substr(-4) + '.dat';
-            const archivePath = await resolve(await dirname(this.path), archiveName);
-            const archivePrefix = await basename(archivePath, '.dat');
-            const size = await getFileSize(archivePath);
-            this.archiveFiles.set(
-                archiveNumber,
-                new MnfArchiveFile(archivePath, archivePrefix, size)
-            );
+        const file = this.archiveFiles.get(archiveNumber);
+        if (!file) {
+            console.warn('Archive file not found for', entry);
+            throw new Error('Archive file not found');
         }
-        return this.archiveFiles.get(archiveNumber) as MnfArchiveFile;
+        return file;
     }
 
     getMnfEntriesForFolder(path: string): MnfEntry[] {
@@ -142,7 +148,7 @@ export default class MnfArchive {
             }
             const target =
                 targetFolder + '/' + fileEntry.fileName.substring(request.rootPath.length);
-            const archiveFile = await this.getArchiveFile(fileEntry);
+            const archiveFile = this.getArchiveFile(fileEntry);
             files.push({ target, archiveFile, fileEntry });
         }
 
@@ -217,5 +223,29 @@ export default class MnfArchive {
             this.searchEntries = searchEntries;
         }
         return this.searchEntries;
+    }
+
+    getFolderStats(folderPath: string): FolderStats {
+        let compressedSize = 0;
+        let decompressedSize = 0;
+        const folders = new Set<string>();
+        for (const file of this.mnfEntries.values()) {
+            if (file.fileName?.startsWith(folderPath)) {
+                compressedSize += file.data.named['compressedSize'].value as number;
+                decompressedSize += file.data.named['fileSize'].value as number;
+                const parts = file.fileName.slice(folderPath.length).split('/');
+                parts.pop(); // Remove file name
+                let path = '';
+                for (const part of parts) {
+                    path += '/' + part;
+                    folders.add(path);
+                }
+            }
+        }
+        return {
+            folderCount: folders.size,
+            compressedSize,
+            decompressedSize
+        };
     }
 }

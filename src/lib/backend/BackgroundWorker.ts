@@ -10,6 +10,7 @@ import type {
     BackgroundGetBaseNameMessage,
     BackgroundGetDirNameMessage,
     BackgroundGetFileMetaDataMessage,
+    BackgroundGetFolderStatsMessage,
     BackgroundLoadFileContentMessage,
     BackgroundMessage,
     BackgroundReadMnfArchiveMessage,
@@ -70,6 +71,9 @@ export default class BackgroundWorker {
             case BackgroundMessageType.SEARCH_FILES:
                 this.onSearchFiles(message);
                 break;
+            case BackgroundMessageType.GET_FOLDER_STATS:
+                this.onFolderStats(message);
+                break;
             default:
                 this.transceiver.onMessage(message);
         }
@@ -91,10 +95,12 @@ export default class BackgroundWorker {
             const path = message.archivePath;
             const size = message.archiveSize;
             console.log('Worker readMnfArchive', path);
+            const start = performance.now();
             const reader = new MnfReader();
             const archive = await reader.read(path, size);
             this.archives.set(path, archive);
-            console.log('Worker readMnfArchive:', archive);
+            const scanned = performance.now();
+            console.log('mnf archive read in', scanned - start, 'ms', archive);
 
             const fileList: MnfFileData[] = [];
             for (const [fileNumber, entry] of archive.mnfEntries) {
@@ -107,6 +113,7 @@ export default class BackgroundWorker {
                 });
             }
             fileList.sort((a, b) => a.fileName.localeCompare(b.fileName));
+            console.log('file list created and sorted in', performance.now() - scanned, 'ms');
             return fileList;
         } catch (error) {
             console.warn('Failed to read archive:', error);
@@ -192,6 +199,21 @@ export default class BackgroundWorker {
             this.transceiver.sendSuccessResponse(message, result);
         } catch (error) {
             console.warn('Failed to search files:', error);
+            this.transceiver.sendErrorResponse(message, error);
+        }
+    }
+
+    private onFolderStats(message: BackgroundMessage) {
+        const data = message as BackgroundGetFolderStatsMessage;
+        try {
+            const archive = this.archives.get(data.archive);
+            if (!archive) {
+                throw new Error('archive not found');
+            }
+            const stats = archive.getFolderStats(data.path);
+            this.transceiver.sendSuccessResponse(message, stats);
+        } catch (error) {
+            console.warn('Failed to get folder stats:', error);
             this.transceiver.sendErrorResponse(message, error);
         }
     }

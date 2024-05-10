@@ -91,17 +91,25 @@ const BLOCK2_FIELD_DEFINITIONS: FieldDefinition[] = [
 async function extractContent(archive: MnfArchive) {
     const named = archive.data.named;
     const fileCount = named['fileCount2'].value as number;
-    named['block0'].value = await inflate(named['block0'].value as Buffer);
-    named['block1'].value = await inflate(named['block1'].value as Buffer);
-    named['block2'].value = await inflate(named['block2'].value as Buffer);
+    const startInflate = performance.now();
+    await Promise.all([
+        inflate(named['block0'].value as Buffer).then((buffer) => (named['block0'].value = buffer)),
+        inflate(named['block1'].value as Buffer).then((buffer) => (named['block1'].value = buffer)),
+        inflate(named['block2'].value as Buffer).then((buffer) => (named['block2'].value = buffer))
+    ]);
+    console.log('headers inflated in', performance.now() - startInflate, 'ms');
+    if (!named['block0'].value || !named['block1'].value || !named['block2'].value) {
+        console.error('Failed to inflate headers', named);
+        return;
+    }
 
     // block0 seems to contain some kind of file id table with 4 bytes width
     // first 3 byte are a unique number and 4th byte is a flag
     // 0x00 or 0x40 (as seen in eso.mnf) seems to indicate removed files
     // 0x80 otherwise for existing files
-    const block0 = new BufferReader(named['block0'].value);
-    const block1 = new BufferReader(named['block1'].value);
-    const block2 = new BufferReader(named['block2'].value);
+    const block0 = new BufferReader(named['block0'].value as Buffer);
+    const block1 = new BufferReader(named['block1'].value as Buffer);
+    const block2 = new BufferReader(named['block2'].value as Buffer);
 
     let skipFlaggedEntries = false;
     let fileTableFileNumber = -1;
@@ -112,6 +120,7 @@ async function extractContent(archive: MnfArchive) {
         skipFlaggedEntries = false;
     } // TODO find a way to do this without hard coded values
 
+    const startCreateFiles = performance.now();
     for (let i = 0; i < fileCount; ++i) {
         const entry = new MnfEntry(archive);
 
@@ -161,7 +170,7 @@ async function extractContent(archive: MnfArchive) {
         const compressedSize = named['compressedSize'].value as number;
         const flags = named['flags'].value as number;
 
-        const archiveFile = await archive.getArchiveFile(entry);
+        const archiveFile = archive.getArchiveFile(entry);
         const prefix = UNMAPPED_DIR + archiveFile.prefix + '/file';
         if (typeField.value === 0x80) {
             entry.fileName = prefix + idField.value + '.dat';
@@ -186,6 +195,7 @@ async function extractContent(archive: MnfArchive) {
             }
         }
     }
+    console.log('files created in', performance.now() - startCreateFiles, 'ms');
 }
 
 export default class MnfReader {
@@ -218,11 +228,15 @@ export default class MnfReader {
 
             const fields = file.readFields(MNF_FIELD_DEFINITIONS);
             const archive = new MnfArchive(path, file, fields);
-            console.log('archive', archive);
+            const beforeInit = performance.now();
+            await archive.initArchiveFiles();
+            const beforeExtract = performance.now();
+            console.log('archive', archive, 'initialized in', beforeExtract - beforeInit, 'ms');
             await extractContent(archive);
-            console.log('extracted', archive);
+            const beforeFinalize = performance.now();
+            console.log('extracted', archive, 'in', beforeFinalize - beforeExtract, 'ms');
             await archive.finalize();
-            console.log('finalized', archive);
+            console.log('finalized', archive, 'in', performance.now() - beforeFinalize, 'ms');
             return archive;
         } catch (err) {
             console.error('Failed to read ' + path, err);

@@ -9,5 +9,6 @@ export enum BackgroundMessageType {
     GET_BASENAME,
     GET_DIRNAME,
     RESOLVE_PATH,
-    SEARCH_FILES
+    SEARCH_FILES,
+    GET_FOLDER_STATS
 }
