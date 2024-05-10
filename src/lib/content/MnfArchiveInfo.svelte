@@ -1,5 +1,7 @@
 <script lang="ts">
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
+    import { dirname } from '$lib/util/FileUtil';
+    import { open } from '@tauri-apps/plugin-shell';
     import {
         archiveOutline,
         downloadOutline,
@@ -8,10 +10,10 @@
         refreshOutline
     } from 'ionicons/icons';
     import CodeBlock from './CodeBlock.svelte';
+    import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
     import FolderDetails from './FolderDetails.svelte';
-    import ContentLayout from './ContentLayout.svelte';
 
     export let archive: MnfArchiveEntry;
 
@@ -35,6 +37,11 @@
         a.download = archivePrefix + folder.path.replaceAll('/', '_') + 'filelist.txt';
         a.click();
     }
+
+    async function explore() {
+        const path = await dirname(archive.path);
+        await open(path);
+    }
 </script>
 
 <ContentLayout hasPreview={$loaded && $root !== null}>
@@ -53,8 +60,15 @@
         {:else}
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-button color="primary" on:click={onLoad} disabled={$busy}>
-                <ion-icon slot="start" icon={refreshOutline} />load</ion-button>
+                <ion-icon slot="start" icon={refreshOutline} />load</ion-button
+            >
         {/if}
+
+        <!-- eslint-disable-next-line svelte/valid-compile -->
+        <ion-button color="primary" on:click={explore}>
+            <ion-icon slot="start" icon={folderOpenOutline} />
+            open folder
+        </ion-button>
     </svelte:fragment>
 
     <svelte:fragment slot="details">

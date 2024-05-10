@@ -8,6 +8,7 @@
         settingsOutline,
         trashBinOutline
     } from 'ionicons/icons';
+    import { open } from '@tauri-apps/plugin-shell';
     import { createEventDispatcher } from 'svelte';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
@@ -19,6 +20,11 @@
     function onRemove() {
         dispatch('remove', gameInstall);
     }
+
+    async function explore() {
+        const path = gameInstall.path;
+        await open(path);
+    }
 </script>
 
 <ContentLayout>
@@ -27,6 +33,12 @@
         <ion-button color="danger" on:click={onRemove}>
             <ion-icon slot="start" icon={trashBinOutline} />
             remove from list
+        </ion-button>
+
+        <!-- eslint-disable-next-line svelte/valid-compile -->
+        <ion-button color="primary" on:click={explore}>
+            <ion-icon slot="start" icon={folderOpenOutline} />
+            open folder
         </ion-button>
     </svelte:fragment>
 
