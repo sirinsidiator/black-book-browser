@@ -1,6 +1,6 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import patreonIcon from '$lib/images/patreon.svg';
+    import patreonIcon from '$lib/assets/patreon.svg';
     import { fileTrayFullOutline, searchOutline } from 'ionicons/icons';
 </script>
 
