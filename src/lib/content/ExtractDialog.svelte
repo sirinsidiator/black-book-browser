@@ -402,6 +402,10 @@
         padding: 0 10px;
     }
 
+    .extraction-log pre {
+        white-space: pre-wrap;
+    }
+
     .progress-text {
         text-align: center;
         margin: 5px;
