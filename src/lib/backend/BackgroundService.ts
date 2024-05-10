@@ -6,18 +6,13 @@ import type {
     ExtractFilesResult
 } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
-import TauriHelper from '$lib/tauri/TauriHelper';
 import {
     isBackgroundMessage,
     type BackgroundExtractFilesMessage,
-    type BackgroundGetBaseNameMessage,
-    type BackgroundGetDirNameMessage,
-    type BackgroundGetFileMetaDataMessage,
     type BackgroundGetFolderStatsMessage,
     type BackgroundLoadFileContentMessage,
     type BackgroundMessage,
     type BackgroundReadMnfArchiveMessage,
-    type BackgroundResolvePathMessage,
     type BackgroundSearchFilesMessage,
     type BackgroundWorkerInitMessage
 } from './BackgroundMessage';
@@ -49,27 +44,6 @@ export default class BackgroundService {
         });
         this.transceiver = new BackgroundMessageTransceiver(this.backgroundWorker);
         this.backgroundWorker.onmessage = this.handleMessage.bind(this);
-
-        this.messageHandlers.set(BackgroundMessageType.GET_FILE_METADATA, async (message) => {
-            const typedMessage = message as BackgroundGetFileMetaDataMessage;
-            return TauriHelper.getInstance().getFileMetadata(typedMessage.filePath);
-        });
-
-        this.messageHandlers.set(BackgroundMessageType.GET_BASENAME, async (message) => {
-            const typedMessage = message as BackgroundGetBaseNameMessage;
-            return TauriHelper.getInstance().getBasename(typedMessage.path, typedMessage.ext);
-        });
-
-        this.messageHandlers.set(BackgroundMessageType.GET_DIRNAME, async (message) => {
-            const typedMessage = message as BackgroundGetDirNameMessage;
-            return TauriHelper.getInstance().getDirname(typedMessage.path);
-        });
-
-        this.messageHandlers.set(BackgroundMessageType.RESOLVE_PATH, async (message) => {
-            const paths = (message as BackgroundResolvePathMessage).paths;
-            return TauriHelper.getInstance().resolve(...paths);
-        });
-
         this.initialize();
     }
 
@@ -94,17 +68,10 @@ export default class BackgroundService {
     }
 
     private initialize() {
-        const helper = TauriHelper.getInstance();
         this.transceiver
             .sendMessage({
                 type: BackgroundMessageType.INIT,
-                config: {
-                    readPartialFileUrl: helper.getReadPartialFileUrl(),
-                    inflateUrl: helper.getInflateUrl(),
-                    decompressUrl: helper.getDecompressUrl(),
-                    extractUrl: helper.getExtractUrl(),
-                    extractProgressUrl: helper.getExtractProgressUrl()
-                }
+                config: {}
             } as BackgroundWorkerInitMessage)
             .catch((error) => {
                 console.error('failed to initialize background worker:', error);

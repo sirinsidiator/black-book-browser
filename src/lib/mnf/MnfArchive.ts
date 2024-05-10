@@ -1,4 +1,5 @@
 import type FileSearchEntry from '$lib/FileSearchEntry.js';
+import type { FolderStats } from '$lib/FolderEntry.js';
 import fuzzysort from 'fuzzysort';
 import type { FieldData } from '../util/BufferReader.js';
 import BufferReader from '../util/BufferReader.js';
@@ -17,7 +18,6 @@ import ZOSFileTableReader from '../zosft/ZOSFileTableReader.js';
 import MnfArchiveFile from './MnfArchiveFile.js';
 import type MnfEntry from './MnfEntry.js';
 import type { MnfFileData } from './MnfFileData.js';
-import type { FolderStats } from '$lib/FolderEntry.js';
 
 export interface ExtractFilesRequest {
     archivePath: string;

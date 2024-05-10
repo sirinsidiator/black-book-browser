@@ -40,27 +40,6 @@ export interface BackgroundExtractFilesMessage extends BackgroundMessage {
     request: ExtractFilesRequest;
 }
 
-export interface BackgroundGetFileMetaDataMessage extends BackgroundMessage {
-    type: BackgroundMessageType.GET_FILE_METADATA;
-    filePath: string;
-}
-
-export interface BackgroundGetBaseNameMessage extends BackgroundMessage {
-    type: BackgroundMessageType.GET_BASENAME;
-    path: string;
-    ext?: string;
-}
-
-export interface BackgroundGetDirNameMessage extends BackgroundMessage {
-    type: BackgroundMessageType.GET_DIRNAME;
-    path: string;
-}
-
-export interface BackgroundResolvePathMessage extends BackgroundMessage {
-    type: BackgroundMessageType.RESOLVE_PATH;
-    paths: string[];
-}
-
 export interface BackgroundSearchFilesMessage extends BackgroundMessage {
     type: BackgroundMessageType.SEARCH_FILES;
     searchTerm: string;

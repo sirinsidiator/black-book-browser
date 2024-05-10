@@ -3,11 +3,14 @@
     import type { FolderEntry } from '$lib/FolderEntry';
     import BackgroundService from '$lib/backend/BackgroundService';
     import type { ExtractFilesProgress, ExtractFilesRequest } from '$lib/mnf/MnfArchive';
-    import TauriHelper from '$lib/tauri/TauriHelper';
     import FileTree from '$lib/tree/FileTree.svelte';
     import FileTreeEntryData from '$lib/tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
-    import { formatFileSize } from '$lib/util/FileUtil';
+    import {
+        formatFileSize,
+        getExtractionTargetFolder,
+        setExtractionTargetFolder
+    } from '$lib/util/FileUtil';
     import type { InputChangeEventDetail } from '@ionic/core';
     import { open } from '@tauri-apps/plugin-dialog';
     import { closeOutline } from 'ionicons/icons';
@@ -153,7 +156,7 @@
     let targetFolder: string;
     async function refresh() {
         entries = updateEntries(target);
-        targetFolder = await TauriHelper.getInstance().getExtractionTargetFolder();
+        targetFolder = await getExtractionTargetFolder();
         extracting = false;
     }
 
@@ -161,7 +164,7 @@
         if (typeof path === 'string') {
             console.log('setting target folder to', path);
             targetFolder = path;
-            TauriHelper.getInstance().setExtractionTargetFolder(path);
+            setExtractionTargetFolder(path);
         }
     }
 
