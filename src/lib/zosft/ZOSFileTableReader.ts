@@ -6,6 +6,8 @@ import ZOSFileTable from './ZOSFileTable.js';
 const ZOSFT_FILE_ID = 'ZOSFT';
 const SEGMENT_COUNT = 3; // seems this is always the case
 
+const ENTRY_COUNT_INDEX = 3;
+
 const ZOSFT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT16 },
     { type: FieldType.UINT32 },
@@ -13,8 +15,14 @@ const ZOSFT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'entryCount' }
 ];
 
-const hasRows = (data: FieldData, prefix: string, fieldName: string) =>
-    ((data.named[prefix + fieldName]?.value as number) ?? 0) > 0;
+const hasRows = (data: FieldData, index: number) => (data.get<number>(index) ?? 0) > 0;
+
+const BLOCK0_ROWS_INDEX = 2;
+const BLOCK1_ROWS_INDEX = 3;
+const BLOCK2_ROWS_INDEX = 4;
+const BLOCK0_DATA_INDEX = 7;
+const BLOCK1_DATA_INDEX = 10;
+const BLOCK2_DATA_INDEX = 13;
 
 const ZOSFT_SEGMENT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT16 },
@@ -25,54 +33,64 @@ const ZOSFT_SEGMENT_HEADER_DEFINITIONS: FieldDefinition[] = [
     {
         type: FieldType.UINT32,
         name: 'block0Size',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK0_ROWS_INDEX)
     },
     {
         type: FieldType.UINT32,
         name: 'block0CompressedSize',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK0_ROWS_INDEX)
     },
     {
         type: FieldType.BINARY,
         name: 'block0',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block0Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK0_ROWS_INDEX)
     },
     {
         type: FieldType.UINT32,
         name: 'block1Size',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK1_ROWS_INDEX)
     },
     {
         type: FieldType.UINT32,
         name: 'block1CompressedSize',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK1_ROWS_INDEX)
     },
     {
         type: FieldType.BINARY,
         name: 'block1',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block1Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK1_ROWS_INDEX)
     },
     {
         type: FieldType.UINT32,
         name: 'block2Size',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK2_ROWS_INDEX)
     },
     {
         type: FieldType.UINT32,
         name: 'block2CompressedSize',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK2_ROWS_INDEX)
     },
     {
         type: FieldType.BINARY,
         name: 'block2',
-        condition: (data, prefix) => hasRows(data, prefix ?? '', 'block2Rows')
+        condition: (data, offset) => hasRows(data, offset + BLOCK2_ROWS_INDEX)
     }
 ];
+
+const FILE_NAME_LIST_INDEX = 1;
 
 const ZOSFT_FILENAME_LIST_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'fileNameListSize' },
     { type: FieldType.STRING, name: 'fileNameList' }
 ];
+
+interface BlockData {
+    segment: number;
+    block: number;
+    rows: number;
+    data: Buffer;
+    inflated?: Uint8Array;
+}
 
 export default class ZOSFileTableReader {
     async read(archive: MnfArchive): Promise<ZOSFileTable | null> {
@@ -83,55 +101,42 @@ export default class ZOSFileTableReader {
         const fileId = reader.readString(ZOSFT_FILE_ID.length);
         if (fileId === ZOSFT_FILE_ID) {
             const start1 = performance.now();
-            const data = reader.readFields(ZOSFT_HEADER_DEFINITIONS);
-            const named = data.named;
-            const fileTable = new ZOSFileTable(data);
+            const data = new FieldData();
+            reader.readFields(ZOSFT_HEADER_DEFINITIONS, data);
+            const entryCount = data.get<number>(ENTRY_COUNT_INDEX);
+            const fileTable = new ZOSFileTable(data, entryCount);
 
-            const blocks: {
-                namePrefix: string;
-                segment: number;
-                block: number;
-                rows: number;
-                data: Buffer;
-                inflated?: Uint8Array;
-            }[] = [];
+            const blocks: BlockData[] = [];
             for (let i = 0; i < SEGMENT_COUNT; ++i) {
-                const prefix = 'segment' + i;
-                reader.readFields(ZOSFT_SEGMENT_HEADER_DEFINITIONS, data, prefix);
+                const offset = reader.readFields(ZOSFT_SEGMENT_HEADER_DEFINITIONS, data);
 
-                const block0Rows = named[prefix + 'block0Rows'].value as number;
+                const block0Rows = data.get<number>(offset + BLOCK0_ROWS_INDEX);
                 if (block0Rows > 0) {
-                    const namePrefix = prefix + 'block0';
                     blocks.push({
-                        namePrefix,
                         segment: i,
                         block: 0,
                         rows: block0Rows,
-                        data: named[namePrefix].value as Buffer
+                        data: data.get<Buffer>(offset + BLOCK0_DATA_INDEX)
                     });
                 }
 
-                const block1Rows = named[prefix + 'block1Rows'].value as number;
+                const block1Rows = data.get<number>(offset + BLOCK1_ROWS_INDEX);
                 if (block1Rows > 0) {
-                    const namePrefix = prefix + 'block1';
                     blocks.push({
-                        namePrefix,
                         segment: i,
                         block: 1,
                         rows: block1Rows,
-                        data: named[namePrefix].value as Buffer
+                        data: data.get<Buffer>(offset + BLOCK1_DATA_INDEX)
                     });
                 }
 
-                const block2Rows = named[prefix + 'block2Rows'].value as number;
+                const block2Rows = data.get<number>(offset + BLOCK2_ROWS_INDEX);
                 if (block2Rows > 0) {
-                    const namePrefix = prefix + 'block2';
                     blocks.push({
-                        namePrefix,
                         segment: i,
                         block: 2,
                         rows: block2Rows,
-                        data: named[namePrefix].value as Buffer
+                        data: data.get<Buffer>(offset + BLOCK2_DATA_INDEX)
                     });
                 }
             }
@@ -153,18 +158,7 @@ export default class ZOSFileTableReader {
                 const blockReader = new BufferReader(block.inflated!);
                 for (let j = 0; j < block.rows; j++) {
                     const file = fileTable.get(j);
-                    if (file) {
-                        if (block.block === 0) {
-                            file.readBlock0(block.segment, blockReader, block.namePrefix);
-                        } else {
-                            file.readBlock(
-                                block.segment,
-                                block.block,
-                                blockReader,
-                                block.namePrefix
-                            );
-                        }
-                    }
+                    file?.readBlock(block.segment, block.block, blockReader);
                 }
                 if (!blockReader.hasReachedEnd()) {
                     console.warn('not all data read', block, blockReader);
@@ -173,9 +167,10 @@ export default class ZOSFileTableReader {
             const start4 = performance.now();
             console.log('block data read in', start4 - start3);
 
-            reader.readFields(ZOSFT_FILENAME_LIST_DEFINITIONS, data);
-            for (let i = 0; i < (data.named['entryCount'].value as number); ++i) {
-                fileTable.get(i).readFileName(named['fileNameList'].value as string);
+            const offset = reader.readFields(ZOSFT_FILENAME_LIST_DEFINITIONS, data);
+            const fileNames = data.get<string>(offset + FILE_NAME_LIST_INDEX);
+            for (let i = 0; i < entryCount; ++i) {
+                fileTable.get(i).readFileName(fileNames);
             }
 
             const eofMarker = reader.readString(ZOSFT_FILE_ID.length);

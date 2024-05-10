@@ -1,8 +1,8 @@
 import type MnfEntry from '../mnf/MnfEntry.js';
 import BufferReader, {
+    Field,
     FieldData,
     FieldType,
-    Field,
     type FieldDefinition
 } from '../util/BufferReader.js';
 
@@ -11,6 +11,8 @@ const BLOCK1_FIELD_DEFINITION_ID: FieldDefinition = { type: FieldType.UINT32, na
 const BLOCK1_FIELD_DEFINITION_TYPE: FieldDefinition = { type: FieldType.UINT8, name: 'type' };
 const BLOCK1_FIELD_DEFINITION_ROW_COUNT: FieldDefinition = { type: FieldType.UINT8, name: 'rows' };
 
+const FILE_NUMBER_INDEX = 0;
+const NAME_OFFSET_INDEX = 1;
 const ENTRY_BLOCK_DEFINITIONS: FieldDefinition[][][] = [
     [
         // segment 0
@@ -63,6 +65,8 @@ export default class ZOSFileTableEntry {
     data: FieldData;
     fileName?: string;
     fileEntry?: MnfEntry;
+    nameOffset?: number;
+    fileNumber?: number;
 
     constructor(index: number) {
         this.data = new FieldData();
@@ -72,49 +76,54 @@ export default class ZOSFileTableEntry {
         this.data.add(indexField);
     }
 
-    readBlock(segment: number, block: number, reader: BufferReader, prefix: string) {
-        const definitions = ENTRY_BLOCK_DEFINITIONS[segment][block];
-        reader.readFields(definitions, this.data, prefix);
-    }
-
-    readBlock0(segment: number, reader: BufferReader, prefix: string): number {
-        const rowCountField = new Field(BLOCK1_FIELD_DEFINITION_ROW_COUNT, -1);
-        rowCountField.value = 0;
-        this.data.add(rowCountField, prefix);
-
-        const idField = new Field(BLOCK1_FIELD_DEFINITION_ID);
-        idField.value = 0;
-        this.data.add(idField, prefix);
-
-        const typeField = new Field(BLOCK1_FIELD_DEFINITION_TYPE, 3);
-        typeField.value = 0;
-        this.data.add(typeField, prefix);
-
-        do {
-            // need to skip empty rows
-            if (!reader.hasReachedEnd()) {
-                rowCountField.value++;
-                const value = reader.readUInt32();
-                idField.value = value & 0xffffff;
-                typeField.value = value >>> 24;
-                if (
-                    !KNOWN_BLOCK1_VALUES[typeField.value] ||
-                    (typeField.value !== 0x80 && idField.value > 0)
-                ) {
-                    console.warn('Unexpected value in', prefix, this);
+    readBlock(segment: number, block: number, reader: BufferReader) {
+        const data = this.data;
+        if (block === 0) {
+            let rowCount = 0;
+            let id = 0;
+            let type = 0;
+            do {
+                // need to skip empty rows
+                if (!reader.hasReachedEnd()) {
+                    rowCount++;
+                    const value = reader.readUInt32();
+                    id = value & 0xffffff;
+                    type = value >>> 24;
+                    if (!KNOWN_BLOCK1_VALUES[type] || (type !== 0x80 && id > 0)) {
+                        console.warn('Unexpected value in segmnet', segment, 'block', block, this);
+                    }
+                } else {
+                    // eso.mnf doesn't seem to have enough entrys that are not 0
+                    id = -1;
+                    type = -1;
+                    break;
                 }
-            } else {
-                // eso.mnf doesn't seem to have enough entrys that are not 0
-                idField.value = -1;
-                typeField.value = -1;
-                break;
+            } while (type === 0);
+
+            const rowCountField = new Field(BLOCK1_FIELD_DEFINITION_ROW_COUNT, -1);
+            rowCountField.value = rowCount;
+            data.add(rowCountField);
+
+            const idField = new Field(BLOCK1_FIELD_DEFINITION_ID);
+            idField.value = id;
+            data.add(idField);
+
+            const typeField = new Field(BLOCK1_FIELD_DEFINITION_TYPE, 3);
+            typeField.value = type;
+            data.add(typeField);
+        } else {
+            const definitions = ENTRY_BLOCK_DEFINITIONS[segment][block];
+            const offset = reader.readFields(definitions, data);
+            if (segment === 0 && block === 2) {
+                this.fileNumber = data.get<number>(offset + FILE_NUMBER_INDEX);
+            } else if (segment === 1 && block === 2) {
+                this.nameOffset = data.get<number>(offset + NAME_OFFSET_INDEX);
             }
-        } while (typeField.value === 0);
-        return rowCountField.value;
+        }
     }
 
     readFileName(fileNameList: string) {
-        const nameOffset = this.data.named['segment1block2nameOffset'].value as number;
+        const nameOffset = this.nameOffset!;
         // beginning in version 10.0.1 the nameOffset is not always aligned correctly for entries in eso.mnf
         let startIndex = nameOffset;
         const endIndex = fileNameList.indexOf('\0', nameOffset);
@@ -125,6 +134,6 @@ export default class ZOSFileTableEntry {
     }
 
     getFileNumber(): number {
-        return this.data.named['segment0block2fileNumber'].value as number;
+        return this.fileNumber!;
     }
 }

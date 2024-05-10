@@ -59,8 +59,7 @@ export default class MnfArchive {
         this.mnfEntries = new Map();
     }
 
-    async initArchiveFiles() {
-        const numArchiveFiles = this.data.named['numArchiveFiles'].value as number;
+    async initArchiveFiles(numArchiveFiles: number) {
         for (let i = 0; i < numArchiveFiles; i++) {
             const prefix = await basename(this.path, '.mnf');
             const archiveName = prefix + i.toString().padStart(4, '0') + '.dat';
@@ -77,17 +76,15 @@ export default class MnfArchive {
         }
 
         const archiveFile = this.getArchiveFile(entry);
-        const named = entry.data.named;
-        const compressionType = named['compressionType'].value as number;
 
-        if (compressionType === 0) {
+        if (entry.compressionType === 0) {
             return await archiveFile.loadContent(entry);
         } else {
             return await decompress(
                 archiveFile.path,
-                named['offset'].value as number,
-                named['compressedSize'].value as number,
-                named['fileSize'].value as number
+                entry.offset!,
+                entry.compressedSize!,
+                entry.fileSize!
             );
         }
     }
@@ -97,8 +94,7 @@ export default class MnfArchive {
     }
 
     getArchiveFile(entry: MnfEntry): MnfArchiveFile {
-        const named = entry.data.named;
-        const archiveNumber = named['archiveNumber'].value as number;
+        const archiveNumber = entry.archiveNumber!;
         const file = this.archiveFiles.get(archiveNumber);
         if (!file) {
             console.warn('Archive file not found for', entry);
@@ -231,8 +227,8 @@ export default class MnfArchive {
         const folders = new Set<string>();
         for (const file of this.mnfEntries.values()) {
             if (file.fileName?.startsWith(folderPath)) {
-                compressedSize += file.data.named['compressedSize'].value as number;
-                decompressedSize += file.data.named['fileSize'].value as number;
+                compressedSize += file.compressedSize!;
+                decompressedSize += file.fileSize!;
                 const parts = file.fileName.slice(folderPath.length).split('/');
                 parts.pop(); // Remove file name
                 let path = '';

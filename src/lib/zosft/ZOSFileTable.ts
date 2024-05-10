@@ -5,10 +5,10 @@ export default class ZOSFileTable {
     data: FieldData;
     entries: ZOSFileTableEntry[];
 
-    constructor(data: FieldData) {
+    constructor(data: FieldData, entryCount: number) {
         this.data = data;
         this.entries = [];
-        for (let i = 0; i < (data.named['entryCount'].value as number); ++i) {
+        for (let i = 0; i < entryCount; ++i) {
             this.entries.push(new ZOSFileTableEntry(i));
         }
     }

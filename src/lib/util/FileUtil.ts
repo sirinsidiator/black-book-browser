@@ -73,12 +73,10 @@ export async function extractFiles(
             files.map((file) => ({
                 targetPath: file.target,
                 archivePath: file.archiveFile.path,
-                offset: file.fileEntry.data.named['offset'].value as number,
-                compressedSize: file.fileEntry.data.named['compressedSize'].value as number,
-                fileSize: file.fileEntry.data.named['fileSize'].value as number,
-                compressionType: !decompress
-                    ? 0
-                    : (file.fileEntry.data.named['compressionType'].value as number)
+                offset: file.fileEntry.offset,
+                compressedSize: file.fileEntry.compressedSize,
+                fileSize: file.fileEntry.fileSize,
+                compressionType: !decompress ? 0 : file.fileEntry.compressionType
             }))
         )
     });

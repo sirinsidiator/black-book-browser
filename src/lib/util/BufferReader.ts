@@ -12,7 +12,7 @@ export interface FieldDefinition {
     name?: string;
     size?: number | string;
     bigEndian?: boolean;
-    condition?: (data: FieldData, prefix?: string) => boolean;
+    condition?: (data: FieldData, offset: number) => boolean;
 }
 
 export class Field {
@@ -27,21 +27,25 @@ export class Field {
 }
 
 export class FieldData {
-    named: {
-        [index: string]: Field;
-    };
-    fields: Field[];
+    private readonly fields: Field[] = [];
 
-    constructor() {
-        this.named = {};
-        this.fields = [];
+    get length() {
+        return this.fields.length;
     }
 
-    add(field: Field, prefix = '') {
+    add(field: Field) {
         this.fields.push(field);
-        if (field.definition.name) {
-            this.named[prefix + field.definition.name] = field;
-        }
+    }
+
+    get<T extends string | number | void | number[] | Uint8Array | undefined>(index: number): T {
+        return this.fields[index]?.value as T;
+    }
+
+    set<T extends string | number | void | number[] | Uint8Array | undefined>(
+        index: number,
+        value: T
+    ) {
+        this.fields[index].value = value;
     }
 }
 
@@ -70,54 +74,58 @@ export default class BufferReader {
         this.cursor += length;
     }
 
-    readFields(fieldDefinitions: FieldDefinition[], data?: FieldData, prefix?: string): FieldData {
-        data = data || new FieldData();
+    readFields(fieldDefinitions: FieldDefinition[], data: FieldData): number {
+        const offset = data.length;
         for (const definition of fieldDefinitions) {
-            if (definition.condition && !definition.condition(data, prefix)) {
-                continue;
-            }
-
-            const littleEndian = !definition.bigEndian;
             const field = new Field(definition, this.cursor);
-            try {
-                const size =
-                    (definition.size as number) ??
-                    (data.fields ? (data.fields[data.fields.length - 1]?.value as number) : 0);
-                switch (definition.type) {
-                    case FieldType.UINT8:
-                        field.value = this.readUInt8();
-                        break;
-                    case FieldType.UINT16:
-                        field.value = this.readUInt16(littleEndian);
-                        break;
-                    case FieldType.UINT16_ARRAY:
-                        field.value = [];
-                        for (let j = 0; j < size; ++j) {
-                            field.value.push(this.readUInt16(littleEndian));
-                        }
-                        break;
-                    case FieldType.UINT32:
-                        field.value = this.readUInt32(littleEndian);
-                        break;
-                    case FieldType.BINARY:
-                        field.value = this.read(size);
-                        break;
-                    case FieldType.STRING:
-                        field.value = this.readString(size);
-                        break;
-                    default:
-                        throw new Error(
-                            'field type "' + (definition.type as string) + '" not implemented'
-                        );
+            if (!definition.condition || definition.condition(data, offset)) {
+                try {
+                    switch (definition.type) {
+                        case FieldType.UINT8:
+                            field.value = this.readUInt8();
+                            break;
+                        case FieldType.UINT16:
+                            field.value = this.readUInt16(!definition.bigEndian);
+                            break;
+                        case FieldType.UINT16_ARRAY:
+                            field.value = this.readArray(data, definition);
+                            break;
+                        case FieldType.UINT32:
+                            field.value = this.readUInt32(!definition.bigEndian);
+                            break;
+                        case FieldType.BINARY:
+                            field.value = this.read(this.getReadSize(data, definition));
+                            break;
+                        case FieldType.STRING:
+                            field.value = this.readString(this.getReadSize(data, definition));
+                            break;
+                        default:
+                            throw new Error(
+                                'field type "' + (definition.type as string) + '" not implemented'
+                            );
+                    }
+                } catch (e) {
+                    console.error('Error reading field', field.definition.name, field, data, e);
+                    throw e;
                 }
-            } catch (e) {
-                console.error('Error reading field', field.definition.name, field, data, e);
-                throw e;
             }
-            data.add(field, prefix);
+            data.add(field);
         }
 
-        return data;
+        return offset;
+    }
+
+    private getReadSize(data: FieldData, definition: FieldDefinition): number {
+        return (definition.size as number) ?? data.get<number>(data.length - 1) ?? 0;
+    }
+
+    private readArray(data: FieldData, definition: FieldDefinition): number[] {
+        const values: number[] = [];
+        const littleEndian = !definition.bigEndian;
+        for (let j = 0; j < this.getReadSize(data, definition); ++j) {
+            values.push(this.readUInt16(littleEndian));
+        }
+        return values;
     }
 
     read(length: number): Uint8Array {

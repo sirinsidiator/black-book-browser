@@ -267,8 +267,8 @@ export default class BackgroundWorker {
                     archivePath: path,
                     fileNumber,
                     fileName: entry.fileName ?? '<missing name>',
-                    size: entry.data.named['fileSize'].value as number,
-                    compressedSize: entry.data.named['compressedSize'].value as number
+                    size: entry.fileSize!,
+                    compressedSize: entry.compressedSize!
                 });
             }
             fileList.sort((a, b) => a.fileName.localeCompare(b.fileName));
