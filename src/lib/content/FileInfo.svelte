@@ -4,9 +4,14 @@
     import ImageViewer from '$lib/content/ImageViewer.svelte';
     import { formatFileSize } from '$lib/util/FileUtil';
     import { archiveOutline, documentOutline, downloadOutline, scaleOutline } from 'ionicons/icons';
+    import ContentLayout from './ContentLayout.svelte';
+    import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
 
     export let file: FileEntry;
+
+    let loading = false;
+    let hasPreview = false;
 
     function onSavePreview(preview: ImageFilePreview) {
         const url = preview.getDataUrl();
@@ -16,80 +21,54 @@
         a.click();
     }
 
-    $: previewLoader = file.getPreviewLoader();
+    function refresh(file: FileEntry) {
+        loading = true;
+        return file.getPreviewLoader().then((preview) => {
+            loading = false;
+            hasPreview = preview instanceof ImageFilePreview || preview instanceof TextFilePreview;
+            return preview;
+        });
+    }
+
+    $: previewLoader = refresh(file);
 </script>
 
-<ion-button color="primary" id="open-extract-dialog">
-    <ion-icon slot="start" icon={archiveOutline} />
-    extract file
-</ion-button>
-<ExtractDialog target={file} />
-{#await previewLoader then preview}
-    {#if preview instanceof ImageFilePreview}
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button color="primary" on:click={() => onSavePreview(preview)}>
-            <ion-icon slot="start" icon={downloadOutline} />
-            save preview
+<ContentLayout {loading} {hasPreview}>
+    <svelte:fragment slot="buttons">
+        <ion-button color="primary" id="open-extract-dialog">
+            <ion-icon slot="start" icon={archiveOutline} />
+            extract file
         </ion-button>
-    {/if}
-{/await}
+        <ExtractDialog target={file} />
+        {#await previewLoader then preview}
+            {#if preview instanceof ImageFilePreview}
+                <!-- eslint-disable-next-line svelte/valid-compile -->
+                <ion-button color="primary" on:click={() => onSavePreview(preview)}>
+                    <ion-icon slot="start" icon={downloadOutline} />
+                    save preview
+                </ion-button>
+            {/if}
+        {/await}
+    </svelte:fragment>
 
-<ion-list>
-    <ion-item>
-        <ion-icon icon={documentOutline} />
-        <ion-label class="label">file path</ion-label>
-        <ion-label>{file.path}</ion-label>
-    </ion-item>
-    <ion-item>
-        <ion-icon icon={scaleOutline} />
-        <ion-label class="label">compressed size</ion-label>
-        <ion-label>{formatFileSize(file.compressedSize)}</ion-label>
-    </ion-item>
-    <ion-item>
-        <ion-icon icon={scaleOutline} />
-        <ion-label class="label">decompressed size</ion-label>
-        <ion-label>{formatFileSize(file.decompressedSize)}</ion-label>
-    </ion-item>
-</ion-list>
+    <svelte:fragment slot="details">
+        <DetailEntry icon={documentOutline} label="file path">{file.path}</DetailEntry>
+        <DetailEntry icon={scaleOutline} label="compressed size"
+            >{formatFileSize(file.compressedSize)}</DetailEntry
+        >
+        <DetailEntry icon={scaleOutline} label="decompressed size"
+            >{formatFileSize(file.decompressedSize)}</DetailEntry
+        >
+    </svelte:fragment>
 
-<div class="preview">
-    {#await previewLoader}
-        <ion-progress-bar type="indeterminate" />
-        <div class="no-preview loading">loading...</div>
-    {:then preview}
-        {#if preview instanceof ImageFilePreview}
-            <ImageViewer image={preview} />
-        {:else if preview instanceof TextFilePreview}
-            <!-- eslint-disable svelte/no-at-html-tags -->
-            <CodeBlock language={preview.language}>{@html preview.getText()}</CodeBlock>
-        {:else}
-            <div class="no-preview">no preview available</div>
-        {/if}
-    {/await}
-</div>
-
-<style>
-    .label {
-        margin-left: 15px;
-        flex: 0 0 200px;
-        font-weight: bold;
-    }
-
-    .preview {
-        margin: 15px 10px;
-        overflow: auto;
-        height: calc(100vh - 303px);
-        background: var(--ion-background-color);
-    }
-
-    .no-preview {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: calc(100vh - 303px);
-    }
-
-    .no-preview.loading {
-        height: calc(100vh - 307px);
-    }
-</style>
+    <svelte:fragment slot="preview">
+        {#await previewLoader then preview}
+            {#if preview instanceof ImageFilePreview}
+                <ImageViewer image={preview} />
+            {:else if preview instanceof TextFilePreview}
+                <!-- eslint-disable svelte/no-at-html-tags -->
+                <CodeBlock language={preview.language}>{@html preview.getText()}</CodeBlock>
+            {/if}
+        {/await}
+    </svelte:fragment>
+</ContentLayout>

@@ -8,8 +8,10 @@
         refreshOutline
     } from 'ionicons/icons';
     import CodeBlock from './CodeBlock.svelte';
-    import FolderDetails from './FolderDetails.svelte';
+    import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
+    import FolderDetails from './FolderDetails.svelte';
+    import ContentLayout from './ContentLayout.svelte';
 
     export let archive: MnfArchiveEntry;
 
@@ -35,52 +37,42 @@
     }
 </script>
 
-{#if $loaded && $root}
-    <ion-button color="primary" id="open-extract-dialog">
-        <ion-icon slot="start" icon={archiveOutline} />
-        extract files
-    </ion-button>
-    <ExtractDialog target={$root} />
-    <!-- eslint-disable-next-line svelte/valid-compile -->
-    <ion-button color="primary" on:click={onSaveFilelist}>
-        <ion-icon slot="start" icon={downloadOutline} />
-        save filelist
-    </ion-button>
-{/if}
-<!-- eslint-disable-next-line svelte/valid-compile -->
-<ion-button color="primary" on:click={onLoad} disabled={$busy}>
-    <ion-icon slot="start" icon={refreshOutline} />
-    {#if $loaded}reload{:else}load{/if}
-</ion-button>
-<ion-list>
-    <ion-item>
-        <ion-icon icon={$loaded ? folderOpenOutline : folderOutline} />
-        <ion-label class="label">archive path</ion-label>
-        <ion-label>{archive.path}</ion-label>
-    </ion-item>
-    {#if $busy}
-        <ion-progress-bar type="indeterminate" />
-    {/if}
-    {#if $loaded && $root}
-        <FolderDetails folder={$root} />
-    {/if}
-</ion-list>
-{#if $loaded && $root}
-    <div class="filelist">
-        <CodeBlock language="ini">{$root.fileList}</CodeBlock>
-    </div>
-{/if}
+<ContentLayout hasPreview={$loaded && $root !== null}>
+    <svelte:fragment slot="buttons">
+        {#if $loaded && $root}
+            <ion-button color="primary" id="open-extract-dialog">
+                <ion-icon slot="start" icon={archiveOutline} />
+                extract files
+            </ion-button>
+            <ExtractDialog target={$root} />
+            <!-- eslint-disable-next-line svelte/valid-compile -->
+            <ion-button color="primary" on:click={onSaveFilelist}>
+                <ion-icon slot="start" icon={downloadOutline} />
+                save filelist
+            </ion-button>
+        {/if}
+        <!-- eslint-disable-next-line svelte/valid-compile -->
+        <ion-button color="primary" on:click={onLoad} disabled={$busy}>
+            <ion-icon slot="start" icon={refreshOutline} />
+            {#if $loaded}reload{:else}load{/if}
+        </ion-button>
+    </svelte:fragment>
 
-<style>
-    .label {
-        margin-left: 15px;
-        flex: 0 0 200px;
-        font-weight: bold;
-    }
+    <svelte:fragment slot="details">
+        <DetailEntry icon={$loaded ? folderOpenOutline : folderOutline} label="archive path"
+            >{archive.path}</DetailEntry
+        >
+        {#if $busy}
+            <ion-progress-bar type="indeterminate" />
+        {/if}
+        {#if $loaded && $root}
+            <FolderDetails folder={$root} />
+        {/if}
+    </svelte:fragment>
 
-    .filelist {
-        margin: 15px 10px;
-        overflow: auto;
-        max-height: calc(100vh - 447px);
-    }
-</style>
+    <svelte:fragment slot="preview">
+        {#if $loaded && $root}
+            <CodeBlock language="ini">{$root.fileList}</CodeBlock>
+        {/if}
+    </svelte:fragment>
+</ContentLayout>

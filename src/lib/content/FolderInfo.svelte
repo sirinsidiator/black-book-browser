@@ -2,8 +2,10 @@
     import type { FolderEntry } from '$lib/FolderEntry';
     import { archiveOutline, downloadOutline, folderOpenOutline } from 'ionicons/icons';
     import CodeBlock from './CodeBlock.svelte';
-    import FolderDetails from './FolderDetails.svelte';
+    import ContentLayout from './ContentLayout.svelte';
+    import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
+    import FolderDetails from './FolderDetails.svelte';
 
     export let folder: FolderEntry;
 
@@ -16,39 +18,28 @@
     }
 </script>
 
-<ion-button color="primary" id="open-extract-dialog">
-    <ion-icon slot="start" icon={archiveOutline} />
-    extract files
-</ion-button>
-<ExtractDialog target={folder} />
-<!-- eslint-disable-next-line svelte/valid-compile -->
-<ion-button color="primary" on:click={onSaveFilelist}>
-    <ion-icon slot="start" icon={downloadOutline} />
-    save filelist
-</ion-button>
-<ion-list>
-    <ion-item>
-        <ion-icon icon={folderOpenOutline} />
-        <ion-label class="label">archive path</ion-label>
-        <ion-label>{folder.archive.path}</ion-label>
-    </ion-item>
-    <FolderDetails {folder} />
-</ion-list>
+<ContentLayout hasPreview={true}>
+    <svelte:fragment slot="buttons">
+        <ion-button color="primary" id="open-extract-dialog">
+            <ion-icon slot="start" icon={archiveOutline} />
+            extract files
+        </ion-button>
+        <ExtractDialog target={folder} />
+        <!-- eslint-disable-next-line svelte/valid-compile -->
+        <ion-button color="primary" on:click={onSaveFilelist}>
+            <ion-icon slot="start" icon={downloadOutline} />
+            save filelist
+        </ion-button>
+    </svelte:fragment>
 
-<div class="filelist">
-    <CodeBlock language="ini">{folder.fileList}</CodeBlock>
-</div>
+    <svelte:fragment slot="details">
+        <DetailEntry icon={folderOpenOutline} label="archive path"
+            >{folder.archive.path}</DetailEntry
+        >
+        <FolderDetails {folder} />
+    </svelte:fragment>
 
-<style>
-    .label {
-        margin-left: 15px;
-        flex: 0 0 200px;
-        font-weight: bold;
-    }
-
-    .filelist {
-        margin: 15px 10px;
-        overflow: auto;
-        max-height: calc(100vh - 447px);
-    }
-</style>
+    <svelte:fragment slot="preview">
+        <CodeBlock language="ini">{folder.fileList}</CodeBlock>
+    </svelte:fragment>
+</ContentLayout>

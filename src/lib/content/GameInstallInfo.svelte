@@ -9,6 +9,8 @@
         trashBinOutline
     } from 'ionicons/icons';
     import { createEventDispatcher } from 'svelte';
+    import ContentLayout from './ContentLayout.svelte';
+    import DetailEntry from './DetailEntry.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -19,45 +21,28 @@
     }
 </script>
 
-<!-- eslint-disable-next-line svelte/valid-compile -->
-<ion-button color="danger" on:click={onRemove}>
-    <ion-icon slot="start" icon={trashBinOutline} />
-    remove from list
-</ion-button>
-<ion-list>
-    <ion-item>
-        <ion-icon icon={folderOpenOutline} />
-        <ion-label class="label">game path</ion-label>
-        <ion-label>{gameInstall.path}</ion-label>
-    </ion-item>
-    <ion-item>
-        <ion-icon icon={pricetagOutline} />
-        <ion-label class="label">version</ion-label>
-        <ion-label>{gameInstall.version.version}</ion-label>
-    </ion-item>
-    <ion-item>
-        <ion-icon icon={calendarOutline} />
-        <ion-label class="label">build date</ion-label>
-        <ion-label>{gameInstall.version.buildDate}</ion-label>
-    </ion-item>
-    <ion-item>
-        <ion-icon icon={buildOutline} />
-        <ion-label class="label">build number</ion-label>
-        <ion-label>{gameInstall.version.buildNumber}</ion-label>
-    </ion-item>
-    {#each gameInstall.settings as entry}
-        <ion-item>
-            <ion-icon icon={settingsOutline} />
-            <ion-label class="label">{entry[0]}</ion-label>
-            <ion-label>{entry[1]}</ion-label>
-        </ion-item>
-    {/each}
-</ion-list>
+<ContentLayout>
+    <svelte:fragment slot="buttons">
+        <!-- eslint-disable-next-line svelte/valid-compile -->
+        <ion-button color="danger" on:click={onRemove}>
+            <ion-icon slot="start" icon={trashBinOutline} />
+            remove from list
+        </ion-button>
+    </svelte:fragment>
 
-<style>
-    .label {
-        margin-left: 15px;
-        flex: 0 0 200px;
-        font-weight: bold;
-    }
-</style>
+    <svelte:fragment slot="details">
+        <DetailEntry icon={folderOpenOutline} label="game path">{gameInstall.path}</DetailEntry>
+        <DetailEntry icon={pricetagOutline} label="version"
+            >{gameInstall.version.version}</DetailEntry
+        >
+        <DetailEntry icon={calendarOutline} label="build date"
+            >{gameInstall.version.buildDate}</DetailEntry
+        >
+        <DetailEntry icon={buildOutline} label="build number"
+            >{gameInstall.version.buildNumber}</DetailEntry
+        >
+        {#each gameInstall.settings as entry}
+            <DetailEntry icon={settingsOutline} label={entry[0]}>{entry[1]}</DetailEntry>
+        {/each}
+    </svelte:fragment>
+</ContentLayout>
