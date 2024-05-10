@@ -16,7 +16,6 @@
 
     function onRefresh(entries: FileTreeEntryData<FileTreeEntryDataProvider>[]) {
         flattenedEntries = entries.flatMap(flattenTreeRecursive);
-        console.log(flattenedEntries)
     }
 
     function flattenTreeRecursive(

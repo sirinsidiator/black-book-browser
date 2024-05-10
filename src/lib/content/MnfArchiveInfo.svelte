@@ -50,12 +50,11 @@
                 <ion-icon slot="start" icon={downloadOutline} />
                 save filelist
             </ion-button>
+        {:else}
+            <!-- eslint-disable-next-line svelte/valid-compile -->
+            <ion-button color="primary" on:click={onLoad} disabled={$busy}>
+                <ion-icon slot="start" icon={refreshOutline} />load</ion-button>
         {/if}
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button color="primary" on:click={onLoad} disabled={$busy}>
-            <ion-icon slot="start" icon={refreshOutline} />
-            {#if $loaded}reload{:else}load{/if}
-        </ion-button>
     </svelte:fragment>
 
     <svelte:fragment slot="details">

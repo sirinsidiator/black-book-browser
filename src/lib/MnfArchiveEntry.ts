@@ -33,15 +33,19 @@ export default class MnfArchiveEntry implements FileTreeEntryDataProvider, Conte
 
     public async loadChildren(): Promise<FileTreeEntryDataProvider[]> {
         this.busy.set(true);
-        console.log('Reading archive: ' + this.path);
-        const size = await getFileSize(this.path);
-        this.files = await BackgroundService.getInstance().readMnfArchive(this.path, size);
-        console.log('Done reading archive: ' + this.path);
-        const rootFolder = new FolderEntry(this, '/');
-        rootFolder.setFiles(this.files);
-        this.gameInstall.addFiles(this.files);
-        this.root.set(rootFolder);
-        this.loaded.set(true);
+
+        let rootFolder = get(this.root);
+        if (!rootFolder) {
+            console.log('Reading archive: ' + this.path);
+            const size = await getFileSize(this.path);
+            this.files = await BackgroundService.getInstance().readMnfArchive(this.path, size);
+            console.log('Done reading archive: ' + this.path);
+            rootFolder = new FolderEntry(this, '/');
+            rootFolder.setFiles(this.files);
+            this.gameInstall.addFiles(this.files);
+            this.root.set(rootFolder);
+            this.loaded.set(true);
+        }
 
         const children = await rootFolder.loadChildren();
         this.busy.set(false);
