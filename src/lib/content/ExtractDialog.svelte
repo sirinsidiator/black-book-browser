@@ -161,6 +161,7 @@
         return getTreeEntries();
     }
 
+    let levelOffset = 0;
     let targetFolder: string;
     async function refresh() {
         entries = updateEntries(target);
@@ -182,6 +183,7 @@
 
     function onPreserveParentFoldersChanged() {
         entries = Promise.resolve(getTreeEntries());
+        levelOffset = getLevelOffset();
         refreshSummary();
     }
 
@@ -202,6 +204,16 @@
             return currentEntry.parent!;
         } else {
             return currentEntry;
+        }
+    }
+
+    function getLevelOffset() {
+        if (preserveParents.checked) {
+            return 0;
+        } else if (currentEntry.data instanceof FileEntry) {
+            return -currentEntry.level;
+        } else {
+            return -(currentEntry.level + 1);
         }
     }
 
@@ -298,7 +310,12 @@
                             <ion-progress-bar type="indeterminate" />
                         </div>
                     {:then entries}
-                        <FileTree {entries} checkable={true} on:change={refreshSummary} />
+                        <FileTree
+                            {entries}
+                            checkable={true}
+                            on:change={refreshSummary}
+                            {levelOffset}
+                        />
                     {/await}
                 </ion-card-content>
             </ion-card>

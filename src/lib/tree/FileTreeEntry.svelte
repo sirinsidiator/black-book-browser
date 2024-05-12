@@ -7,6 +7,7 @@
     export let data: FileTreeEntryData<FileTreeEntryDataProvider>;
     export let selected: FileTreeEntryData<FileTreeEntryDataProvider>;
     export let checkable = false;
+    export let levelOffset = 0;
 
     $: opened = data.opened;
     $: checked = data.checked;
@@ -31,7 +32,7 @@
     }
 </script>
 
-<div class="entry" style="--level: {data.level}">
+<div class="entry" style="--level: {levelOffset + data.level}">
     <!-- eslint-disable-next-line svelte/valid-compile -->
     <ion-button
         class="caret"

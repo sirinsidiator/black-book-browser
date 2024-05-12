@@ -10,6 +10,7 @@
 
     export let entries: FileTreeEntryData<FileTreeEntryDataProvider>[];
     export let checkable = false;
+    export let levelOffset = 0;
 
     let flattenedEntries: FileTreeEntryData<FileTreeEntryDataProvider>[] = [];
     let selected: FileTreeEntryData<FileTreeEntryDataProvider>;
@@ -40,6 +41,7 @@
             data={item}
             {selected}
             {checkable}
+            {levelOffset}
             on:refresh={() => onRefresh(entries)}
             on:select={select}
             on:change
