@@ -182,7 +182,7 @@ export default class GameInstallManager {
     public getGameInstallForArchive(path: string): GameInstallEntry | undefined {
         const gameInstalls = get(this.gameInstalls);
         for (const gameInstall of gameInstalls.values()) {
-            if (path.startsWith(gameInstall.path)) {
+            if (path.startsWith(gameInstall.path + '\\')) {
                 return gameInstall;
             }
         }

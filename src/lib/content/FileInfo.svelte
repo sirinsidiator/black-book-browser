@@ -3,7 +3,7 @@
     import CodeBlock from '$lib/content/CodeBlock.svelte';
     import ImageViewer from '$lib/content/ImageViewer.svelte';
     import { formatFileSize } from '$lib/util/FileUtil';
-    import { documentOutline, downloadOutline, scaleOutline } from 'ionicons/icons';
+    import { documentOutline, downloadOutline, folderOpenOutline, scaleOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
@@ -48,6 +48,9 @@
     </svelte:fragment>
 
     <svelte:fragment slot="details">
+        <DetailEntry icon={folderOpenOutline} label="archive path"
+            >{file.parent.archive.path}</DetailEntry
+        >
         <DetailEntry icon={documentOutline} label="file path">{file.path}</DetailEntry>
         <DetailEntry icon={scaleOutline} label="compressed size"
             >{formatFileSize(file.compressedSize)}</DetailEntry
