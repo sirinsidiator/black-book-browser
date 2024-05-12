@@ -77,27 +77,29 @@ export class FileEntry implements FileTreeEntryDataProvider, ContentEntry {
         return Promise.resolve([]);
     }
 
+    private previewCache: WeakRef<FilePreview> | null = null;
     public async getPreviewLoader(): Promise<FilePreview | null> {
-        const extension = this.file.fileName.substr(this.file.fileName.lastIndexOf('.')) ?? '';
-        if (extension === '.dds') {
-            console.log('getPreviewLoader', this.file.fileName);
-
-            const data = await BackgroundService.getInstance().loadFileContent(this.file);
-            if (data) {
-                const canvas = new DDSHelper().createCanvas(data);
-                if (canvas) {
-                    console.log('getPreviewLoader', canvas);
-                    return new ImageFilePreview(canvas);
+        let preview = this.previewCache?.deref();
+        if (!preview) {
+            const extension = this.file.fileName.slice(this.file.fileName.lastIndexOf('.'));
+            if (extension === '.dds') {
+                const data = await BackgroundService.getInstance().loadFileContent(this.file);
+                if (data) {
+                    const canvas = new DDSHelper().createCanvas(data);
+                    if (canvas) {
+                        preview = new ImageFilePreview(canvas);
+                        this.previewCache = new WeakRef(preview);
+                    }
+                }
+            } else if (EXT_TO_LANGUAGE[extension]) {
+                const data = await BackgroundService.getInstance().loadFileContent(this.file);
+                if (data) {
+                    const view = new BufferReader(data);
+                    preview = new TextFilePreview(view.readString(), EXT_TO_LANGUAGE[extension]);
+                    this.previewCache = new WeakRef(preview);
                 }
             }
-        } else if (EXT_TO_LANGUAGE[extension]) {
-            console.log('getPreviewLoader', this.file.fileName);
-            const data = await BackgroundService.getInstance().loadFileContent(this.file);
-            if (data) {
-                const view = new BufferReader(data);
-                return new TextFilePreview(view.readString(), EXT_TO_LANGUAGE[extension]);
-            }
         }
-        return null;
+        return preview ?? null;
     }
 }
