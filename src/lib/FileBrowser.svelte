@@ -9,6 +9,7 @@
     export let manager: StateManager;
 
     const gameInstalls = manager.gameInstallManager.gameInstalls;
+    const selectedContent = manager.selectedContent;
 
     async function addFolder() {
         const selected = await open({
@@ -18,13 +19,13 @@
         if (typeof selected === 'string') {
             const gameInstall = await manager.gameInstallManager.add(selected);
             if (gameInstall) {
-                manager.selectedContent.set(gameInstall);
+                selectedContent.set(gameInstall);
             }
         }
     }
 
     function onSelect(event: CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>) {
-        manager.selectedContent.set(event.detail.data);
+        selectedContent.set(event.detail.data);
     }
 
     $: entries = Array.from($gameInstalls.values()).map((install) => install.fileTreeEntry);
@@ -42,7 +43,12 @@
                 <p>No game installs found</p>
             </div>
         {:else}
-            <FileTree {entries} on:select={onSelect} />
+            <FileTree
+                {entries}
+                selectedContent={$selectedContent}
+                on:select={onSelect}
+                keyboardNavigationTarget={document.body}
+            />
         {/if}
 
         <ion-fab slot="fixed" vertical="bottom" horizontal="end">

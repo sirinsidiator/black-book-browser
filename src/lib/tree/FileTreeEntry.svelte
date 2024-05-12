@@ -5,7 +5,7 @@
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
     export let data: FileTreeEntryData<FileTreeEntryDataProvider>;
-    export let selected: FileTreeEntryData<FileTreeEntryDataProvider>;
+    export let selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined = undefined;
     export let checkable = false;
     export let levelOffset = 0;
 
@@ -16,17 +16,15 @@
     $: failed = data.failed;
     $: hasChildren = data.hasChildren;
 
-    async function onToggleOpen() {
-        await data.toggleOpen();
-        dispatch('refresh');
+    const dispatch = createEventDispatcher();
+    function onToggleOpen() {
+        dispatch('open', data);
     }
 
     function onToggleChecked() {
-        data.toggleChecked();
         dispatch('change', data);
     }
 
-    const dispatch = createEventDispatcher();
     function onSelect() {
         dispatch('select', data);
     }

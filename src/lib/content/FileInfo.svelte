@@ -3,7 +3,7 @@
     import CodeBlock from '$lib/content/CodeBlock.svelte';
     import ImageViewer from '$lib/content/ImageViewer.svelte';
     import { formatFileSize } from '$lib/util/FileUtil';
-    import { archiveOutline, documentOutline, downloadOutline, scaleOutline } from 'ionicons/icons';
+    import { documentOutline, downloadOutline, scaleOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
@@ -35,10 +35,6 @@
 
 <ContentLayout {loading} {hasPreview}>
     <svelte:fragment slot="buttons">
-        <ion-button color="primary" id="open-extract-dialog">
-            <ion-icon slot="start" icon={archiveOutline} />
-            extract file
-        </ion-button>
         <ExtractDialog target={file} />
         {#await previewLoader then preview}
             {#if preview instanceof ImageFilePreview}

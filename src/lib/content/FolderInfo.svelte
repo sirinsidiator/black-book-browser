@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { FolderEntry } from '$lib/FolderEntry';
-    import { archiveOutline, downloadOutline, folderOpenOutline } from 'ionicons/icons';
+    import { downloadOutline, folderOpenOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
@@ -20,10 +20,6 @@
 
 <ContentLayout hasPreview={true}>
     <svelte:fragment slot="buttons">
-        <ion-button color="primary" id="open-extract-dialog">
-            <ion-icon slot="start" icon={archiveOutline} />
-            extract files
-        </ion-button>
         <ExtractDialog target={folder} />
         <!-- eslint-disable-next-line svelte/valid-compile -->
         <ion-button color="primary" on:click={onSaveFilelist}>

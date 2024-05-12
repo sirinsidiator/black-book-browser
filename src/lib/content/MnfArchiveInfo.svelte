@@ -3,7 +3,6 @@
     import { dirname } from '$lib/util/FileUtil';
     import { open } from '@tauri-apps/plugin-shell';
     import {
-        archiveOutline,
         downloadOutline,
         folderOpenOutline,
         folderOutline,
@@ -47,10 +46,6 @@
 <ContentLayout hasPreview={$loaded && $root !== null}>
     <svelte:fragment slot="buttons">
         {#if $loaded && $root}
-            <ion-button color="primary" id="open-extract-dialog">
-                <ion-icon slot="start" icon={archiveOutline} />
-                extract files
-            </ion-button>
             <ExtractDialog target={$root} />
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-button color="primary" on:click={onSaveFilelist}>

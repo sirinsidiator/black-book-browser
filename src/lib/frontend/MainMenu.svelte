@@ -1,7 +1,32 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import patreonIcon from '$lib/assets/patreon.svg';
     import { fileTrayFullOutline, searchOutline } from 'ionicons/icons';
+    import { onDestroy, onMount } from 'svelte';
+
+    function onKeyNavigation(event: KeyboardEvent) {
+        if (!event.ctrlKey) return;
+        if ($page.route.id !== '/' && event.key === '1') {
+            goto('/').catch(console.error);
+        } else if ($page.route.id !== '/search' && (event.key === '2' || event.key === 'f')) {
+            goto('/search').catch(console.error);
+        } else if ($page.route.id !== '/patrons' && event.key === '3') {
+            goto('/patrons').catch(console.error);
+        } else {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    onMount(() => {
+        document.addEventListener('keydown', onKeyNavigation);
+    });
+
+    onDestroy(() => {
+        document.removeEventListener('keydown', onKeyNavigation);
+    });
 </script>
 
 <ion-buttons>
