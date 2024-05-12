@@ -16,33 +16,61 @@ const DDSD_MIPMAPCOUNT = 0x20000;
 const DDSD_LINEARSIZE = 0x80000;
 const DDSD_DEPTH = 0x800000;
 
+const DDPF_ALPHAPIXELS = 0x1;
+const DDPF_ALPHA = 0x2;
 const DDPF_FOURCC = 0x4;
+const DDPF_RGB = 0x40;
+const DDPF_YUV = 0x200;
+const DDPF_LUMINANCE = 0x20000;
 
-function headerFlagsToDebugString(flags: number): string {
+function headerFlagsToDebugString(flags: number, ...affected: number[]): string {
     const result = [];
-    if (flags & DDSD_CAPS) {
+    if (flags & DDSD_CAPS && affected.includes(DDSD_CAPS)) {
         result.push('DDSD_CAPS');
     }
-    if (flags & DDSD_HEIGHT) {
+    if (flags & DDSD_HEIGHT && affected.includes(DDSD_HEIGHT)) {
         result.push('DDSD_HEIGHT');
     }
-    if (flags & DDSD_WIDTH) {
+    if (flags & DDSD_WIDTH && affected.includes(DDSD_WIDTH)) {
         result.push('DDSD_WIDTH');
     }
-    if (flags & DDSD_PITCH) {
+    if (flags & DDSD_PITCH && affected.includes(DDSD_PITCH)) {
         result.push('DDSD_PITCH');
     }
-    if (flags & DDSD_PIXELFORMAT) {
+    if (flags & DDSD_PIXELFORMAT && affected.includes(DDSD_PIXELFORMAT)) {
         result.push('DDSD_PIXELFORMAT');
     }
-    if (flags & DDSD_MIPMAPCOUNT) {
+    if (flags & DDSD_MIPMAPCOUNT && affected.includes(DDSD_MIPMAPCOUNT)) {
         result.push('DDSD_MIPMAPCOUNT');
     }
-    if (flags & DDSD_LINEARSIZE) {
+    if (flags & DDSD_LINEARSIZE && affected.includes(DDSD_LINEARSIZE)) {
         result.push('DDSD_LINEARSIZE');
     }
-    if (flags & DDSD_DEPTH) {
+    if (flags & DDSD_DEPTH && affected.includes(DDSD_DEPTH)) {
         result.push('DDSD_DEPTH');
+    }
+    return result.join(' | ');
+}
+
+function pixelFormatFlagsToDebugString(flags: number): string {
+    const result = [];
+    if (flags & DDPF_ALPHAPIXELS) {
+        result.push('DDPF_ALPHAPIXELS');
+    }
+    if (flags & DDPF_ALPHA) {
+        result.push('DDPF_ALPHA');
+    }
+    if (flags & DDPF_FOURCC) {
+        result.push('DDPF_FOURCC');
+    }
+    if (flags & DDPF_RGB) {
+        result.push('DDPF_RGB');
+    }
+    if (flags & DDPF_YUV) {
+        result.push('DDPF_YUV');
+    }
+    if (flags & DDPF_LUMINANCE) {
+        result.push('DDPF_LUMINANCE');
     }
     return result.join(' | ');
 }
@@ -82,32 +110,6 @@ export default class DDSHelper {
         }
 
         const headerFlags = view.readUInt32();
-        if (
-            !(headerFlags & DDSD_CAPS) ||
-            !(headerFlags & DDSD_HEIGHT) ||
-            !(headerFlags & DDSD_WIDTH) ||
-            !(headerFlags & DDSD_PIXELFORMAT)
-        ) {
-            console.warn(
-                'Invalid header flags in DDS header',
-                headerFlagsToDebugString(headerFlags),
-                view
-            );
-            return null;
-        }
-
-        if (
-            headerFlags & DDSD_PITCH ||
-            headerFlags & DDSD_MIPMAPCOUNT ||
-            headerFlags & DDSD_DEPTH
-        ) {
-            console.warn(
-                'Unsupported header flags in DDS header',
-                headerFlagsToDebugString(headerFlags),
-                view
-            );
-            return null;
-        }
 
         const height = view.readUInt32();
         const width = view.readUInt32();
@@ -117,22 +119,8 @@ export default class DDSHelper {
         view.skip(11 * 4); // reserved1
 
         const pixelFormatSize = view.readUInt32();
-        if (pixelFormatSize !== 32) {
-            console.warn('Invalid pixel format size in DDS header', pixelFormatSize, view);
-            return null;
-        }
-
         const pixelFormatFlags = view.readUInt32();
-        if (pixelFormatFlags !== DDPF_FOURCC) {
-            console.warn('Unsupported pixel format flags in DDS header', pixelFormatFlags, view);
-            return null;
-        }
-
         const fourCC = view.readString(4);
-        if (fourCC !== 'DXT5') {
-            console.warn('Unsupported pixel format in DDS header', fourCC, view);
-            return null;
-        }
 
         const rgbBitCount = view.readUInt32();
         const rBitMask = view.readUInt32();
@@ -170,28 +158,90 @@ export default class DDSHelper {
             caps4
         };
 
-        if (header.pixelFormat.flags !== DDPF_FOURCC) {
-            console.warn('Unsupported pixel format', header.pixelFormat.flags, view, header);
+        if (
+            !(headerFlags & DDSD_CAPS) ||
+            !(headerFlags & DDSD_HEIGHT) ||
+            !(headerFlags & DDSD_WIDTH) ||
+            !(headerFlags & DDSD_PIXELFORMAT)
+        ) {
+            console.warn(
+                'Invalid header flags in DDS header',
+                headerFlagsToDebugString(
+                    headerFlags,
+                    DDSD_CAPS,
+                    DDSD_HEIGHT,
+                    DDSD_WIDTH,
+                    DDSD_PIXELFORMAT
+                ),
+                view,
+                header
+            );
             return null;
         }
 
+        if (headerFlags & DDSD_MIPMAPCOUNT || headerFlags & DDSD_DEPTH) {
+            console.warn(
+                'Ignore unsupported header flags in DDS header:',
+                headerFlagsToDebugString(headerFlags, DDSD_MIPMAPCOUNT, DDSD_DEPTH),
+                view,
+                header
+            );
+        }
+
         let pixelData: Uint8ClampedArray;
-        switch (header.pixelFormat.fourCC) {
-            case 'DXT1':
-                pixelData = this.decompressDXT1(view, header.width, header.height);
-                break;
-            case 'DXT3':
-                pixelData = this.decompressDXT3(view, header.width, header.height);
-                break;
-            case 'DXT5':
-                pixelData = this.decompressDXT5(view, header.width, header.height);
-                break;
-            default:
-                console.warn('Unsupported FourCC code', header.pixelFormat.fourCC, view, header);
+        if (pixelFormatFlags === DDPF_FOURCC) {
+            if (pixelFormatSize !== 32) {
+                console.warn(
+                    'Invalid pixel format size in DDS header',
+                    pixelFormatSize,
+                    view,
+                    header
+                );
                 return null;
+            }
+            switch (header.pixelFormat.fourCC) {
+                case 'DXT1':
+                    pixelData = this.decompressDXT1(view, header.width, header.height);
+                    break;
+                case 'DXT3':
+                    pixelData = this.decompressDXT3(view, header.width, header.height);
+                    break;
+                case 'DXT5':
+                    pixelData = this.decompressDXT5(view, header.width, header.height);
+                    break;
+                default:
+                    console.warn(
+                        'Unsupported FourCC code',
+                        header.pixelFormat.fourCC,
+                        view,
+                        header
+                    );
+                    return null;
+            }
+        } else if (pixelFormatFlags === (DDPF_RGB | DDPF_ALPHAPIXELS)) {
+            pixelData = this.readA8R8G8B8(view, header.width, header.height);
+        } else {
+            console.warn(
+                'Unsupported pixel format flags',
+                pixelFormatFlagsToDebugString(pixelFormatFlags),
+                view,
+                header
+            );
+            return null;
         }
 
         return new ImageData(pixelData, header.width, header.height);
+    }
+
+    readA8R8G8B8(view: BufferReader, width: number, height: number): Uint8ClampedArray {
+        const pixelData = new Uint8ClampedArray(width * height * 4);
+        for (let i = 0; i < pixelData.length; i += 4) {
+            pixelData[i + 0] = view.readUInt8();
+            pixelData[i + 1] = view.readUInt8();
+            pixelData[i + 2] = view.readUInt8();
+            pixelData[i + 3] = view.readUInt8();
+        }
+        return pixelData;
     }
 
     // 64 bit contain 16 pixels
