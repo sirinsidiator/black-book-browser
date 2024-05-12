@@ -10,9 +10,6 @@ export default class MnfArchiveFile {
 
     async loadContent(entry: MnfEntry): Promise<Uint8Array> {
         console.log('loadContent', entry);
-        const named = entry.data.named;
-        const offset = named['offset'].value as number;
-        const compressedSize = named['compressedSize'].value as number;
-        return readPartialFile(this.path, offset, compressedSize);
+        return readPartialFile(this.path, entry.offset!, entry.compressedSize!);
     }
 }
