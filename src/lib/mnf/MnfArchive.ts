@@ -37,6 +37,7 @@ export interface ExtractFilesResult {
     success: number;
     failed: number;
     total: number;
+    errors: string[];
 }
 
 export default class MnfArchive {

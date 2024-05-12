@@ -92,15 +92,23 @@
         extractionTotal = details.files.length;
         extractionDone = false;
         queueAddLogEntry(`Begin extracting ${currentEntry.path} to ${targetFolder}`);
+        let addedErrorsIndex = 0;
         BackgroundService.getInstance()
             .extractFiles(details, (progress) => {
                 if (progress.done > 0) {
                     extractionProgress = progress;
                 }
-                progress.errors.forEach((error) => queueAddLogEntry(error, true));
+                for (let i = addedErrorsIndex; i < progress.errors.length; i++) {
+                    queueAddLogEntry(progress.errors[i], true);
+                    addedErrorsIndex++;
+                }
             })
             .then(
                 (result) => {
+                    for (let i = addedErrorsIndex; i < result.errors.length; i++) {
+                        queueAddLogEntry(result.errors[i], true);
+                        addedErrorsIndex++;
+                    }
                     const duration = performance.now() - startTime;
                     const durationString =
                         duration < 1000

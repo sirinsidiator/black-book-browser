@@ -273,14 +273,14 @@ fn extract_files_parallel(files: &Vec<serde_json::Value>, progress: ExtractionPr
     }
 
     let handles: Vec<_> = queue
-    .local_queues()
-    .map(move |mut local_queue| {
-        let progress = progress.clone();
-        std::thread::spawn(move || {
-            let mut local_progress = LocalExtractionProgress {
-                done: 0,
-                successes: 0,
-                failures: 0,
+        .local_queues()
+        .map(move |mut local_queue| {
+            let progress = progress.clone();
+            std::thread::spawn(move || {
+                let mut local_progress = LocalExtractionProgress {
+                    done: 0,
+                    successes: 0,
+                    failures: 0,
                 };
                 while let Some(task) = local_queue.pop() {
                     task.0(&mut local_queue, &mut local_progress);
@@ -346,14 +346,17 @@ pub fn handle_ipc_message(
                 extract_files_parallel(files, extraction_progress);
                 let successes = progress.successes.load(Ordering::SeqCst);
                 let failures = progress.failures.load(Ordering::SeqCst);
+                let mut errors = progress.errors.lock().unwrap();
                 let response = serde_json::json!({
                     "success": successes,
                     "failed": failures,
+                    "errors": errors.clone(),
                     "total": files.len(),
                 });
                 progress.done.store(0, Ordering::SeqCst);
                 progress.successes.store(0, Ordering::SeqCst);
                 progress.failures.store(0, Ordering::SeqCst);
+                errors.clear();
                 result = Ok(response.to_string().into_bytes());
             }
             Err(err) => {
@@ -362,12 +365,11 @@ pub fn handle_ipc_message(
         }
     } else if path == "/extract-files-progress" {
         let done = extraction_progress.done.load(Ordering::SeqCst);
-        let mut errors = extraction_progress.errors.lock().unwrap();
+        let errors = extraction_progress.errors.lock().unwrap();
         let response = serde_json::json!({
             "done": done,
             "errors": errors.clone(),
         });
-        errors.clear();
         result = Ok(response.to_string().into_bytes());
     } else {
         return build_error_response(format!("Error: Unknown path {:?}", path));
