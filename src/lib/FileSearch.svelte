@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { SearchbarInputEventDetail } from '@ionic/core';
-    import VirtualList from '@sveltejs/svelte-virtual-list';
     import fuzzysort from 'fuzzysort';
     import { onMount } from 'svelte';
+    import VirtualList from 'svelte-virtual-list-ce';
     import type FileSearchEntry from './FileSearchEntry';
     import type StateManager from './StateManager';
 
@@ -105,7 +105,7 @@
             {#if $searching}
                 Searching...
             {:else}
-            found {$searchResults.length.toLocaleString()} results in {$searchDuration.toLocaleString()}ms
+                found {$searchResults.length.toLocaleString()} results in {$searchDuration.toLocaleString()}ms
             {/if}
         </ion-chip>
     {/if}

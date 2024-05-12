@@ -9,10 +9,10 @@
         folderOutline,
         refreshOutline
     } from 'ionicons/icons';
-    import CodeBlock from './CodeBlock.svelte';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
+    import FileListPreview from './FileListPreview.svelte';
     import FolderDetails from './FolderDetails.svelte';
 
     export let archive: MnfArchiveEntry;
@@ -85,7 +85,7 @@
 
     <svelte:fragment slot="preview">
         {#if $loaded && $root}
-            <CodeBlock language="ini">{$root.fileList}</CodeBlock>
+            <FileListPreview folder={$root} />
         {/if}
     </svelte:fragment>
 </ContentLayout>

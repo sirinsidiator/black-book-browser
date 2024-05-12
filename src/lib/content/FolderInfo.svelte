@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { FolderEntry } from '$lib/FolderEntry';
     import { archiveOutline, downloadOutline, folderOpenOutline } from 'ionicons/icons';
-    import CodeBlock from './CodeBlock.svelte';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
+    import FileListPreview from './FileListPreview.svelte';
     import FolderDetails from './FolderDetails.svelte';
 
     export let folder: FolderEntry;
@@ -40,6 +40,6 @@
     </svelte:fragment>
 
     <svelte:fragment slot="preview">
-        <CodeBlock language="ini">{folder.fileList}</CodeBlock>
+        <FileListPreview {folder} />
     </svelte:fragment>
 </ContentLayout>

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import { get } from 'svelte/store';
     import FileTreeEntry from './FileTreeEntry.svelte';
     import type FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
-    import { get } from 'svelte/store';
-    import VirtualList from '@sveltejs/svelte-virtual-list';
+    import VirtualList from 'svelte-virtual-list-ce';
 
     const dispatch = createEventDispatcher();
 
