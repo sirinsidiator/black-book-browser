@@ -8,15 +8,63 @@ import type { MnfFileData } from './mnf/MnfFileData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 import BufferReader from './util/BufferReader';
 
-abstract class FilePreview {}
+abstract class FilePreview {
+    public abstract prepare(): Promise<WeakRef<FilePreview>>;
+}
 
 export class ImageFilePreview implements FilePreview {
-    constructor(public readonly canvas: HTMLCanvasElement) {
-        console.log('ImageFilePreview', canvas);
+    private dataUrl?: string;
+    private png: boolean;
+
+    constructor(
+        public readonly data: Uint8Array,
+        extension: string
+    ) {
+        console.log('ImageFilePreview', data);
+        this.png = extension === '.png';
+    }
+
+    public async prepare(): Promise<WeakRef<FilePreview>> {
+        if (this.png) {
+            await this.preparePng();
+        } else {
+            const canvas = new DDSHelper().createCanvas(this.data);
+            this.dataUrl = canvas.toDataURL();
+        }
+        return new WeakRef(this);
+    }
+
+    public async preparePng(): Promise<WeakRef<FilePreview>> {
+        const view = new BufferReader(this.data);
+        view.skip(1);
+        const header = view.readString(3);
+        if (header !== 'PNG') {
+            console.warn('Invalid PNG header', header);
+            throw new Error('Invalid PNG data');
+        }
+
+        const blob = new Blob([this.data], { type: 'image/png' });
+
+        this.dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result === 'string') {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error('Could not get data url from raw data'));
+                }
+            };
+            reader.onerror = (error) => {
+                reject(error);
+            };
+            reader.readAsDataURL(blob);
+        });
+
+        return new WeakRef(this);
     }
 
     public getDataUrl() {
-        return this.canvas.toDataURL();
+        return this.dataUrl!;
     }
 }
 
@@ -29,6 +77,10 @@ export class TextFilePreview implements FilePreview {
     ) {
         console.log('TextFilePreview', language);
         this.result = hljs.highlight(content, { language: language });
+    }
+
+    public prepare(): Promise<WeakRef<FilePreview>> {
+        return Promise.resolve(new WeakRef(this));
     }
 
     public getText() {
@@ -82,14 +134,11 @@ export class FileEntry implements FileTreeEntryDataProvider, ContentEntry {
         let preview = this.previewCache?.deref();
         if (!preview) {
             const extension = this.file.fileName.slice(this.file.fileName.lastIndexOf('.'));
-            if (extension === '.dds') {
+            if (extension === '.dds' || extension === '.png') {
                 const data = await BackgroundService.getInstance().loadFileContent(this.file);
                 if (data) {
-                    const canvas = new DDSHelper().createCanvas(data);
-                    if (canvas) {
-                        preview = new ImageFilePreview(canvas);
-                        this.previewCache = new WeakRef(preview);
-                    }
+                    preview = new ImageFilePreview(data, extension);
+                    this.previewCache = await preview.prepare();
                 }
             } else if (EXT_TO_LANGUAGE[extension]) {
                 const data = await BackgroundService.getInstance().loadFileContent(this.file);
