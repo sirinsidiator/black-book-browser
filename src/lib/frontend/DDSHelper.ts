@@ -77,11 +77,8 @@ function pixelFormatFlagsToDebugString(flags: number): string {
 
 // adapted from https://learn.microsoft.com/en-gb/windows/win32/direct3ddds/dds-pixelformat
 export default class DDSHelper {
-    createCanvas(data: Uint8Array): HTMLCanvasElement | null {
+    createCanvas(data: Uint8Array): HTMLCanvasElement {
         const imageData = this.parse(data);
-        if (!imageData) {
-            return null;
-        }
 
         const canvas = document.createElement('canvas');
         canvas.width = imageData.width;
@@ -93,12 +90,12 @@ export default class DDSHelper {
         return canvas;
     }
 
-    parse(data: Uint8Array): ImageData | null {
+    parse(data: Uint8Array): ImageData {
         const view = new BufferReader(data);
         const magic = view.readUInt32();
         if (magic !== DDS_MAGIC) {
             console.warn('Invalid magic number in DDS header', magic, view);
-            return null;
+            throw new Error('Invalid magic number in DDS header');
         }
 
         console.log('read DDS header', data);
@@ -106,7 +103,7 @@ export default class DDSHelper {
         const headerSize = view.readUInt32();
         if (headerSize !== 124) {
             console.warn('Invalid header size in DDS header', headerSize, view);
-            return null;
+            throw new Error('Invalid header size in DDS header');
         }
 
         const headerFlags = view.readUInt32();
@@ -176,7 +173,7 @@ export default class DDSHelper {
                 view,
                 header
             );
-            return null;
+            throw new Error('Invalid header flags in DDS header');
         }
 
         if (headerFlags & DDSD_MIPMAPCOUNT || headerFlags & DDSD_DEPTH) {
@@ -197,7 +194,7 @@ export default class DDSHelper {
                     view,
                     header
                 );
-                return null;
+                throw new Error('Invalid pixel format size in DDS header');
             }
             switch (header.pixelFormat.fourCC) {
                 case 'DXT1':
@@ -216,7 +213,7 @@ export default class DDSHelper {
                         view,
                         header
                     );
-                    return null;
+                    throw new Error('Unsupported FourCC code');
             }
         } else if (pixelFormatFlags === (DDPF_RGB | DDPF_ALPHAPIXELS)) {
             pixelData = this.readA8R8G8B8(view, header.width, header.height);
@@ -227,7 +224,7 @@ export default class DDSHelper {
                 view,
                 header
             );
-            return null;
+            throw new Error('Unsupported pixel format flags');
         }
 
         return new ImageData(pixelData, header.width, header.height);

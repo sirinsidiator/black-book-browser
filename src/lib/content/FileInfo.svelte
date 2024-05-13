@@ -3,7 +3,12 @@
     import CodeBlock from '$lib/content/CodeBlock.svelte';
     import ImageViewer from '$lib/content/ImageViewer.svelte';
     import { formatFileSize } from '$lib/util/FileUtil';
-    import { documentOutline, downloadOutline, folderOpenOutline, scaleOutline } from 'ionicons/icons';
+    import {
+        documentOutline,
+        downloadOutline,
+        folderOpenOutline,
+        scaleOutline
+    } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
@@ -12,6 +17,7 @@
 
     let loading = false;
     let hasPreview = false;
+    let hasPreviewFailed = false;
 
     function onSavePreview(preview: ImageFilePreview) {
         const url = preview.getDataUrl();
@@ -23,17 +29,27 @@
 
     function refresh(file: FileEntry) {
         loading = true;
-        return file.getPreviewLoader().then((preview) => {
-            loading = false;
-            hasPreview = preview instanceof ImageFilePreview || preview instanceof TextFilePreview;
-            return preview;
-        });
+        return file.getPreviewLoader().then(
+            (preview) => {
+                loading = false;
+                hasPreview =
+                    preview instanceof ImageFilePreview || preview instanceof TextFilePreview;
+                hasPreviewFailed = false;
+                return preview;
+            },
+            () => {
+                loading = false;
+                hasPreview = false;
+                hasPreviewFailed = true;
+                return null;
+            }
+        );
     }
 
     $: previewLoader = refresh(file);
 </script>
 
-<ContentLayout {loading} {hasPreview}>
+<ContentLayout {loading} {hasPreview} {hasPreviewFailed}>
     <svelte:fragment slot="buttons">
         <ExtractDialog target={file} />
         {#await previewLoader then preview}
