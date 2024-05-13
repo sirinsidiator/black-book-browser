@@ -137,6 +137,7 @@
 
     onMount(async () => {
         doSearch($searchTerm);
+        searchbar.value = $searchTerm;
         inputElement = await searchbar.getInputElement();
         await searchbar.setFocus();
         document.addEventListener('keydown', onKeyNavigation);
@@ -152,10 +153,9 @@
         <ion-searchbar
             bind:this={searchbar}
             color="light"
-            debounce={200}
+            debounce={100}
             on:ionInput={onSearch}
             on:ionClear={onClear}
-            value={$searchTerm}
         ></ion-searchbar>
         {#if $searching}
             <ion-progress-bar type="indeterminate" />
