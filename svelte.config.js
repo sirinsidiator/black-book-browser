@@ -2,9 +2,19 @@ import adapter from '@sveltejs/adapter-static';
 import preprocess from 'svelte-preprocess';
 import { importAssets } from 'svelte-preprocess-import-assets';
 
+let version = process.env.npm_package_version;
+if (process.env.NODE_ENV === 'development') {
+    version = `${version}-dev`;
+}
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-    preprocess: [importAssets(), preprocess()],
+    preprocess: [
+        importAssets(),
+        preprocess({
+            replace: [['@version', version]]
+        })
+    ],
 
     kit: {
         adapter: adapter({

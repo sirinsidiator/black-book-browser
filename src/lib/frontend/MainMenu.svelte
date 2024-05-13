@@ -48,6 +48,7 @@
             <div class="label">patrons</div>
         </div>
     </ion-button>
+    <ion-label class="version" color="medium">@version</ion-label>
 </ion-buttons>
 
 <style>
@@ -75,5 +76,11 @@
 
     .label {
         margin-top: 3px;
+    }
+
+    .version {
+        position: absolute;
+        bottom: 10px;
+        font-size: 0.8em;
     }
 </style>
