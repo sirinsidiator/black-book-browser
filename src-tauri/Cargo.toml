@@ -14,7 +14,7 @@ cxx-build = "1.0.121"
 tauri-build = { version = "2.0.0-beta", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-beta", features = [] }
+tauri = { version = "2.0.0-beta", features = ["devtools"] }
 tauri-plugin-fs = "2.0.0-beta"
 tauri-plugin-dialog = "2.0.0-beta"
 tauri-plugin-shell = "2.0.0-beta"
