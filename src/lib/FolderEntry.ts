@@ -1,10 +1,10 @@
 import { folder } from 'ionicons/icons';
+import ContentEntry from './ContentEntry';
 import { FileEntry } from './FileEntry';
 import type MnfArchiveEntry from './MnfArchiveEntry';
-import type { ContentEntry } from './StateManager';
+import BackgroundService from './backend/BackgroundService';
 import type { MnfFileData } from './mnf/MnfFileData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
-import BackgroundService from './backend/BackgroundService';
 
 export interface FolderStats {
     folderCount: number;
@@ -12,7 +12,7 @@ export interface FolderStats {
     decompressedSize: number;
 }
 
-export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
+export class FolderEntry extends ContentEntry implements FileTreeEntryDataProvider {
     public readonly icon = folder;
     public readonly children: (FileEntry | FolderEntry)[] = [];
     private _folderCount = 0;
@@ -28,7 +28,9 @@ export class FolderEntry implements FileTreeEntryDataProvider, ContentEntry {
         private readonly files: MnfFileData[],
         public readonly parent?: FolderEntry,
         private level = 1
-    ) {}
+    ) {
+        super();
+    }
 
     public get path(): string {
         const parent = this.parent;

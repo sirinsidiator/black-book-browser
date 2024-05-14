@@ -1,13 +1,13 @@
 import { folder } from 'ionicons/icons';
+import ContentEntry from './ContentEntry';
 import type GameInstallManager from './GameInstallManager';
 import type { GameVersionData } from './GameInstallManager';
 import MnfArchiveEntry from './MnfArchiveEntry';
-import type { ContentEntry } from './StateManager';
 import type { MnfFileData } from './mnf/MnfFileData';
 import FileTreeEntryData from './tree/FileTreeEntryData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
-export class GameInstallEntry implements FileTreeEntryDataProvider, ContentEntry {
+export class GameInstallEntry extends ContentEntry implements FileTreeEntryDataProvider {
     public readonly icon = folder;
     public readonly hasChildren = true;
     public readonly fileTreeEntry: FileTreeEntryData<this>;
@@ -22,6 +22,7 @@ export class GameInstallEntry implements FileTreeEntryDataProvider, ContentEntry
         public readonly settings: Map<string, string>,
         private readonly archiveFiles: string[]
     ) {
+        super();
         this.fileTreeEntry = new FileTreeEntryData(this);
         this.fileTreeEntry.toggleOpen().catch(console.error);
     }

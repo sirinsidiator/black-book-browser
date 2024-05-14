@@ -1,15 +1,15 @@
 import { fileTrayFull } from 'ionicons/icons';
 import { get, writable, type Writable } from 'svelte/store';
+import ContentEntry from './ContentEntry';
 import type { FileEntry } from './FileEntry';
 import { FolderEntry } from './FolderEntry';
 import type { GameInstallEntry } from './GameInstallEntry';
-import type { ContentEntry } from './StateManager';
 import BackgroundService from './backend/BackgroundService';
 import type { MnfFileData } from './mnf/MnfFileData';
 import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 import { getFileSize } from './util/FileUtil';
 
-export default class MnfArchiveEntry implements FileTreeEntryDataProvider, ContentEntry {
+export default class MnfArchiveEntry extends ContentEntry implements FileTreeEntryDataProvider {
     public readonly root: Writable<FolderEntry | null> = writable(null);
     public readonly busy: Writable<boolean> = writable(false);
     public readonly loaded: Writable<boolean> = writable(false);
@@ -21,7 +21,9 @@ export default class MnfArchiveEntry implements FileTreeEntryDataProvider, Conte
     constructor(
         private gameInstall: GameInstallEntry,
         private _path: string
-    ) {}
+    ) {
+        super();
+    }
 
     public get label(): string {
         return this._path.substring(this.gameInstall.path.length + 1);

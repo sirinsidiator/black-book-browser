@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { ImageFilePreview } from '$lib/FileEntry';
+    import type ImageFilePreviewLoader from './loader/ImageFilePreviewLoader';
 
-    export let image: ImageFilePreview;
+    export let loader: ImageFilePreviewLoader;
 </script>
 
 <div class="image-viewer">
-    <img src={image.getDataUrl()} alt="content" />
+    <img src={loader.getDataUrl()} alt="content" />
 </div>
 
 <style>
@@ -17,7 +17,7 @@
         padding: 10px;
         background: var(--ion-background-color-step-100);
     }
-    
+
     .image-viewer img {
         max-width: 100%;
         max-height: 100%;

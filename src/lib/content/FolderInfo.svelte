@@ -1,31 +1,21 @@
 <script lang="ts">
     import type { FolderEntry } from '$lib/FolderEntry';
-    import { downloadOutline, folderOpenOutline } from 'ionicons/icons';
+    import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
+    import { folderOpenOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
-    import FileListPreview from './FileListPreview.svelte';
     import FolderDetails from './FolderDetails.svelte';
 
     export let folder: FolderEntry;
 
-    function onSaveFilelist() {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([folder.fileList], { type: 'text/plain' }));
-        const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift();
-        a.download = archivePrefix + folder.path.replaceAll('/', '_') + 'filelist.txt';
-        a.click();
-    }
+    $: preview = folder.getPreviewLoader();
 </script>
 
-<ContentLayout hasPreview={true}>
+<ContentLayout {preview}>
     <svelte:fragment slot="buttons">
         <ExtractDialog target={folder} />
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button color="primary" on:click={onSaveFilelist}>
-            <ion-icon slot="start" icon={downloadOutline} />
-            save filelist
-        </ion-button>
+        <SavePreviewButton {preview}>save filelist</SavePreviewButton>
     </svelte:fragment>
 
     <svelte:fragment slot="details">
@@ -33,9 +23,5 @@
             >{folder.archive.path}</DetailEntry
         >
         <FolderDetails {folder} />
-    </svelte:fragment>
-
-    <svelte:fragment slot="preview">
-        <FileListPreview {folder} />
     </svelte:fragment>
 </ContentLayout>

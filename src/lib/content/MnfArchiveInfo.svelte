@@ -1,9 +1,10 @@
 <script lang="ts">
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
+    import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
+    import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';
     import { dirname } from '$lib/util/FileUtil';
     import { open } from '@tauri-apps/plugin-shell';
     import {
-        downloadOutline,
         folderOpenOutline,
         folderOutline,
         refreshOutline
@@ -11,10 +12,10 @@
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
-    import FileListPreview from './FileListPreview.svelte';
     import FolderDetails from './FolderDetails.svelte';
 
     export let archive: MnfArchiveEntry;
+    let preview: Promise<ContentPreviewLoader> | undefined;
 
     $: loaded = archive.loaded;
     $: busy = archive.busy;
@@ -24,34 +25,27 @@
         archive.loadChildren().catch(console.error);
     }
 
-    function onSaveFilelist() {
-        const folder = $root;
-        if (!folder) {
-            return;
-        }
-
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([folder.fileList], { type: 'text/plain' }));
-        const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift();
-        a.download = archivePrefix + folder.path.replaceAll('/', '_') + 'filelist.txt';
-        a.click();
-    }
-
     async function explore() {
         const path = await dirname(archive.path);
         await open(path);
     }
+
+    function refresh(loaded: boolean) {
+        if (loaded) {
+            preview = archive.getPreviewLoader();
+        } else {
+            preview = undefined;
+        }
+    }
+
+    $: refresh($loaded);
 </script>
 
-<ContentLayout hasPreview={$loaded && $root !== null}>
+<ContentLayout {preview}>
     <svelte:fragment slot="buttons">
-        {#if $loaded && $root}
+        {#if $loaded && $root && preview}
             <ExtractDialog target={$root} />
-            <!-- eslint-disable-next-line svelte/valid-compile -->
-            <ion-button color="primary" on:click={onSaveFilelist}>
-                <ion-icon slot="start" icon={downloadOutline} />
-                save filelist
-            </ion-button>
+            <SavePreviewButton {preview}>save filelist</SavePreviewButton>
         {:else}
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-button color="primary" on:click={onLoad} disabled={$busy}>
@@ -75,12 +69,6 @@
         {/if}
         {#if $loaded && $root}
             <FolderDetails folder={$root} />
-        {/if}
-    </svelte:fragment>
-
-    <svelte:fragment slot="preview">
-        {#if $loaded && $root}
-            <FileListPreview folder={$root} />
         {/if}
     </svelte:fragment>
 </ContentLayout>
