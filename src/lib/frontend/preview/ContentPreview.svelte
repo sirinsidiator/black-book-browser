@@ -4,6 +4,7 @@
     import { ContentPreviewLoader } from './loader/ContentPreviewLoader';
     // load all preview loaders so that they can register themselves
     import './loader/FileListPreviewLoader';
+    import './loader/FontPreviewLoader';
     import './loader/ImageFilePreviewLoader';
     import './loader/TextFilePreviewLoader';
 
