@@ -20,14 +20,22 @@ export default class FileListPreviewLoader implements ContentPreviewLoader {
 
     public async prepare(): Promise<void> {}
 
-    public save(): void {
+    public save(fileEnding?: string, suffix?: string): void {
         const folder = this.folder;
-        const file = new Blob([folder.fileList], { type: 'text/plain' });
+        let content = folder.fileList;
+        console.log('save', fileEnding);
+        if (fileEnding) {
+            content = content
+                .split('\n')
+                .filter((line) => line.endsWith(fileEnding))
+                .join('\n');
+        }
+        const file = new Blob([content], { type: 'text/plain' });
         const url = URL.createObjectURL(file);
         const a = document.createElement('a');
         a.href = url;
         const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift();
-        a.download = archivePrefix + folder.path.replaceAll('/', '_') + 'filelist.txt';
+        a.download = archivePrefix + folder.path.replaceAll('/', '_') + (suffix ?? 'filelist.txt');
         a.click();
         URL.revokeObjectURL(url);
     }

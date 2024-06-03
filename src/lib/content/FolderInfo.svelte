@@ -16,6 +16,7 @@
     <svelte:fragment slot="buttons">
         <ExtractDialog target={folder} />
         <SavePreviewButton {preview}>save filelist</SavePreviewButton>
+        <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}>save texturelist</SavePreviewButton>
     </svelte:fragment>
 
     <svelte:fragment slot="details">

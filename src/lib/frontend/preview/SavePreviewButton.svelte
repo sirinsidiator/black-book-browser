@@ -3,11 +3,12 @@
     import type { ContentPreviewLoader } from './loader/ContentPreviewLoader';
 
     export let preview: Promise<ContentPreviewLoader>;
+    export let options: unknown[] = [];
 
     let disabled = true;
 
     async function save() {
-        (await preview).save();
+        (await preview).save(...options);
     }
 
     async function refresh(preview: Promise<ContentPreviewLoader>) {

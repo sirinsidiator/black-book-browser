@@ -4,11 +4,7 @@
     import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';
     import { dirname } from '$lib/util/FileUtil';
     import { open } from '@tauri-apps/plugin-shell';
-    import {
-        folderOpenOutline,
-        folderOutline,
-        refreshOutline
-    } from 'ionicons/icons';
+    import { folderOpenOutline, folderOutline, refreshOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
@@ -46,6 +42,7 @@
         {#if $loaded && $root && preview}
             <ExtractDialog target={$root} />
             <SavePreviewButton {preview}>save filelist</SavePreviewButton>
+            <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}>save texturelist</SavePreviewButton>
         {:else}
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-button color="primary" on:click={onLoad} disabled={$busy}>

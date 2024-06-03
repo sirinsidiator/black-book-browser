@@ -28,7 +28,7 @@ export abstract class ContentPreviewLoader {
     public abstract readonly canSave: boolean;
 
     public abstract prepare(): Promise<void>;
-    public abstract save(): void;
+    public abstract save(...options: unknown[]): void;
 }
 
 class NoPreviewLoader extends ContentPreviewLoader {
