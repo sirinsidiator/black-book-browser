@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <script lang="ts">
     import { caretForwardOutline, warningOutline } from 'ionicons/icons';
     import { createEventDispatcher } from 'svelte';

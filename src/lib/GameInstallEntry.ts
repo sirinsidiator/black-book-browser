@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { folder } from 'ionicons/icons';
 import ContentEntry from './ContentEntry';
 import type GameInstallManager from './GameInstallManager';

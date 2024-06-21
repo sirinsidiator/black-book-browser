@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { get, writable, type Writable } from 'svelte/store';
 import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';

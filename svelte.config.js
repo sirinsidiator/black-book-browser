@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import adapter from '@sveltejs/adapter-static';
 import preprocess from 'svelte-preprocess';
 import { importAssets } from 'svelte-preprocess-import-assets';

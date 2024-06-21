@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <script lang="ts">
     import { setupIonicBase } from 'ionic-svelte';
     /* Import all components - or do partial loading - see below */

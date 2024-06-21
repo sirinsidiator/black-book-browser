@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type { ExtractFilesProgress, ExtractFilesResult } from '$lib/mnf/MnfArchive';
 import type MnfArchiveFile from '$lib/mnf/MnfArchiveFile';
 import type MnfEntry from '$lib/mnf/MnfEntry';

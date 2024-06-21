@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type FileSearchEntry from '$lib/FileSearchEntry';
 import type { FolderStats } from '$lib/FolderEntry';
 import type {

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 # Tauri + Svelte + Typescript
 
 This template should help get you started developing with Tauri, Svelte and TypeScript in Vite.

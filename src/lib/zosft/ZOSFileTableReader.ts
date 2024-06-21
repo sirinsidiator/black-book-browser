@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type MnfArchive from '../mnf/MnfArchive.js';
 import BufferReader, { FieldData, FieldType, type FieldDefinition } from '../util/BufferReader.js';
 import { inflate } from '../util/FileUtil.js';

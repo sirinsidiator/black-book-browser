@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use rust_ooz::{decompress, read_partial_file};
 use std::fs::File;
 use std::io::Write;

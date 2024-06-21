@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 sirinsidiator
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Logs
 logs
 *.log
@@ -9,6 +13,7 @@ lerna-debug.log*
 
 node_modules
 /build
+/unused
 /.svelte-kit
 dist
 dist-ssr

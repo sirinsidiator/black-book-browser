@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <script lang="ts">
     import ContentPreview from '$lib/frontend/preview/ContentPreview.svelte';
     import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';

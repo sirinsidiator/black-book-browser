@@ -1,10 +1,14 @@
+# SPDX-FileCopyrightText: 2024 sirinsidiator
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [package]
 name = "black-book-browser"
 version = "4.0.0"
 description = "A Tauri App"
 authors = ["sirinsidiator"]
-license = ""
-repository = ""
+license = "GPL-3.0-or-later"
+repository = "https://github.com/sirinsidiator/black-book-browser"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

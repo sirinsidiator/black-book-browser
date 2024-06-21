@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type ContentEntry from '$lib/ContentEntry';
 import type { ComponentType, SvelteComponent } from 'svelte';
 import NoPreview from '../NoPreview.svelte';

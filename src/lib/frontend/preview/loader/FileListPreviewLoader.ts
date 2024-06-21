@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type ContentEntry from '$lib/ContentEntry';
 import { FolderEntry } from '$lib/FolderEntry';
 import MnfArchiveEntry from '$lib/MnfArchiveEntry';

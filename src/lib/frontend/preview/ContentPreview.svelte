@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <script lang="ts">
     import { warningOutline } from 'ionicons/icons';
     import ContentPreviewText from './ContentPreviewText.svelte';

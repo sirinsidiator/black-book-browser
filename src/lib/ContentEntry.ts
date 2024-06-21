@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { ContentPreviewLoader } from './frontend/preview/loader/ContentPreviewLoader';
 
 export default abstract class ContentEntry {

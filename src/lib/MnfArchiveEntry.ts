@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { fileTrayFull } from 'ionicons/icons';
 import { get, writable, type Writable } from 'svelte/store';
 import ContentEntry from './ContentEntry';

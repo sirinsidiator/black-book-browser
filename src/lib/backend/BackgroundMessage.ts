@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import type { ExtractFilesRequest } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { BackgroundMessageType } from './BackgroundMessageType';

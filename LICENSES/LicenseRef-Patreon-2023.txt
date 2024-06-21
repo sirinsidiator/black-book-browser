@@ -1,0 +1,8 @@
+Our creations are protected by copyright, trademark, patent, and trade secret laws. 
+Some examples of our creations are the text on the www.patreon.com site, the text on Patreon’s other websites, 
+our iOS and Android apps, our APIs, our embeds, our logo, and our codebase. 
+We grant creators a license to use our logo and other copyrights or trademarks to promote their Patreon pages. 
+You can learn more about the correct use of our logo in our Brand Guidelines. 
+You may not otherwise use, reproduce, distribute, perform, publicly display, or prepare derivative works of our creations unless we give you permission in writing.
+
+(copied from https://www.patreon.com/policy/legal)

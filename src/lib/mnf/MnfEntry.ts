@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { FieldData } from '../util/BufferReader';
 import type ZOSFileTableEntry from '../zosft/ZOSFileTableEntry';
 import type MnfArchive from './MnfArchive';

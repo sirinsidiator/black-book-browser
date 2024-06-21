@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <script lang="ts">
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
     import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
