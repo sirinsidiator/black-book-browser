@@ -281,9 +281,8 @@ dependencies = [
 name = "black-book-browser"
 version = "4.0.0"
 dependencies = [
- "cxx",
- "cxx-build",
  "num_cpus",
+ "rust-ooz",
  "serde",
  "serde_json",
  "tauri",
@@ -2875,6 +2874,15 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "rust-ooz"
+version = "1.0.0"
+source = "git+https://github.com/sirinsidiator/rust-ooz.git#ed825952050cf1a7830a36de3094a8adf0d84585"
+dependencies = [
+ "cxx",
+ "cxx-build",
 ]
 
 [[package]]
