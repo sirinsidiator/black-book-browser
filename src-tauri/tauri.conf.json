@@ -21,7 +21,7 @@
     "shortDescription": "Black Book Browser - Elder Scrolls Online Game Archive Viewer"
   },
   "productName": "bbb",
-  "version": "4.0.0",
+  "version": "4.2.0",
   "identifier": "at.insidi.black-book-browser",
   "plugins": {},
   "app": {
