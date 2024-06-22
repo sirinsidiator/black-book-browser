@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     } from '$lib/util/FileUtil';
     import type { InputChangeEventDetail } from '@ionic/core';
     import { open } from '@tauri-apps/plugin-dialog';
+    import { open as openFolder } from '@tauri-apps/plugin-shell';
     import { archiveOutline, closeOutline } from 'ionicons/icons';
     import { get } from 'svelte/store';
 
@@ -47,6 +48,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     function close() {
         dialog.dismiss().catch(console.error);
+    }
+
+    function openTargetFolder() {
+        if (!targetFolder) {
+            return;
+        }
+        openFolder(targetFolder).catch(console.error);
     }
 
     function flushLogEntries() {
@@ -400,6 +408,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
                                 on:click={close}>close</ion-button
                             >
                         {/if}
+                        <!-- eslint-disable-next-line svelte/valid-compile -->
+                        <ion-button
+                            expand="block"
+                            color="medium"
+                            disabled={!targetFolder}
+                            on:click={openTargetFolder}>open folder</ion-button
+                        >
                     </ion-card-content>
                 </ion-card>
             </div>
