@@ -1,15 +1,24 @@
+<!--
+SPDX-FileCopyrightText: 2024 sirinsidiator
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 <script lang="ts">
     import type { InputChangeEventDetail } from '@ionic/core';
     import { open } from '@tauri-apps/plugin-dialog';
+    import { helpCircleOutline } from 'ionicons/icons';
     import type ExtractionOptions from './ExtractionOptions';
+    import { openIgnorePatternHelp } from './ignoredFilesFilterHelper';
 
     export let extracting: boolean;
     export let options: ExtractionOptions;
 
-    const { targetFolder, preserveParents, decompressFiles } = options;
+    const { targetFolder, preserveParents, decompressFiles, ignorePattern } = options;
 
     let preserveParentsControl: HTMLIonToggleElement;
     let decompressFilesControl: HTMLIonToggleElement;
+    let ignorePatternControl: HTMLIonInputElement;
 
     function setTargetFolder(path: unknown) {
         if (typeof path === 'string') {
@@ -32,6 +41,10 @@
 
     function onDecompressFilesChanged() {
         $decompressFiles = decompressFilesControl.checked;
+    }
+
+    function onIgnorePatternChanged() {
+        $ignorePattern = (ignorePatternControl.value ?? '') as string;
     }
 
     async function selectLocation() {
@@ -72,6 +85,19 @@
                 checked={$decompressFiles}
                 on:ionChange={onDecompressFilesChanged}>Decompress files</ion-toggle
             >
+        </ion-item>
+        <ion-item>
+            <ion-input
+                bind:this={ignorePatternControl}
+                label="Ignore pattern"
+                placeholder="e.g. !**/*.+(lua|xml|txt)"
+                value={$ignorePattern}
+                on:ionChange={onIgnorePatternChanged}
+            >
+            </ion-input>
+            <ion-button slot="end" fill="clear" on:click={openIgnorePatternHelp}>
+                <ion-icon icon={helpCircleOutline} slot="icon-only" />
+            </ion-button>
         </ion-item>
     </ion-card-content>
 </ion-card>

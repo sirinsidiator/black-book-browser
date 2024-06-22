@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
+    import { isIgnoredPath } from '$lib/content/ignoredFilesFilterHelper';
     import { caretForwardOutline, warningOutline } from 'ionicons/icons';
     import { createEventDispatcher } from 'svelte';
     import FileTreeEntryData from './FileTreeEntryData';
@@ -14,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined = undefined;
     export let checkable = false;
     export let levelOffset = 0;
+    export let ignorePattern: string | undefined = undefined;
 
     $: opened = data.opened;
     $: checked = data.checked;
@@ -21,6 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: busy = data.busy;
     $: failed = data.failed;
     $: hasChildren = data.hasChildren;
+    $: ignored = !$hasChildren && isIgnoredPath(data.path, ignorePattern);
 
     const dispatch = createEventDispatcher();
     function onToggleOpen() {
@@ -54,8 +57,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     {#if checkable}
         <ion-checkbox
-            checked={$checked}
-            indeterminate={$indeterminate}
+            checked={!ignored && $checked}
+            indeterminate={!ignored && $indeterminate}
+            disabled={ignored}
             on:ionChange={onToggleChecked}
         />
     {/if}
@@ -64,9 +68,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <ion-button
         class="content"
         class:selected={selected === data}
+        class:ignored
         fill="clear"
         size="small"
         color={$failed ? 'danger' : 'medium'}
+        disabled={ignored}
         on:click={onSelect}
         on:dblclick={onToggleOpen}
     >
@@ -132,5 +138,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     .content.selected {
         background-color: var(--ion-color-light-tint);
+    }
+
+    .content.ignored {
+        text-decoration: line-through;
     }
 </style>

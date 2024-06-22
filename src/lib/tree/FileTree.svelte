@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let checkable = false;
     export let levelOffset = 0;
     export let keyboardNavigationTarget: HTMLElement | null = null;
+    export let ignorePattern: string | undefined = undefined;
 
     let scrollToIndex: (index: number) => void;
     let start: number;
@@ -144,6 +145,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             {selected}
             {checkable}
             {levelOffset}
+            {ignorePattern}
             on:open={toggleOpen}
             on:change={toggleChecked}
             on:select={select}

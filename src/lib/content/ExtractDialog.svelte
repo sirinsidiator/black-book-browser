@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { FolderEntry } from '$lib/FolderEntry';
     import BackgroundService from '$lib/backend/BackgroundService';
     import type { ExtractFilesProgress, ExtractFilesRequest } from '$lib/mnf/MnfArchive';
+    import type { MnfFileData } from '$lib/mnf/MnfFileData';
     import FileTree from '$lib/tree/FileTree.svelte';
     import FileTreeEntryData from '$lib/tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
@@ -18,11 +19,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { get } from 'svelte/store';
     import ExtractDialogOptions from './ExtractDialogOptions.svelte';
     import ExtractionOptions from './ExtractionOptions';
+    import { filterIgnoredFiles } from './ignoredFilesFilterHelper';
 
     export let target: FolderEntry | FileEntry;
 
     const options = new ExtractionOptions();
-    const { targetFolder, preserveParents, decompressFiles } = options;
+    const { targetFolder, preserveParents, decompressFiles, ignorePattern } = options;
 
     let dialog: HTMLIonModalElement;
     let logContainer: HTMLDivElement;
@@ -41,6 +43,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let levelOffset = 0;
     let dialogVisible = false;
     let selectedContent: FileTreeEntryDataProvider;
+    let refreshingSummary = false;
+    let selectedFiles: MnfFileData[] = [];
 
     function close() {
         dialog.dismiss().catch(console.error);
@@ -94,7 +98,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             rootPath: root.path,
             preserveParents: $preserveParents,
             decompressFiles: $decompressFiles,
-            files: root.getSelectedFiles()
+            files: selectedFiles
         };
         console.log('extracting files', details);
         extracting = true;
@@ -102,7 +106,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         extractionProgress = null;
         extractionTotal = details.files.length;
         extractionDone = false;
-        queueAddLogEntry(`Begin extracting ${currentEntry.path} to ${targetFolder}`);
+        queueAddLogEntry(`Begin extracting ${currentEntry.path} to ${$targetFolder}`);
         let addedErrorsIndex = 0;
         BackgroundService.getInstance()
             .extractFiles(details, (progress) => {
@@ -217,16 +221,27 @@ SPDX-License-Identifier: GPL-3.0-or-later
         refreshSummary($preserveParents, decompressFiles);
     }
 
-    function refreshSummary(preserveParents: boolean, decompressFiles: boolean) {
+    function onIgnorePatternChanged(ignorePattern: string) {
+        refreshSummary($preserveParents, $decompressFiles);
+    }
+
+    async function refreshSummary(preserveParents: boolean, decompressFiles: boolean) {
         const root = getRootEntry(preserveParents);
         if (!root) return;
-        const selectedFiles = root.getSelectedFiles();
+        refreshingSummary = true;
+
+        selectedFiles = root.getSelectedFiles();
+        if ($ignorePattern) {
+            selectedFiles = await filterIgnoredFiles($ignorePattern, selectedFiles);
+        }
+
         fileCount = selectedFiles.length;
         if (decompressFiles) {
             totalSize = selectedFiles.reduce((acc, entry) => acc + entry.size, 0);
         } else {
             totalSize = selectedFiles.reduce((acc, entry) => acc + entry.compressedSize, 0);
         }
+        refreshingSummary = false;
     }
 
     function onShow() {
@@ -245,6 +260,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     $: onPreserveParentFoldersChanged($preserveParents);
     $: onDecompressFilesChanged($decompressFiles);
+    $: onIgnorePatternChanged($ignorePattern);
 </script>
 
 <ion-button color="primary" id="open-extract-dialog">
@@ -300,6 +316,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                                 on:select={select}
                                 {levelOffset}
                                 keyboardNavigationTarget={dialog}
+                                ignorePattern={$ignorePattern}
                             />
                         {/await}
                     </ion-card-content>
@@ -329,15 +346,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     <ion-card-content>
                         {#if !extracting}
                             <ion-label class="summary" color="dark">
-                                {fileCount.toLocaleString()} files selected | {formatFileSize(
-                                    totalSize
-                                )}
+                                {#if refreshingSummary}
+                                    <ion-skeleton-text animated style="width: 330px" />
+                                {:else}
+                                    {fileCount.toLocaleString()} files selected | {formatFileSize(
+                                        totalSize
+                                    )}
+                                {/if}
                             </ion-label>
                             <!-- eslint-disable-next-line svelte/valid-compile -->
                             <ion-button
                                 expand="block"
                                 color="primary"
-                                disabled={fileCount === 0}
+                                disabled={refreshingSummary || fileCount === 0}
                                 on:click={doExtract}>extract</ion-button
                             >
                         {:else}
