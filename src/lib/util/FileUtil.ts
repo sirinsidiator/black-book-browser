@@ -131,15 +131,3 @@ export function dirname(pathString: string): Promise<string> {
 export function resolve(...paths: string[]) {
     return path.resolve(...paths);
 }
-
-export async function getExtractionTargetFolder(): Promise<string> {
-    const folder = localStorage.getItem('extract-target-folder');
-    if (!folder) {
-        return path.desktopDir();
-    }
-    return folder;
-}
-
-export function setExtractionTargetFolder(folder: string) {
-    localStorage.setItem('extract-target-folder', folder);
-}

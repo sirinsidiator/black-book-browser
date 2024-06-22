@@ -12,22 +12,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import FileTree from '$lib/tree/FileTree.svelte';
     import FileTreeEntryData from '$lib/tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
-    import {
-        formatFileSize,
-        getExtractionTargetFolder,
-        setExtractionTargetFolder
-    } from '$lib/util/FileUtil';
-    import type { InputChangeEventDetail } from '@ionic/core';
-    import { open } from '@tauri-apps/plugin-dialog';
-    import { open as openFolder } from '@tauri-apps/plugin-shell';
+    import { formatFileSize } from '$lib/util/FileUtil';
+    import { open } from '@tauri-apps/plugin-shell';
     import { archiveOutline, closeOutline } from 'ionicons/icons';
     import { get } from 'svelte/store';
+    import ExtractDialogOptions from './ExtractDialogOptions.svelte';
+    import ExtractionOptions from './ExtractionOptions';
 
     export let target: FolderEntry | FileEntry;
 
+    const options = new ExtractionOptions();
+    const { targetFolder, preserveParents, decompressFiles } = options;
+
     let dialog: HTMLIonModalElement;
-    let preserveParents: HTMLIonToggleElement;
-    let decompressFiles: HTMLIonToggleElement;
     let logContainer: HTMLDivElement;
     let rootEntry: FileTreeEntryData<FileTreeEntryDataProvider>;
     let currentEntry: FileTreeEntryData<FileTreeEntryDataProvider>;
@@ -42,7 +39,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let extractionProgress: ExtractFilesProgress | null = null;
     let extractionDone = false;
     let levelOffset = 0;
-    let targetFolder: string;
     let dialogVisible = false;
     let selectedContent: FileTreeEntryDataProvider;
 
@@ -51,10 +47,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     function openTargetFolder() {
-        if (!targetFolder) {
-            return;
-        }
-        openFolder(targetFolder).catch(console.error);
+        open($targetFolder).catch(console.error);
     }
 
     function flushLogEntries() {
@@ -94,13 +87,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     function doExtract() {
         const startTime = performance.now();
-        const root = getRootEntry();
+        const root = getRootEntry($preserveParents);
         const details: ExtractFilesRequest = {
             archivePath: (root.data as FolderEntry).archive.path,
-            targetFolder,
+            targetFolder: $targetFolder,
             rootPath: root.path,
-            preserveParents: preserveParents.checked,
-            decompressFiles: decompressFiles.checked,
+            preserveParents: $preserveParents,
+            decompressFiles: $decompressFiles,
             files: root.getSelectedFiles()
         };
         console.log('extracting files', details);
@@ -175,36 +168,23 @@ SPDX-License-Identifier: GPL-3.0-or-later
             await currentEntry.toggleOpen();
         }
 
-        refreshSummary();
-        return getTreeEntries();
+        refreshSummary($preserveParents, $decompressFiles);
+        return getTreeEntries($preserveParents);
     }
 
     async function refresh() {
         entries = updateEntries(target);
-        targetFolder = await getExtractionTargetFolder();
         extracting = false;
     }
 
-    function setTargetFolder(path: unknown) {
-        if (typeof path === 'string') {
-            console.log('setting target folder to', path);
-            targetFolder = path;
-            setExtractionTargetFolder(path);
-        }
+    function onPreserveParentFoldersChanged(preserveParents: boolean) {
+        entries = Promise.resolve(getTreeEntries(preserveParents));
+        levelOffset = getLevelOffset(preserveParents);
+        refreshSummary(preserveParents, $decompressFiles);
     }
 
-    function onTargetFolderChanged(event: CustomEvent<InputChangeEventDetail>) {
-        setTargetFolder(event.detail.value);
-    }
-
-    function onPreserveParentFoldersChanged() {
-        entries = Promise.resolve(getTreeEntries());
-        levelOffset = getLevelOffset();
-        refreshSummary();
-    }
-
-    function getTreeEntries() {
-        if (preserveParents.checked) {
+    function getTreeEntries(preserveParents: boolean) {
+        if (preserveParents) {
             return [rootEntry];
         } else if (currentEntry.data instanceof FileEntry) {
             return [currentEntry];
@@ -213,8 +193,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
         }
     }
 
-    function getRootEntry() {
-        if (preserveParents.checked) {
+    function getRootEntry(preserveParents: boolean) {
+        if (preserveParents) {
             return rootEntry;
         } else if (currentEntry.data instanceof FileEntry) {
             return currentEntry.parent!;
@@ -223,8 +203,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
         }
     }
 
-    function getLevelOffset() {
-        if (preserveParents.checked) {
+    function getLevelOffset(preserveParents: boolean) {
+        if (preserveParents) {
             return 0;
         } else if (currentEntry.data instanceof FileEntry) {
             return -currentEntry.level;
@@ -233,27 +213,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
         }
     }
 
-    function onDecompressFilesChanged() {
-        refreshSummary();
+    function onDecompressFilesChanged(decompressFiles: boolean) {
+        refreshSummary($preserveParents, decompressFiles);
     }
 
-    function refreshSummary() {
-        const root = getRootEntry();
+    function refreshSummary(preserveParents: boolean, decompressFiles: boolean) {
+        const root = getRootEntry(preserveParents);
+        if (!root) return;
         const selectedFiles = root.getSelectedFiles();
         fileCount = selectedFiles.length;
-        if (decompressFiles.checked) {
+        if (decompressFiles) {
             totalSize = selectedFiles.reduce((acc, entry) => acc + entry.size, 0);
         } else {
             totalSize = selectedFiles.reduce((acc, entry) => acc + entry.compressedSize, 0);
         }
-    }
-
-    async function selectLocation() {
-        const selected = await open({
-            directory: true,
-            defaultPath: targetFolder
-        });
-        setTargetFolder(selected);
     }
 
     function onShow() {
@@ -269,6 +242,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     function select(event: CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>) {
         selectedContent = event.detail.data;
     }
+
+    $: onPreserveParentFoldersChanged($preserveParents);
+    $: onDecompressFilesChanged($decompressFiles);
 </script>
 
 <ion-button color="primary" id="open-extract-dialog">
@@ -303,42 +279,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </ion-header>
         <ion-content>
             <div class="inner">
-                <ion-card class="options" color="light" class:hidden={extracting}>
-                    <ion-card-header>
-                        <ion-card-title>Options</ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                        <ion-item>
-                            <ion-input
-                                label="Extract to"
-                                value={targetFolder}
-                                on:ionChange={onTargetFolderChanged}
-                            />
-                            <!-- eslint-disable-next-line svelte/valid-compile -->
-                            <ion-button
-                                slot="end"
-                                fill="clear"
-                                color="primary"
-                                on:click={selectLocation}>Choose</ion-button
-                            >
-                        </ion-item>
-                        <ion-item>
-                            <ion-toggle
-                                bind:this={preserveParents}
-                                checked={true}
-                                on:ionChange={onPreserveParentFoldersChanged}
-                                >Preserve parent folders</ion-toggle
-                            >
-                        </ion-item>
-                        <ion-item>
-                            <ion-toggle
-                                bind:this={decompressFiles}
-                                checked={true}
-                                on:ionChange={onDecompressFilesChanged}>Decompress files</ion-toggle
-                            >
-                        </ion-item>
-                    </ion-card-content>
-                </ion-card>
+                <ExtractDialogOptions {options} {extracting} />
 
                 <ion-card class="files" color="light" class:hidden={extracting}>
                     <ion-card-header>
@@ -355,7 +296,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                                 {entries}
                                 checkable={true}
                                 {selectedContent}
-                                on:change={refreshSummary}
+                                on:change={() => refreshSummary($preserveParents, $decompressFiles)}
                                 on:select={select}
                                 {levelOffset}
                                 keyboardNavigationTarget={dialog}
@@ -445,7 +386,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
         height: calc(var(--height) - 56px);
     }
 
-    .options,
     .footer {
         flex-shrink: 0;
     }
