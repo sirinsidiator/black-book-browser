@@ -78,6 +78,10 @@ export default class BufferReader {
         this.cursor += length;
     }
 
+    setCursor(offset: number) {
+        this.cursor = offset;
+    }
+
     readFields(fieldDefinitions: FieldDefinition[], data: FieldData): number {
         const offset = data.length;
         for (const definition of fieldDefinitions) {

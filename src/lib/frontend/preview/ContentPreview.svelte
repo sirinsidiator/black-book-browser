@@ -13,6 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import './loader/FontPreviewLoader';
     import './loader/ImageFilePreviewLoader';
     import './loader/TextFilePreviewLoader';
+    // hex preview has to be loaded last so it does not get chosen over other loaders
+    import './loader/HexPreviewLoader';
 
     export let preview: Promise<ContentPreviewLoader>;
 </script>
