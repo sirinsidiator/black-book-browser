@@ -237,9 +237,9 @@ export default class DDSHelper {
     readA8R8G8B8(view: BufferReader, width: number, height: number): Uint8ClampedArray {
         const pixelData = new Uint8ClampedArray(width * height * 4);
         for (let i = 0; i < pixelData.length; i += 4) {
-            pixelData[i + 0] = view.readUInt8();
-            pixelData[i + 1] = view.readUInt8();
             pixelData[i + 2] = view.readUInt8();
+            pixelData[i + 1] = view.readUInt8();
+            pixelData[i + 0] = view.readUInt8();
             pixelData[i + 3] = view.readUInt8();
         }
         return pixelData;
