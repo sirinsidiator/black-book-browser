@@ -17,6 +17,14 @@ fn find_mnf_files_in_dir(path: &str) -> Vec<String> {
     return mnf_files;
 }
 
+#[tauri::command]
+fn init_worker(request: tauri::ipc::Request) -> Result<String, String> {
+    let Some(key) = request.headers().get("Tauri-Invoke-Key") else {
+        return Err("Missing `Tauri-Invoke-Key` header".into());
+    };
+    return Ok(key.to_str().unwrap().to_string());
+}
+
 fn scan_for_mnf_files_recursivly(path: &str, mnf_files: &mut Vec<String>, level: u32) {
     if level > 4 {
         return;
@@ -48,7 +56,7 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![find_mnf_files_in_dir])
+        .invoke_handler(tauri::generate_handler![find_mnf_files_in_dir, init_worker])
         .register_asynchronous_uri_scheme_protocol("bbb", move |_app, req, res| {
             if req.method() == "OPTIONS" {
                 match bbb::build_options_response() {

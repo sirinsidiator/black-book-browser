@@ -22,7 +22,7 @@ import { BackgroundMessageType } from './BackgroundMessageType';
 import type { BackgroundWorkerConfig } from './BackgroundWorkerConfig';
 
 // adapted from tauri core source so we can use invoke directly in the worker
-function setupTauriInternals() {
+function setupTauriInternals(key: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const window: any = {};
 
@@ -90,6 +90,7 @@ function setupTauriInternals() {
                 'Content-Type': contentType,
                 'Tauri-Callback': callback,
                 'Tauri-Error': error,
+                'Tauri-Invoke-Key': key,
                 ...(options?.headers || {})
             } as Record<string, string>
         })
@@ -199,7 +200,7 @@ export default class BackgroundWorker {
             console.warn('worker already initialized');
             return;
         }
-        setupTauriInternals();
+        setupTauriInternals(message.config.key);
         this.instance = new BackgroundWorker(message.config);
         this.instance.transceiver.sendSuccessResponse(message);
     }

@@ -28,6 +28,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import '../theme/variables.css';
     /* Import the main menu */
     import MainMenu from '$lib/frontend/MainMenu.svelte';
+    import BackgroundService from '$lib/backend/BackgroundService';
 
     /* Call Ionic's setup routine */
     setupIonicBase();
@@ -62,6 +63,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         Want to know what is happening more - follow me on Twitter - https://twitter.com/Tommertomm
         Discord channel on Ionic server - https://discordapp.com/channels/520266681499779082/1049388501629681675
     */
+
+    BackgroundService.initialize()
+        .then(() => {
+            console.log('BackgroundService initialized successfully');
+        })
+        .catch((error) => {
+            console.error('Failed to initialize BackgroundService:', error);
+        });
 </script>
 
 <ion-app>

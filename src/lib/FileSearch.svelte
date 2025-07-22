@@ -50,9 +50,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
         gameInstallManager.clearFileSearch();
     }
 
+    // fuzzysort moved the highlight method, but we only get a plain object from the BackgroundService
+    // so we need to restore the prototype to get the highlight method back.
+    const dummyResult = fuzzysort.go('dummy', ['dummy']);
+    function restoreResult(item: unknown): Fuzzysort.KeysResult<FileSearchEntry> {
+        let result = item as Fuzzysort.KeysResult<FileSearchEntry>;
+        if (!result[0].highlight) {
+            result = Object.setPrototypeOf(result, dummyResult.constructor.prototype);
+            (result as any)[0] = Object.setPrototypeOf(
+                result[0],
+                dummyResult[0].constructor.prototype
+            );
+        }
+        return result;
+    }
+
     function highlight(item: unknown) {
-        const result = item as Fuzzysort.KeysResult<FileSearchEntry>;
-        return fuzzysort.highlight(result[0]);
+        const result = restoreResult(item);
+        return result[0].highlight();
     }
 
     async function onSelect(item: unknown) {

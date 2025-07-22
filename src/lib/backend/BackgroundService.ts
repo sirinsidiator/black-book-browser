@@ -10,6 +10,7 @@ import type {
     ExtractFilesResult
 } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
+import { invoke } from '@tauri-apps/api/core';
 import {
     isBackgroundMessage,
     type BackgroundExtractFilesMessage,
@@ -27,9 +28,18 @@ import workerUrl from './worker?worker&url';
 export default class BackgroundService {
     private static instance: BackgroundService;
 
-    public static getInstance(): BackgroundService {
+    public static async initialize() {
         if (!this.instance) {
             this.instance = new BackgroundService();
+            await this.instance.initialize();
+        } else {
+            console.warn('BackgroundService is already initialized');
+        }
+    }
+
+    public static getInstance(): BackgroundService {
+        if (!this.instance) {
+            throw new Error('BackgroundService is not initialized. Call BackgroundService.initialize() first.');
         }
         return this.instance;
     }
@@ -48,7 +58,6 @@ export default class BackgroundService {
         });
         this.transceiver = new BackgroundMessageTransceiver(this.backgroundWorker);
         this.backgroundWorker.onmessage = this.handleMessage.bind(this);
-        this.initialize();
     }
 
     private handleMessage(event: MessageEvent<BackgroundMessage>) {
@@ -71,11 +80,12 @@ export default class BackgroundService {
         }
     }
 
-    private initialize() {
+    private async initialize() {
+        const key = await invoke('init_worker');
         this.transceiver
             .sendMessage({
                 type: BackgroundMessageType.INIT,
-                config: {}
+                config: { key }
             } as BackgroundWorkerInitMessage)
             .catch((error) => {
                 console.error('failed to initialize background worker:', error);

@@ -15,6 +15,7 @@
     "core:tray:default",
     "fs:allow-read-file",
     "fs:allow-read-dir",
+    "fs:allow-stat",
     {
       "identifier": "fs:scope",
       "allow": [

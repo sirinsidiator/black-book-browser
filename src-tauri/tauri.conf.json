@@ -23,7 +23,11 @@
   "productName": "bbb",
   "version": "4.2.0",
   "identifier": "at.insidi.black-book-browser",
-  "plugins": {},
+  "plugins": {
+    "shell": {
+      "open": "([A-Z]:\\\\.*)"
+    }
+  },
   "app": {
     "withGlobalTauri": false,
     "windows": [

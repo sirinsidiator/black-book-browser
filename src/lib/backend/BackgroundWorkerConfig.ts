@@ -3,4 +3,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 export interface BackgroundWorkerConfig {
+    key: string;
 }

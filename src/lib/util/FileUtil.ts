@@ -26,15 +26,7 @@ export function formatFileSize(size: number, showBytes = true): string {
 }
 
 export async function inflate(buffer: Uint8Array): Promise<Uint8Array> {
-    const url = convertFileSrc('inflate', 'bbb');
-    const response = await fetch(url, {
-        method: 'POST',
-        body: buffer
-    });
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-    }
+    const response = await rustCall('inflate', buffer);
     const content = await response.arrayBuffer();
     return new Uint8Array(content);
 }
@@ -49,15 +41,7 @@ export async function readPartialFile(
     offset: number,
     length: number
 ): Promise<Uint8Array> {
-    const url = convertFileSrc('read-partial-file', 'bbb');
-    const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify({ path, offset, length })
-    });
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-    }
+    const response = await rustCall('read-partial-file', JSON.stringify({ path, offset, length }));
     const content = await response.arrayBuffer();
     return new Uint8Array(content);
 }
@@ -70,34 +54,19 @@ export async function extractFiles(
     }[],
     decompress: boolean
 ): Promise<ExtractFilesResult> {
-    const url = convertFileSrc('extract-files', 'bbb');
-    const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify(
-            files.map((file) => ({
-                targetPath: file.target,
-                archivePath: file.archiveFile.path,
-                offset: file.fileEntry.offset,
-                compressedSize: file.fileEntry.compressedSize,
-                fileSize: file.fileEntry.fileSize,
-                compressionType: !decompress ? 0 : file.fileEntry.compressionType
-            }))
-        )
-    });
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-    }
+    const response = await rustCall('extract-files', JSON.stringify(files.map((file) => ({
+        targetPath: file.target,
+        archivePath: file.archiveFile.path,
+        offset: file.fileEntry.offset,
+        compressedSize: file.fileEntry.compressedSize,
+        fileSize: file.fileEntry.fileSize,
+        compressionType: !decompress ? 0 : file.fileEntry.compressionType
+    }))));
     return response.json() as Promise<ExtractFilesResult>;
 }
 
 export async function getExtractFileProgress(): Promise<ExtractFilesProgress> {
-    const url = convertFileSrc('extract-files-progress', 'bbb');
-    const response = await fetch(url);
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-    }
+    const response = await rustCall('extract-files-progress');
     return response.json() as Promise<ExtractFilesProgress>;
 }
 
@@ -107,15 +76,7 @@ export async function decompress(
     compressedSize: number,
     fileSize: number
 ): Promise<Uint8Array> {
-    const url = convertFileSrc('decompress', 'bbb');
-    const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify({ path, offset, compressedSize, fileSize })
-    });
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-    }
+    const response = await rustCall('decompress', JSON.stringify({ path, offset, compressedSize, fileSize }));
     const content = await response.arrayBuffer();
     return new Uint8Array(content);
 }
@@ -130,4 +91,21 @@ export function dirname(pathString: string): Promise<string> {
 
 export function resolve(...paths: string[]) {
     return path.resolve(...paths);
+}
+
+async function rustCall(functionName: string, body?: BodyInit | null) {
+    const url = convertFileSrc(functionName, 'bbb');
+    console.log(url, {
+        method: body ? 'POST' : 'GET',
+        body,
+    });
+    const response = await fetch(url, {
+        method: body ? 'POST' : 'GET',
+        body,
+    });
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+    }
+    return response;
 }
