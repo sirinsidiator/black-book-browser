@@ -4,6 +4,32 @@
 
 import BufferReader from '$lib/util/BufferReader';
 
+interface DDSHeader {
+    size: number,
+    flags: number,
+    height: number,
+    width: number,
+    pitchOrLinearSize: number,
+    depth: number,
+    mipMapCount: number,
+    pixelFormat: PixelFormat,
+    caps: number,
+    caps2: number,
+    caps3: number,
+    caps4: number
+};
+
+interface PixelFormat {
+    size: number;
+    flags: number;
+    fourCC: string;
+    RGBBitCount: number;
+    RBitMask: number;
+    GBitMask: number;
+    BBitMask: number;
+    ABitMask: number;
+}
+
 const ALPHA = 0xff;
 const BLOCK_HEIGHT = 4;
 const BLOCK_WIDTH = 4;
@@ -135,7 +161,7 @@ export default class DDSHelper {
         const caps4 = view.readUInt32();
         view.skip(4); // reserved2
 
-        const header = {
+        const header: DDSHeader = {
             size: headerSize,
             flags: headerFlags,
             height,
@@ -220,7 +246,11 @@ export default class DDSHelper {
                     throw new Error('Unsupported FourCC code');
             }
         } else if (pixelFormatFlags === (DDPF_RGB | DDPF_ALPHAPIXELS)) {
-            pixelData = this.readA8R8G8B8(view, header.width, header.height);
+            if (header.pixelFormat.size !== 32) {
+                console.warn('Unsupported pixel format size for RGBA', view, header);
+                throw new Error('Unsupported pixel format size');
+            }
+            pixelData = this.readRGBA(view, header.width, header.height, header.pixelFormat);
         } else {
             console.warn(
                 'Unsupported pixel format flags',
@@ -234,13 +264,22 @@ export default class DDSHelper {
         return new ImageData(pixelData, header.width, header.height);
     }
 
-    readA8R8G8B8(view: BufferReader, width: number, height: number): Uint8ClampedArray {
+    readRGBA(view: BufferReader, width: number, height: number, pixelFormat: PixelFormat): Uint8ClampedArray {
         const pixelData = new Uint8ClampedArray(width * height * 4);
+        const offset: Record<string, number> = {};
+        [
+            { key: 'red', mask: pixelFormat.RBitMask },
+            { key: 'green', mask: pixelFormat.GBitMask },
+            { key: 'blue', mask: pixelFormat.BBitMask },
+            { key: 'alpha', mask: pixelFormat.ABitMask }
+        ].sort((a, b) => a.mask - b.mask).forEach((channel, index) => {
+            offset[channel.key] = index;
+        });
         for (let i = 0; i < pixelData.length; i += 4) {
-            pixelData[i + 2] = view.readUInt8();
-            pixelData[i + 1] = view.readUInt8();
-            pixelData[i + 0] = view.readUInt8();
-            pixelData[i + 3] = view.readUInt8();
+            pixelData[i + offset.red] = view.readUInt8();
+            pixelData[i + offset.green] = view.readUInt8();
+            pixelData[i + offset.blue] = view.readUInt8();
+            pixelData[i + offset.alpha] = view.readUInt8();
         }
         return pixelData;
     }
