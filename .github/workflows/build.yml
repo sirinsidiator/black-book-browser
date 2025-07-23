@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: 2025 sirinsidiator
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Build Application
+run-name: Build Application
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    build:
+        name: Build Application
+        runs-on: windows-latest
+        env:
+            CACHE_BIN: 'true'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: 'npm'
+
+            - name: Create target directory
+              run: New-Item -ItemType Directory -Path ./src-tauri/target -Force
+
+            - name: Rust cache
+              uses: swatinem/rust-cache@v2
+              with:
+                  workspaces: ./src-tauri
+                  cache-bin: ${{ env.CACHE_BIN }}
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Update Patrons
+              run: npm run update-patrons
+
+            - name: Build Application
+              run: npm run tauri build
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  path: ./src-tauri/target/release/bbb.exe
+                  name: bbb
