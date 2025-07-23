@@ -20,7 +20,7 @@
         "@tauri-apps/api": "^2.7.0",
         "@tauri-apps/plugin-dialog": "^2.3.1",
         "@tauri-apps/plugin-fs": "^2.4.1",
-        "@tauri-apps/plugin-shell": "^2.3.0",
+        "@tauri-apps/plugin-opener": "^2.4.0",
         "fuzzysort": "^3.1.0",
         "highlight.js": "^11.11.1",
         "ionic-svelte": "^0.5.85",

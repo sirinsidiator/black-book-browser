@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import FileTreeEntryData from '$lib/tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
     import { formatFileSize } from '$lib/util/FileUtil';
-    import { open } from '@tauri-apps/plugin-shell';
+    import { openPath } from '@tauri-apps/plugin-opener';
     import { archiveOutline, closeOutline } from 'ionicons/icons';
     import { get } from 'svelte/store';
     import ExtractDialogOptions from './ExtractDialogOptions.svelte';
@@ -51,7 +51,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     function openTargetFolder() {
-        open($targetFolder).catch(console.error);
+        openPath($targetFolder).catch(console.error);
     }
 
     function flushLogEntries() {

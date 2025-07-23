@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
-import { open } from '@tauri-apps/plugin-shell';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import picomatch from 'picomatch';
 
 const CHUNK_SIZE = 100000;
@@ -52,5 +52,5 @@ async function filterIgnoredFilesChunk(
 }
 
 export function openIgnorePatternHelp() {
-    open(HELP_URL);
+    openUrl(HELP_URL);
 }

@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
     import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';
     import { dirname } from '$lib/util/FileUtil';
-    import { open } from '@tauri-apps/plugin-shell';
+    import { openPath } from '@tauri-apps/plugin-opener';
     import { folderOpenOutline, folderOutline, refreshOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
@@ -29,7 +29,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     async function explore() {
         const path = await dirname(archive.path);
-        await open(path);
+        await openPath(path);
     }
 
     function refresh(loaded: boolean) {
@@ -48,7 +48,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {#if $loaded && $root && preview}
             <ExtractDialog target={$root} />
             <SavePreviewButton {preview}>save filelist</SavePreviewButton>
-            <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}>save texturelist</SavePreviewButton>
+            <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}
+                >save texturelist</SavePreviewButton
+            >
         {:else}
             <!-- eslint-disable-next-line svelte/valid-compile -->
             <ion-button color="primary" on:click={onLoad} disabled={$busy}>

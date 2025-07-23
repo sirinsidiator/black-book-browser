@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type { GameInstallEntry } from '$lib/GameInstallEntry';
+    import { openPath } from '@tauri-apps/plugin-opener';
     import {
         buildOutline,
         calendarOutline,
@@ -14,7 +15,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
         settingsOutline,
         trashBinOutline
     } from 'ionicons/icons';
-    import { open } from '@tauri-apps/plugin-shell';
     import { createEventDispatcher } from 'svelte';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
@@ -29,7 +29,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     async function explore() {
         const path = gameInstall.path;
-        await open(path);
+        await openPath(path);
     }
 </script>
 

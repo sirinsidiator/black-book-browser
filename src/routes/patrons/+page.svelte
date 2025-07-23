@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import patreonIcon from '$lib/assets/patreon.svg';
     import patrons from '$lib/assets/patrons.json';
-    import { open } from '@tauri-apps/plugin-shell';
+    import { openUrl } from '@tauri-apps/plugin-opener';
     import { onMount } from 'svelte';
 
     const PATREON_LINK = 'https://www.patreon.com/bePatron?u=18954089';
@@ -56,7 +56,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             fill="outline"
             color="primary"
             size="large"
-            on:click={() => open(PATREON_LINK)}
+            on:click={() => openUrl(PATREON_LINK)}
             ><ion-icon icon={patreonIcon}></ion-icon> Become a Patron</ion-button
         >
     </ion-card-content>
