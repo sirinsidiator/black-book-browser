@@ -12,15 +12,27 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     const PATREON_LINK = 'https://www.patreon.com/bePatron?u=18954089';
 
+    interface Patron {
+        name: string;
+        tier: number;
+    }
+
+    let patronList: Patron[] = preparePatronList();
+
+    function preparePatronList(): Patron[] {
+        return patrons.flatMap((patrons, tier) => patrons.map((name) => ({ name, tier })));
+    }
+
     // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-    function shuffleArray(array: unknown[]) {
+    function shuffleArray(array: Patron[]) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
         }
+        return array;
     }
 
-    onMount(() => shuffleArray(patrons));
+    onMount(() => (patronList = shuffleArray(patronList)));
 </script>
 
 <ion-card>
@@ -32,7 +44,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <p class="loading"><ion-spinner /> Loading...</p>
         {:else}
             <div class="patron-list">
-                {#each patrons as patron}
+                {#each patronList as patron}
                     <ion-label color="dark" class="emph{patron.tier}">{patron.name}</ion-label>
                 {/each}
             </div>

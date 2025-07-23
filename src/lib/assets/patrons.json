@@ -1,14 +1,1 @@
-[
-    {
-        "name": "John",
-        "tier": 0
-    },
-    {
-        "name": "Jane",
-        "tier": 1
-    },
-    {
-        "name": "Joe",
-        "tier": 2
-    }
-]
+[["John"],["Jane"],["Joe"]]
