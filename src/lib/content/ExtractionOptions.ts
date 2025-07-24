@@ -19,7 +19,11 @@ export default class ExtractionOptions {
     constructor() {
         const folder = localStorage.getItem(TARGET_FOLDER_KEY);
         if (!folder) {
-            path.desktopDir().then((desktopDir) => this.targetFolder.set(desktopDir));
+            path.desktopDir()
+                .then((desktopDir) => this.targetFolder.set(desktopDir))
+                .catch((error) => {
+                    console.error('Failed to set default target folder:', error);
+                });
         } else {
             this.targetFolder.set(folder);
         }

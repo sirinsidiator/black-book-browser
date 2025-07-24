@@ -92,7 +92,7 @@ interface BlockData {
     segment: number;
     block: number;
     rows: number;
-    data: Buffer;
+    data: Uint8Array;
     inflated?: Uint8Array;
 }
 
@@ -120,7 +120,7 @@ export default class ZOSFileTableReader {
                         segment: i,
                         block: 0,
                         rows: block0Rows,
-                        data: data.get<Buffer>(offset + BLOCK0_DATA_INDEX)
+                        data: data.get<Uint8Array>(offset + BLOCK0_DATA_INDEX)
                     });
                 }
 
@@ -130,7 +130,7 @@ export default class ZOSFileTableReader {
                         segment: i,
                         block: 1,
                         rows: block1Rows,
-                        data: data.get<Buffer>(offset + BLOCK1_DATA_INDEX)
+                        data: data.get<Uint8Array>(offset + BLOCK1_DATA_INDEX)
                     });
                 }
 
@@ -140,7 +140,7 @@ export default class ZOSFileTableReader {
                         segment: i,
                         block: 2,
                         rows: block2Rows,
-                        data: data.get<Buffer>(offset + BLOCK2_DATA_INDEX)
+                        data: data.get<Uint8Array>(offset + BLOCK2_DATA_INDEX)
                     });
                 }
             }

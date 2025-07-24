@@ -171,7 +171,6 @@ function setupTauriInternals(key: string) {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const __TAURI_INTERNALS__ = {
         postMessage: sendIpcMessage,
         convertFileSrc,

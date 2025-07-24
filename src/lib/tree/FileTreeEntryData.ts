@@ -19,7 +19,10 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
     private _parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
     private firstOpen = true;
 
-    constructor(public readonly data: T, public readonly level = 0) {
+    constructor(
+        public readonly data: T,
+        public readonly level = 0
+    ) {
         this.hasChildren.set(data.hasChildren);
     }
 

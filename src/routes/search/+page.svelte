@@ -48,7 +48,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <ion-split-pane bind:this={splitPane} when="xs" content-id="main">
     <ion-menu content-id="main">
         <FileSearch manager={data.stateManager} />
-        <div class="divider" bind:this={divider} />
+        <div class="divider" bind:this={divider}></div>
     </ion-menu>
 
     <div id="main">

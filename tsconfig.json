@@ -10,5 +10,12 @@
         "skipLibCheck": true,
         "sourceMap": true,
         "strict": true
-    }
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.svelte",
+        "src/**/*.d.ts",
+        "eslint.config.js"
+    ]
 }

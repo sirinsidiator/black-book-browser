@@ -7,7 +7,7 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import picomatch from 'picomatch';
 
 const CHUNK_SIZE = 100000;
-const HELP_URL = "https://www.npmjs.com/package/picomatch#globbing-features";
+const HELP_URL = 'https://www.npmjs.com/package/picomatch#globbing-features';
 
 function genrerateIsMatch(pattern: string) {
     return picomatch(pattern);
@@ -52,5 +52,7 @@ async function filterIgnoredFilesChunk(
 }
 
 export function openIgnorePatternHelp() {
-    openUrl(HELP_URL);
+    openUrl(HELP_URL).catch((error) => {
+        console.error('Failed to open ignore pattern help:', error);
+    });
 }

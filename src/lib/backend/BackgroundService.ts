@@ -39,7 +39,9 @@ export default class BackgroundService {
 
     public static getInstance(): BackgroundService {
         if (!this.instance) {
-            throw new Error('BackgroundService is not initialized. Call BackgroundService.initialize() first.');
+            throw new Error(
+                'BackgroundService is not initialized. Call BackgroundService.initialize() first.'
+            );
         }
         return this.instance;
     }

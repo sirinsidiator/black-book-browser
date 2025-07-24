@@ -32,7 +32,7 @@ export class HexPreviewLoader implements ContentPreviewLoader {
         const fileData = this.file.file;
         const data = await BackgroundService.getInstance().loadFileContent(fileData);
         this._view = new BufferReader(data);
-        return this ;
+        return this;
     }
 }
 

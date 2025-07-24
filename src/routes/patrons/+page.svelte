@@ -44,7 +44,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <p class="loading"><ion-spinner /> Loading...</p>
         {:else}
             <div class="patron-list">
-                {#each patronList as patron}
+                {#each patronList as patron (patron.name)}
                     <ion-label color="dark" class="emph{patron.tier}">{patron.name}</ion-label>
                 {/each}
             </div>

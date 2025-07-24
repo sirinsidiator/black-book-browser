@@ -54,14 +54,19 @@ export async function extractFiles(
     }[],
     decompress: boolean
 ): Promise<ExtractFilesResult> {
-    const response = await rustCall('extract-files', JSON.stringify(files.map((file) => ({
-        targetPath: file.target,
-        archivePath: file.archiveFile.path,
-        offset: file.fileEntry.offset,
-        compressedSize: file.fileEntry.compressedSize,
-        fileSize: file.fileEntry.fileSize,
-        compressionType: !decompress ? 0 : file.fileEntry.compressionType
-    }))));
+    const response = await rustCall(
+        'extract-files',
+        JSON.stringify(
+            files.map((file) => ({
+                targetPath: file.target,
+                archivePath: file.archiveFile.path,
+                offset: file.fileEntry.offset,
+                compressedSize: file.fileEntry.compressedSize,
+                fileSize: file.fileEntry.fileSize,
+                compressionType: !decompress ? 0 : file.fileEntry.compressionType
+            }))
+        )
+    );
     return response.json() as Promise<ExtractFilesResult>;
 }
 
@@ -76,7 +81,10 @@ export async function decompress(
     compressedSize: number,
     fileSize: number
 ): Promise<Uint8Array> {
-    const response = await rustCall('decompress', JSON.stringify({ path, offset, compressedSize, fileSize }));
+    const response = await rustCall(
+        'decompress',
+        JSON.stringify({ path, offset, compressedSize, fileSize })
+    );
     const content = await response.arrayBuffer();
     return new Uint8Array(content);
 }
@@ -97,11 +105,11 @@ async function rustCall(functionName: string, body?: BodyInit | null) {
     const url = convertFileSrc(functionName, 'bbb');
     console.log(url, {
         method: body ? 'POST' : 'GET',
-        body,
+        body
     });
     const response = await fetch(url, {
         method: body ? 'POST' : 'GET',
-        body,
+        body
     });
     if (!response.ok) {
         const error = await response.text();

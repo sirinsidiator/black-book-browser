@@ -22,7 +22,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <svelte:fragment slot="buttons">
         <ExtractDialog target={folder} />
         <SavePreviewButton {preview}>save filelist</SavePreviewButton>
-        <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}>save texturelist</SavePreviewButton>
+        <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}
+            >save texturelist</SavePreviewButton
+        >
     </svelte:fragment>
 
     <svelte:fragment slot="details">

@@ -5,19 +5,19 @@
 import BufferReader from '$lib/util/BufferReader';
 
 interface DDSHeader {
-    size: number,
-    flags: number,
-    height: number,
-    width: number,
-    pitchOrLinearSize: number,
-    depth: number,
-    mipMapCount: number,
-    pixelFormat: PixelFormat,
-    caps: number,
-    caps2: number,
-    caps3: number,
-    caps4: number
-};
+    size: number;
+    flags: number;
+    height: number;
+    width: number;
+    pitchOrLinearSize: number;
+    depth: number;
+    mipMapCount: number;
+    pixelFormat: PixelFormat;
+    caps: number;
+    caps2: number;
+    caps3: number;
+    caps4: number;
+}
 
 interface PixelFormat {
     size: number;
@@ -264,7 +264,12 @@ export default class DDSHelper {
         return new ImageData(pixelData, header.width, header.height);
     }
 
-    readRGBA(view: BufferReader, width: number, height: number, pixelFormat: PixelFormat): Uint8ClampedArray {
+    readRGBA(
+        view: BufferReader,
+        width: number,
+        height: number,
+        pixelFormat: PixelFormat
+    ): Uint8ClampedArray {
         const pixelData = new Uint8ClampedArray(width * height * 4);
         const offset: Record<string, number> = {};
         [
@@ -272,9 +277,11 @@ export default class DDSHelper {
             { key: 'green', mask: pixelFormat.GBitMask },
             { key: 'blue', mask: pixelFormat.BBitMask },
             { key: 'alpha', mask: pixelFormat.ABitMask }
-        ].sort((a, b) => a.mask - b.mask).forEach((channel, index) => {
-            offset[channel.key] = index;
-        });
+        ]
+            .sort((a, b) => a.mask - b.mask)
+            .forEach((channel, index) => {
+                offset[channel.key] = index;
+            });
         for (let i = 0; i < pixelData.length; i += 4) {
             pixelData[i + offset.red] = view.readUInt8();
             pixelData[i + offset.green] = view.readUInt8();

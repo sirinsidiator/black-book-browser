@@ -14,8 +14,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <VirtualList items={loader.getFileList()} itemHeight={20} let:item>
     {@const path = loader.getPathParts(item)}
     <div class="entry">
-        {#each path.directoryParts as part}{part}<span class="sep">/</span>{/each}<span class="name"
-            >{path.fileName}</span
+        {#each path.directoryParts as part (part)}{part}<span class="sep">/</span>{/each}<span
+            class="name">{path.fileName}</span
         ><span class="ext">.{path.extension}</span>
     </div>
 </VirtualList>

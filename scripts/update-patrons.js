@@ -12,16 +12,15 @@ const patronsUrl = 'https://sir.insidi.at/or/patrons.json';
 const patronsFile = 'src/lib/assets/patrons.json';
 
 get(patronsUrl, (res) => {
-        let data = '';
-        res.on('data', (chunk) => {
-            data += chunk;
-        });
-        res.on('end', () => {
-            writeFileSync(patronsFile, data);
-            console.log('Patrons updated');
-        });
-    })
-    .on('error', (err) => {
-        console.error('Error: ' + err.message);
-        process.exit(1);
+    let data = '';
+    res.on('data', (chunk) => {
+        data += chunk;
     });
+    res.on('end', () => {
+        writeFileSync(patronsFile, data);
+        console.log('Patrons updated');
+    });
+}).on('error', (err) => {
+    console.error('Error: ' + err.message);
+    process.exit(1);
+});

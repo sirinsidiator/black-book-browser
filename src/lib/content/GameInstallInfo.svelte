@@ -59,7 +59,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <DetailEntry icon={buildOutline} label="build number"
             >{gameInstall.version.buildNumber}</DetailEntry
         >
-        {#each gameInstall.settings as entry}
+        {#each gameInstall.settings as entry (entry[0])}
             <DetailEntry icon={settingsOutline} label={entry[0]}>{entry[1]}</DetailEntry>
         {/each}
     </svelte:fragment>
