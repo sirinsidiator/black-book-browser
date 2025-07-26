@@ -85,11 +85,18 @@ export default class MnfArchive {
         if (entry.compressionType === 0) {
             return await archiveFile.loadContent(entry);
         } else {
+            if (
+                entry.offset === undefined ||
+                entry.compressedSize === undefined ||
+                entry.fileSize === undefined
+            ) {
+                throw new Error('Entry offset, compressed size or file size is not defined');
+            }
             return await decompress(
                 archiveFile.path,
-                entry.offset!,
-                entry.compressedSize!,
-                entry.fileSize!
+                entry.offset,
+                entry.compressedSize,
+                entry.fileSize
             );
         }
     }
@@ -99,8 +106,8 @@ export default class MnfArchive {
     }
 
     getArchiveFile(entry: MnfEntry): MnfArchiveFile {
-        const archiveNumber = entry.archiveNumber!;
-        const file = this.archiveFiles.get(archiveNumber);
+        const archiveNumber = entry.archiveNumber;
+        const file = this.archiveFiles.get(archiveNumber ?? -1);
         if (!file) {
             console.warn('Archive file not found for', entry);
             throw new Error('Archive file not found');
@@ -179,7 +186,7 @@ export default class MnfArchive {
             if (fileTable) {
                 const noMnfEntryList: ZOSFileTableEntry[] = [];
                 fileTable.forEach((tableEntry: ZOSFileTableEntry) => {
-                    const fileEntry = this.fileEntries.get(tableEntry.getFileNumber());
+                    const fileEntry = this.fileEntries.get(tableEntry.fileNumber);
                     if (!fileEntry) {
                         noMnfEntryList.push(tableEntry);
                     } else if (fileEntry.tableEntry) {
@@ -190,7 +197,7 @@ export default class MnfArchive {
                         );
                     } else {
                         tableEntry.fileEntry = fileEntry;
-                        fileEntry.fileName = tableEntry.fileName ?? 'unknown';
+                        fileEntry.fileName = tableEntry.fileName;
                         fileEntry.tableEntry = tableEntry;
                     }
                 });
@@ -232,8 +239,8 @@ export default class MnfArchive {
         const folders = new Set<string>();
         for (const file of this.mnfEntries.values()) {
             if (file.fileName?.startsWith(folderPath)) {
-                compressedSize += file.compressedSize!;
-                decompressedSize += file.fileSize!;
+                compressedSize += file.compressedSize ?? 0;
+                decompressedSize += file.fileSize ?? 0;
                 const parts = file.fileName.slice(folderPath.length).split('/');
                 parts.pop(); // Remove file name
                 let path = '';

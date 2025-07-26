@@ -14,6 +14,9 @@ export default class MnfArchiveFile {
 
     async loadContent(entry: MnfEntry): Promise<Uint8Array> {
         console.log('loadContent', entry);
-        return readPartialFile(this.path, entry.offset!, entry.compressedSize!);
+        if (entry.offset === undefined || entry.compressedSize === undefined) {
+            throw new Error('Entry offset or compressed size is not defined');
+        }
+        return readPartialFile(this.path, entry.offset, entry.compressedSize);
     }
 }

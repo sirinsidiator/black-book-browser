@@ -16,12 +16,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import ExtractDialog from './ExtractDialog.svelte';
     import FolderDetails from './FolderDetails.svelte';
 
-    export let archive: MnfArchiveEntry;
-    let preview: Promise<ContentPreviewLoader> | undefined;
+    interface Props {
+        archive: MnfArchiveEntry;
+    }
 
-    $: loaded = archive.loaded;
-    $: busy = archive.busy;
-    $: root = archive.root;
+    let { archive }: Props = $props();
+    let loaded = $derived(archive.loaded);
+    let busy = $derived(archive.busy);
+    let root = $derived(archive.root);
+    let preview: Promise<ContentPreviewLoader> | undefined = $derived(
+        $loaded ? archive.getPreviewLoader() : undefined
+    );
 
     function onLoad() {
         archive.loadChildren().catch(console.error);
@@ -31,20 +36,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         const path = await dirname(archive.path);
         await openPath(path);
     }
-
-    function refresh(loaded: boolean) {
-        if (loaded) {
-            preview = archive.getPreviewLoader();
-        } else {
-            preview = undefined;
-        }
-    }
-
-    $: refresh($loaded);
 </script>
 
 <ContentLayout {preview}>
-    <svelte:fragment slot="buttons">
+    {#snippet buttons()}
         {#if $loaded && $root && preview}
             <ExtractDialog target={$root} />
             <SavePreviewButton {preview}>save filelist</SavePreviewButton>
@@ -52,28 +47,26 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 >save texturelist</SavePreviewButton
             >
         {:else}
-            <!-- eslint-disable-next-line svelte/valid-compile -->
-            <ion-button color="primary" on:click={onLoad} disabled={$busy}>
-                <ion-icon slot="start" icon={refreshOutline} />load</ion-button
+            <ion-button color="primary" onclick={onLoad} disabled={$busy}>
+                <ion-icon slot="start" icon={refreshOutline}></ion-icon>load</ion-button
             >
         {/if}
 
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button color="primary" on:click={explore}>
-            <ion-icon slot="start" icon={folderOpenOutline} />
+        <ion-button color="primary" onclick={explore}>
+            <ion-icon slot="start" icon={folderOpenOutline}></ion-icon>
             open folder
         </ion-button>
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="details">
+    {#snippet details()}
         <DetailEntry icon={$loaded ? folderOpenOutline : folderOutline} label="archive path"
             >{archive.path}</DetailEntry
         >
         {#if $busy}
-            <ion-progress-bar type="indeterminate" />
+            <ion-progress-bar type="indeterminate"></ion-progress-bar>
         {/if}
         {#if $loaded && $root}
             <FolderDetails folder={$root} />
         {/if}
-    </svelte:fragment>
+    {/snippet}
 </ContentLayout>

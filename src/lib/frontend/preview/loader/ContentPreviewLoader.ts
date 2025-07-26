@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import type ContentEntry from '$lib/ContentEntry';
-import type { ComponentType, SvelteComponent } from 'svelte';
+import type { Component } from 'svelte';
 import NoPreview from '../NoPreview.svelte';
+
+export type ContentPreviewLoaderComponent = Component<{ loader: ContentPreviewLoader }>;
 
 export abstract class ContentPreviewLoaderFactory {
     public abstract supports(content: ContentEntry): boolean;
@@ -14,7 +16,7 @@ export abstract class ContentPreviewLoaderFactory {
 export abstract class ContentPreviewLoader {
     private static loaders: ContentPreviewLoaderFactory[] = [];
 
-    public static async load(content: ContentEntry): Promise<ContentPreviewLoader> {
+    public static async load(content: ContentEntry) {
         const loaderFactory = this.loaders.find((loader) => loader.supports(content));
         if (!loaderFactory) {
             return new NoPreviewLoader();
@@ -24,11 +26,11 @@ export abstract class ContentPreviewLoader {
         return loader;
     }
 
-    public static registerLoader(loader: ContentPreviewLoaderFactory) {
+    public static registerLoader(loader: ContentPreviewLoaderFactory): void {
         this.loaders.push(loader);
     }
 
-    public abstract readonly previewClass: ComponentType<SvelteComponent>;
+    public abstract readonly component: ContentPreviewLoaderComponent;
     public abstract readonly canSave: boolean;
 
     public abstract prepare(): Promise<void>;
@@ -36,7 +38,7 @@ export abstract class ContentPreviewLoader {
 }
 
 class NoPreviewLoader extends ContentPreviewLoader {
-    public readonly previewClass = NoPreview;
+    public readonly component = NoPreview;
     public readonly canSave = false;
 
     public prepare() {

@@ -60,17 +60,18 @@ const ENTRY_BLOCK_DEFINITIONS: FieldDefinition[][][] = [
     ]
 ];
 
-const KNOWN_BLOCK1_VALUES: { [index: number]: boolean } = {};
+const KNOWN_BLOCK1_VALUES: Record<number, boolean> = {};
 KNOWN_BLOCK1_VALUES[0x80] = true;
 KNOWN_BLOCK1_VALUES[0x40] = true;
 KNOWN_BLOCK1_VALUES[0x00] = true;
 
 export default class ZOSFileTableEntry {
-    data: FieldData;
-    fileName?: string;
-    fileEntry?: MnfEntry;
-    nameOffset?: number;
-    fileNumber?: number;
+    private readonly data: FieldData;
+
+    public fileEntry?: MnfEntry;
+    private _fileName?: string;
+    private _fileNumber?: number;
+    private nameOffset?: number;
 
     constructor(index: number) {
         this.data = new FieldData();
@@ -78,6 +79,14 @@ export default class ZOSFileTableEntry {
         const indexField = new Field(ENTRY_FIELD_DEFINITION_INDEX, -1);
         indexField.value = index;
         this.data.add(indexField);
+    }
+
+    get fileName(): string {
+        return this._fileName ?? 'unknown';
+    }
+
+    get fileNumber(): number {
+        return this._fileNumber ?? -1;
     }
 
     readBlock(segment: number, block: number, reader: BufferReader) {
@@ -119,7 +128,7 @@ export default class ZOSFileTableEntry {
             const definitions = ENTRY_BLOCK_DEFINITIONS[segment][block];
             const offset = reader.readFields(definitions, data);
             if (segment === 0 && block === 2) {
-                this.fileNumber = data.get<number>(offset + FILE_NUMBER_INDEX);
+                this._fileNumber = data.get<number>(offset + FILE_NUMBER_INDEX);
             } else if (segment === 1 && block === 2) {
                 this.nameOffset = data.get<number>(offset + NAME_OFFSET_INDEX);
             }
@@ -127,17 +136,17 @@ export default class ZOSFileTableEntry {
     }
 
     readFileName(fileNameList: string) {
-        const nameOffset = this.nameOffset!;
+        const nameOffset = this.nameOffset;
+        if (!nameOffset) {
+            console.warn('No nameOffset found for', this);
+            return;
+        }
         // beginning in version 10.0.1 the nameOffset is not always aligned correctly for entries in eso.mnf
         let startIndex = nameOffset;
         const endIndex = fileNameList.indexOf('\0', nameOffset);
         while (startIndex > 0 && fileNameList[startIndex - 1] !== '\0') {
             startIndex--;
         }
-        this.fileName = fileNameList.substring(startIndex, endIndex);
-    }
-
-    getFileNumber(): number {
-        return this.fileNumber!;
+        this._fileName = fileNameList.substring(startIndex, endIndex);
     }
 }

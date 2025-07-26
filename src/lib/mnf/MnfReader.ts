@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { inflate, readPartialFile } from '$lib/util/FileUtil.js';
 import BufferReader, {
     Field,
     FieldData,
     FieldType,
     toHex,
     type FieldDefinition
-} from '../util/BufferReader.js';
+} from '$lib/util/BufferReader.js';
+import { inflate, readPartialFile } from '$lib/util/FileUtil.js';
 import MnfArchive from './MnfArchive.js';
 import MnfEntry from './MnfEntry.js';
 
@@ -19,9 +19,7 @@ export enum MnfType {
     V3
 }
 
-interface Block0Values {
-    [index: number]: boolean;
-}
+type Block0Values = Record<number, boolean>;
 
 const FILE_ID = 'MES2';
 const UNMAPPED_DIR = '/unmapped/';
@@ -112,9 +110,15 @@ async function extractContent(archive: MnfArchive) {
     const fileCount = data.get<number>(FILE_COUNT2_INDEX);
     const startInflate = performance.now();
     await Promise.all([
-        inflate(data.get(BLOCK0_DATA_INDEX)).then((buffer) => data.set(BLOCK0_DATA_INDEX, buffer)),
-        inflate(data.get(BLOCK1_DATA_INDEX)).then((buffer) => data.set(BLOCK1_DATA_INDEX, buffer)),
-        inflate(data.get(BLOCK2_DATA_INDEX)).then((buffer) => data.set(BLOCK2_DATA_INDEX, buffer))
+        inflate(data.get(BLOCK0_DATA_INDEX)).then((buffer) => {
+            data.set(BLOCK0_DATA_INDEX, buffer);
+        }),
+        inflate(data.get(BLOCK1_DATA_INDEX)).then((buffer) => {
+            data.set(BLOCK1_DATA_INDEX, buffer);
+        }),
+        inflate(data.get(BLOCK2_DATA_INDEX)).then((buffer) => {
+            data.set(BLOCK2_DATA_INDEX, buffer);
+        })
     ]);
     console.log('headers inflated in', performance.now() - startInflate, 'ms');
 
@@ -126,10 +130,11 @@ async function extractContent(archive: MnfArchive) {
     const block1 = new BufferReader(data.get(BLOCK1_DATA_INDEX));
     const block2 = new BufferReader(data.get(BLOCK2_DATA_INDEX));
 
-    let skipFlaggedEntries = false;
+    let skipFlaggedEntries = true;
     let fileTableFileNumber = -1;
     if (archive.path.endsWith('game.mnf')) {
         fileTableFileNumber = 0;
+        skipFlaggedEntries = false;
     } else if (archive.path.endsWith('eso.mnf')) {
         fileTableFileNumber = 0xffffff;
         skipFlaggedEntries = false;
@@ -193,7 +198,7 @@ async function extractContent(archive: MnfArchive) {
         const archiveFile = archive.getArchiveFile(entry);
         const prefix = UNMAPPED_DIR + archiveFile.prefix + '/file';
         if (typeField.value === 0x80) {
-            entry.fileName = prefix + idField.value + '.dat';
+            entry.fileName = prefix + idField.value.toString() + '.dat';
         } else {
             entry.fileName = prefix + '@' + toHex(byteOffset) + '.dat';
         }
@@ -243,7 +248,7 @@ export default class MnfReader {
             const version = file.readUInt16();
             console.log('version', version);
             if (version !== 3) {
-                throw new Error('Unsupported .mnf version (v' + version + ')');
+                throw new Error('Unsupported .mnf version (v' + version.toString() + ')');
             }
 
             const fields = new FieldData();

@@ -6,18 +6,26 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type BufferReader from '$lib/util/BufferReader';
-    import VirtualList from 'svelte-virtual-list-ce';
+    import type { InputChangeEventDetail } from '@ionic/core';
+    import VirtualList from './VirtualList.svelte';
 
-    export let view: BufferReader;
-
-    const DEFAULT_BYTES_PER_LINE = 24;
-    let bytesPerLine = DEFAULT_BYTES_PER_LINE;
-
-    function onBytesPerLineChange(e: CustomEvent) {
-        bytesPerLine = parseInt(e.detail.value);
+    interface Props {
+        view: BufferReader;
     }
 
-    $: items = Array.from({ length: view.getSize() / bytesPerLine }, (_, i) => i * bytesPerLine);
+    let { view }: Props = $props();
+
+    const DEFAULT_BYTES_PER_LINE = 24;
+    let bytesPerLine = $state(DEFAULT_BYTES_PER_LINE);
+
+    function onBytesPerLineChange(e: CustomEvent<InputChangeEventDetail>) {
+        bytesPerLine = parseInt(e.detail.value ?? '0', 10);
+        if (isNaN(bytesPerLine) || bytesPerLine < 1) bytesPerLine = DEFAULT_BYTES_PER_LINE;
+    }
+
+    let items = $derived(
+        Array.from({ length: view.getSize() / bytesPerLine }, (_, i) => i * bytesPerLine)
+    );
 
     function getData(i: number) {
         view.setCursor(i);
@@ -42,37 +50,43 @@ SPDX-License-Identifier: GPL-3.0-or-later
             type="number"
             min="1"
             value={bytesPerLine}
-            on:ionChange={onBytesPerLineChange}
-        />
+            onionChange={onBytesPerLineChange}
+        ></ion-input>
     </div>
 
     <div class="header">
         <div class="label">Offset (h)</div>
         <div class="hex">
-            {#each Array.from({ length: bytesPerLine }, (_, i) => i) as i}
-                <span>{i.toString(16).toUpperCase().padStart(2, '0')}{' '}</span>
+            {#each Array.from({ length: bytesPerLine }, (_, i) => i) as i (i)}
+                <span>{i.toString(16).toUpperCase().padStart(2, '0')}&nbsp;</span>
             {/each}
         </div>
         <div class="text">Decoded text</div>
     </div>
 
     <div class="content">
-        <VirtualList {items} itemHeight={20} let:item>
-            {@const data = getData(item)}
-            <div class="entry">
-                <div class="offset">{item.toString(16).toUpperCase().padStart(8, '0')}</div>
+        <VirtualList {items} itemHeight={20}>
+            {#snippet children(data)}
+                {@const entry = getData(data as number)}
+                <div class="entry">
+                    <div class="offset">
+                        {(data as number).toString(16).toUpperCase().padStart(8, '0')}
+                    </div>
 
-                <div class="hex">
-                    {#each toHexArray(data) as byte}
-                        <span>{byte}{' '}</span>
-                    {/each}
+                    <div class="hex">
+                        <!-- eslint-disable-next-line svelte/require-each-key -->
+                        {#each toHexArray(entry) as byte}
+                            <span>{byte}&nbsp;</span>
+                        {/each}
+                    </div>
+                    <div class="text">
+                        <!-- eslint-disable-next-line svelte/require-each-key -->
+                        {#each toAsciiArray(entry) as byte}
+                            {byte}
+                        {/each}
+                    </div>
                 </div>
-                <div class="text">
-                    {#each toAsciiArray(data) as byte}
-                        {byte}
-                    {/each}
-                </div>
-            </div>
+            {/snippet}
         </VirtualList>
     </div>
 </div>

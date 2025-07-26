@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import type { ContentEntry } from '$lib/StateManager';
+import type ContentEntry from '$lib/ContentEntry';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 
 export default interface FileTreeEntryDataProvider extends ContentEntry {

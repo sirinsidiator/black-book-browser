@@ -11,9 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import ContentPreviewText from './ContentPreviewText.svelte';
     import type { HexPreviewLoader } from './loader/HexPreviewLoader';
 
-    export let loader: HexPreviewLoader;
+    interface Props {
+        loader: HexPreviewLoader;
+    }
 
-    let showHex = false;
+    let { loader }: Props = $props();
+
+    let showHex = $state(false);
 </script>
 
 {#if loader.view}
@@ -23,13 +27,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {:else}
     <ContentPreviewText icon={informationCircleOutline}>
         no preview available<br />
-        <a on:click={() => (showHex = true)}>click to view as hex</a>
+        <ion-button fill="clear" size="small" onclick={() => (showHex = true)}
+            >click to view as hex</ion-button
+        >
     </ContentPreviewText>
 {/if}
 
 <style>
-    a {
-        cursor: pointer;
-        color: var(--ion-color-primary);
+    ion-button {
+        margin: 0;
+        text-transform: none;
+        --padding-start: 0;
+        --padding-end: 0;
+        --padding-top: 0;
+        --padding-bottom: 0;
     }
 </style>

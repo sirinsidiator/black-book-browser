@@ -7,40 +7,53 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import { isIgnoredPath } from '$lib/content/ignoredFilesFilterHelper';
     import { caretForwardOutline, warningOutline } from 'ionicons/icons';
-    import { createEventDispatcher } from 'svelte';
     import FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
-    export let data: FileTreeEntryData<FileTreeEntryDataProvider>;
-    export let selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined = undefined;
-    export let checkable = false;
-    export let levelOffset = 0;
-    export let ignorePattern: string | undefined = undefined;
-
-    $: opened = data.opened;
-    $: checked = data.checked;
-    $: indeterminate = data.indeterminate;
-    $: busy = data.busy;
-    $: failed = data.failed;
-    $: hasChildren = data.hasChildren;
-    $: ignored = !$hasChildren && isIgnoredPath(data.path, ignorePattern);
-
-    const dispatch = createEventDispatcher();
-    function onToggleOpen() {
-        dispatch('open', data);
+    interface Props {
+        data: FileTreeEntryData<FileTreeEntryDataProvider>;
+        selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined;
+        checkable: boolean;
+        levelOffset: number;
+        ignorePattern?: string | undefined;
+        onopen: (data: FileTreeEntryData<FileTreeEntryDataProvider>) => void;
+        onchange: (data: FileTreeEntryData<FileTreeEntryDataProvider>) => void;
+        onselect: (data: FileTreeEntryData<FileTreeEntryDataProvider>) => void;
     }
 
-    function onToggleChecked() {
-        dispatch('change', data);
+    let {
+        data,
+        selected = undefined,
+        checkable = false,
+        levelOffset = 0,
+        ignorePattern = undefined,
+        onopen,
+        onchange,
+        onselect
+    }: Props = $props();
+
+    let opened = $derived(data.opened);
+    let checked = $derived(data.checked);
+    let indeterminate = $derived(data.indeterminate);
+    let busy = $derived(data.busy);
+    let failed = $derived(data.failed);
+    let hasChildren = $derived(data.hasChildren);
+    let ignored = $derived(!$hasChildren && isIgnoredPath(data.path, ignorePattern));
+
+    function toggleOpen() {
+        onopen(data);
     }
 
-    function onSelect() {
-        dispatch('select', data);
+    function toggleChecked() {
+        onchange(data);
+    }
+
+    function select() {
+        onselect(data);
     }
 </script>
 
 <div class="entry" style="--level: {levelOffset + data.level}">
-    <!-- eslint-disable-next-line svelte/valid-compile -->
     <ion-button
         class="caret"
         class:open={$opened}
@@ -50,9 +63,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
         color="medium"
         expand="block"
         disabled={$failed ? true : false}
-        on:click={onToggleOpen}
+        onclick={toggleOpen}
     >
-        <ion-icon icon={caretForwardOutline} />
+        <ion-icon icon={caretForwardOutline}></ion-icon>
     </ion-button>
 
     {#if checkable}
@@ -60,11 +73,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
             checked={!ignored && $checked}
             indeterminate={!ignored && $indeterminate}
             disabled={ignored}
-            on:ionChange={onToggleChecked}
-        />
+            onionChange={toggleChecked}
+        ></ion-checkbox>
     {/if}
 
-    <!-- eslint-disable-next-line svelte/valid-compile -->
     <ion-button
         class="content"
         class:selected={selected === data}
@@ -73,15 +85,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
         size="small"
         color={$failed ? 'danger' : 'medium'}
         disabled={ignored}
-        on:click={onSelect}
-        on:dblclick={onToggleOpen}
+        onclick={select}
+        ondblClick={toggleOpen}
     >
         {#if $busy}
-            <ion-spinner class="busyIcon" color="medium" />
+            <ion-spinner class="busyIcon" color="medium"></ion-spinner>
         {:else if $failed}
-            <ion-icon class="typeIcon" icon={warningOutline} />
+            <ion-icon class="typeIcon" icon={warningOutline}></ion-icon>
         {:else}
-            <ion-icon class="typeIcon" icon={data.icon} />
+            <ion-icon class="typeIcon" icon={data.icon}></ion-icon>
         {/if}
         <ion-text>{data.label}</ion-text>
     </ion-button>

@@ -29,6 +29,7 @@ export default class BackgroundService {
     private static instance: BackgroundService;
 
     public static async initialize() {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!this.instance) {
             this.instance = new BackgroundService();
             await this.instance.initialize();
@@ -38,6 +39,7 @@ export default class BackgroundService {
     }
 
     public static getInstance(): BackgroundService {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!this.instance) {
             throw new Error(
                 'BackgroundService is not initialized. Call BackgroundService.initialize() first.'
@@ -65,12 +67,13 @@ export default class BackgroundService {
     private handleMessage(event: MessageEvent<BackgroundMessage>) {
         if (isBackgroundMessage(event.data)) {
             const message = event.data;
-            if (this.messageHandlers.has(message.type)) {
-                this.messageHandlers.get(message.type)!(message).then(
+            const handler = this.messageHandlers.get(message.type);
+            if (handler) {
+                handler(message).then(
                     (result) => {
                         this.transceiver.sendSuccessResponse(message, result);
                     },
-                    (reason) => {
+                    (reason: unknown) => {
                         this.transceiver.sendErrorResponse(message, reason);
                     }
                 );
@@ -89,7 +92,7 @@ export default class BackgroundService {
                 type: BackgroundMessageType.INIT,
                 config: { key }
             } as BackgroundWorkerInitMessage)
-            .catch((error) => {
+            .catch((error: unknown) => {
                 console.error('failed to initialize background worker:', error);
             });
     }

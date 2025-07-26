@@ -14,7 +14,7 @@ export enum FieldType {
 export interface FieldDefinition {
     type: FieldType;
     name?: string;
-    size?: number | string;
+    size?: number;
     bigEndian?: boolean;
     condition?: (data: FieldData, offset: number) => boolean;
 }
@@ -22,7 +22,7 @@ export interface FieldDefinition {
 export class Field {
     definition: FieldDefinition;
     offset: number;
-    value?: void | number | number[] | Uint8Array | string;
+    value?: number | number[] | Uint8Array | string;
 
     constructor(definition: FieldDefinition, offset = 0) {
         this.definition = definition;
@@ -41,20 +41,17 @@ export class FieldData {
         this.fields.push(field);
     }
 
-    get<T extends string | number | void | number[] | Uint8Array | undefined>(index: number): T {
+    get<T extends string | number | number[] | Uint8Array | undefined>(index: number): T {
         return this.fields[index]?.value as T;
     }
 
-    set<T extends string | number | void | number[] | Uint8Array | undefined>(
-        index: number,
-        value: T
-    ) {
+    set<T extends string | number | number[] | Uint8Array | undefined>(index: number, value: T) {
         this.fields[index].value = value;
     }
 }
 
 export function toHex(v: number, c = 0) {
-    return '0x' + ('00'.repeat(c) + v.toString(16).toUpperCase()).substr(-2 * c);
+    return '0x' + ('00'.repeat(c) + v.toString(16).toUpperCase()).slice(-2 * c);
 }
 
 export default class BufferReader {
@@ -124,7 +121,7 @@ export default class BufferReader {
     }
 
     private getReadSize(data: FieldData, definition: FieldDefinition): number {
-        return (definition.size as number) ?? data.get<number>(data.length - 1) ?? 0;
+        return definition.size ?? data.get<number | undefined>(data.length - 1) ?? 0;
     }
 
     private readArray(data: FieldData, definition: FieldDefinition): number[] {

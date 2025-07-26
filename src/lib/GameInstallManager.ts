@@ -138,11 +138,11 @@ export default class GameInstallManager {
             console.warn('Could not load app settings', err);
         }
         const lines = settingsData.split('\r\n');
-        const settings: Map<string, string> = new Map();
+        const settings = new Map<string, string>();
         const regex = /^SET\s+(\S+)\s+"([^"]+)"$/;
         console.log('settings:', lines);
         for (const line of lines) {
-            const match = line.match(regex);
+            const match = regex.exec(line);
             if (match) {
                 settings.set(match[1], match[2]);
             }

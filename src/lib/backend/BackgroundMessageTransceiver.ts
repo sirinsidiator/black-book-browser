@@ -59,8 +59,9 @@ export default class BackgroundMessageTransceiver {
 
     public onMessage(message: BackgroundMessage) {
         if (isBackgroundProgressMessage(message)) {
-            if (this.pendingResponses.has(message.id)) {
-                const { onprogress } = this.pendingResponses.get(message.id)!;
+            const pendingResponse = this.pendingResponses.get(message.id);
+            if (pendingResponse) {
+                const { onprogress } = pendingResponse;
                 if (onprogress) {
                     onprogress(message.progress);
                 } else {
@@ -73,8 +74,9 @@ export default class BackgroundMessageTransceiver {
                 console.warn('received progress for unknown message:', message);
             }
         } else if (isBackgroundResponseMessage(message)) {
-            if (this.pendingResponses.has(message.id)) {
-                const { resolve, reject } = this.pendingResponses.get(message.id)!;
+            const pendingResponse = this.pendingResponses.get(message.id);
+            if (pendingResponse) {
+                const { resolve, reject } = pendingResponse;
                 if (message.error) {
                     reject(message.result);
                 } else {

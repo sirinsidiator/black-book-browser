@@ -15,16 +15,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import GameInstallInfo from './GameInstallInfo.svelte';
     import MnfArchiveInfo from './MnfArchiveInfo.svelte';
 
-    export let manager: StateManager;
-    const content = manager.selectedContent;
-
-    function onExplore(event: CustomEvent<GameInstallEntry>) {
-        console.log('explore', event.detail);
+    interface Props {
+        manager: StateManager;
     }
 
-    function onRemove(event: CustomEvent<GameInstallEntry>) {
-        console.log('remove', event.detail);
-        manager.gameInstallManager.remove(event.detail.path);
+    let { manager }: Props = $props();
+    const content = manager.selectedContent;
+
+    function onremove(entry: GameInstallEntry) {
+        console.log('remove', entry);
+        manager.gameInstallManager.remove(entry.path);
         manager.selectedContent.set(null);
     }
 </script>
@@ -42,11 +42,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </ion-card-header>
         <ion-card-content>
             {#if $content instanceof GameInstallEntry}
-                <GameInstallInfo
-                    gameInstall={$content}
-                    on:explore={onExplore}
-                    on:remove={onRemove}
-                />
+                <GameInstallInfo gameInstall={$content} {onremove} />
             {:else if $content instanceof MnfArchiveEntry}
                 <MnfArchiveInfo archive={$content} />
             {:else if $content instanceof FolderEntry}

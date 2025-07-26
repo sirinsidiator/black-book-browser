@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         tier: number;
     }
 
-    let patronList: Patron[] = preparePatronList();
+    let patronList: Patron[] = $state(preparePatronList());
 
     function preparePatronList(): Patron[] {
         return patrons.flatMap((patrons, tier) => patrons.map((name) => ({ name, tier })));
@@ -41,7 +41,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </ion-card-header>
     <ion-card-content>
         {#if !patrons}
-            <p class="loading"><ion-spinner /> Loading...</p>
+            <p class="loading"><ion-spinner></ion-spinner> Loading...</p>
         {:else}
             <div class="patron-list">
                 {#each patronList as patron (patron.name)}
@@ -50,13 +50,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
             </div>
             <ion-label class="thanks" color="dark">Thank you for your continued support</ion-label>
         {/if}
-        <!-- eslint-disable-next-line svelte/valid-compile -->
         <ion-button
             id="becomePatron"
             fill="outline"
             color="primary"
             size="large"
-            on:click={() => openUrl(PATREON_LINK)}
+            onclick={() => openUrl(PATREON_LINK)}
             ><ion-icon icon={patreonIcon}></ion-icon> Become a Patron</ion-button
         >
     </ion-card-content>

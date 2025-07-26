@@ -8,10 +8,14 @@ import BackgroundService from '$lib/backend/BackgroundService';
 import DDSHelper from '$lib/frontend/preview/loader/DDSHelper';
 import BufferReader from '$lib/util/BufferReader';
 import ImageViewer from '../ImagePreview.svelte';
-import { ContentPreviewLoader, ContentPreviewLoaderFactory } from './ContentPreviewLoader';
+import {
+    ContentPreviewLoader,
+    ContentPreviewLoaderFactory,
+    type ContentPreviewLoaderComponent
+} from './ContentPreviewLoader';
 
 export default abstract class ImageFilePreviewLoader implements ContentPreviewLoader {
-    public readonly previewClass = ImageViewer;
+    public readonly component = ImageViewer as unknown as ContentPreviewLoaderComponent;
     public readonly canSave = true;
     protected dataUrl?: string;
 

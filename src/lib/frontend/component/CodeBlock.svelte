@@ -6,11 +6,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import 'highlight.js/styles/base16/classic-dark.css';
+    import type { Snippet } from 'svelte';
 
-    export let language: string;
+    interface Props {
+        language: string;
+        children?: Snippet;
+    }
+
+    let { language, children }: Props = $props();
 </script>
 
-<pre><code class="hljs language-{language}"><slot /></code></pre>
+<pre><code class="hljs language-{language}">{@render children?.()}</code></pre>
 
 <style>
     pre,

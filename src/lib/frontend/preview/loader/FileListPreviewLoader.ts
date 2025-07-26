@@ -8,7 +8,11 @@ import MnfArchiveEntry from '$lib/MnfArchiveEntry';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { get } from 'svelte/store';
 import FileListPreview from '../FileListPreview.svelte';
-import { ContentPreviewLoader, ContentPreviewLoaderFactory } from './ContentPreviewLoader';
+import {
+    ContentPreviewLoader,
+    ContentPreviewLoaderFactory,
+    type ContentPreviewLoaderComponent
+} from './ContentPreviewLoader';
 
 interface PathParts {
     directoryParts: string[];
@@ -17,12 +21,14 @@ interface PathParts {
 }
 
 export default class FileListPreviewLoader implements ContentPreviewLoader {
-    public readonly previewClass = FileListPreview;
+    public readonly component = FileListPreview as unknown as ContentPreviewLoaderComponent;
     public readonly canSave = true;
 
     constructor(public readonly folder: FolderEntry) {}
 
-    public async prepare(): Promise<void> {}
+    public async prepare(): Promise<void> {
+        // do nothing
+    }
 
     public save(fileEnding?: string, suffix?: string): void {
         const folder = this.folder;
@@ -38,7 +44,7 @@ export default class FileListPreviewLoader implements ContentPreviewLoader {
         const url = URL.createObjectURL(file);
         const a = document.createElement('a');
         a.href = url;
-        const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift();
+        const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift() ?? '';
         a.download = archivePrefix + folder.path.replaceAll('/', '_') + (suffix ?? 'filelist.txt');
         a.click();
         URL.revokeObjectURL(url);
@@ -51,8 +57,8 @@ export default class FileListPreviewLoader implements ContentPreviewLoader {
     public getPathParts(item: unknown): PathParts {
         const path = (item as MnfFileData).fileName;
         const parts = path.split('/');
-        const fullFileName = parts.pop();
-        const fileNameParts = fullFileName!.split('.', 2);
+        const fullFileName = parts.pop() ?? path;
+        const fileNameParts = fullFileName.split('.', 2);
         return {
             directoryParts: parts,
             fileName: fileNameParts[0],
@@ -69,7 +75,11 @@ class FileListPreviewLoaderFactory extends ContentPreviewLoaderFactory {
     public create(content: ContentEntry) {
         let folder: FolderEntry;
         if (content instanceof MnfArchiveEntry) {
-            folder = get(content.root) as FolderEntry;
+            const root = get(content.root);
+            if (!root) {
+                throw new Error('MnfArchiveEntry root is not loaded');
+            }
+            folder = root;
         } else {
             folder = content as FolderEntry;
         }

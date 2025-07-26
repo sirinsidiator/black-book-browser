@@ -12,7 +12,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import FileTreeEntryData from './tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
-    export let manager: StateManager;
+    interface Props {
+        manager: StateManager;
+    }
+
+    let { manager }: Props = $props();
 
     const gameInstalls = manager.gameInstallManager.gameInstalls;
     const selectedContent = manager.selectedContent;
@@ -30,18 +34,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
         }
     }
 
-    function onSelect(event: CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>) {
-        selectedContent.set(event.detail.data);
+    function onselect(entry: FileTreeEntryData<FileTreeEntryDataProvider>) {
+        console.log('Selected entry:', entry);
+        selectedContent.set(entry.data);
     }
 
-    $: entries = Array.from($gameInstalls.values()).map((install) => install.fileTreeEntry);
+    let entries = $derived(
+        Array.from($gameInstalls.values()).map((install) => install.fileTreeEntry)
+    );
 </script>
 
 <ion-content>
     {#await manager.gameInstallManager.initialize()}
         <div class="status">
             <p>Loading...</p>
-            <ion-progress-bar type="indeterminate" />
+            <ion-progress-bar type="indeterminate"></ion-progress-bar>
         </div>
     {:then}
         {#if entries.length === 0}
@@ -52,15 +59,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <FileTree
                 {entries}
                 selectedContent={$selectedContent}
-                on:select={onSelect}
+                {onselect}
                 keyboardNavigationTarget={document.body}
             />
         {/if}
 
         <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-            <!-- eslint-disable-next-line svelte/valid-compile -->
-            <ion-fab-button on:click={addFolder}>
-                <ion-icon icon={add} />
+            <ion-fab-button onclick={addFolder}>
+                <ion-icon icon={add}></ion-icon>
             </ion-fab-button>
         </ion-fab>
     {:catch}

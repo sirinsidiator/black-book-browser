@@ -11,7 +11,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { onDestroy, onMount } from 'svelte';
     import type { PageData } from './$types';
 
-    export let data: PageData;
+    interface Props {
+        data: PageData;
+    }
+
+    let { data }: Props = $props();
 
     let splitPane: HTMLIonSplitPaneElement;
     let divider: HTMLDivElement;
@@ -29,11 +33,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
             gestureName: 'resize-menu',
             el: divider,
             onMove: (e) => {
+                const x = e.currentX.toString();
                 splitPane.style.setProperty(
                     '--side-width',
-                    `calc(${e.currentX}px - var(--main-menu-width))`
+                    `calc(${x}px - var(--main-menu-width))`
                 );
-                localStorage.setItem('side-width', e.currentX.toString());
+                localStorage.setItem('side-width', x);
             }
         });
 

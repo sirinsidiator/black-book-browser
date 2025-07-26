@@ -5,17 +5,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
-    export let icon: string | undefined = undefined;
-    export let loading = false;
-    export let warning = false;
+    import type { Snippet } from 'svelte';
+
+    interface Props {
+        icon?: string | undefined;
+        loading?: boolean;
+        warning?: boolean;
+        children?: Snippet;
+    }
+
+    let { icon = undefined, loading = false, warning = false, children }: Props = $props();
 </script>
 
 <div class:loading class:warning>
-    {#if loading}<ion-spinner name="dots" />{:else if icon}<ion-icon {icon} />{/if}<ion-label
-        color={warning ? 'warning' : undefined}><slot /></ion-label
+    {#if loading}<ion-spinner name="dots"></ion-spinner>{:else if icon}<ion-icon {icon}
+        ></ion-icon>{/if}<ion-label color={warning ? 'warning' : undefined}
+        >{@render children?.()}</ion-label
     >
 </div>
-{#if loading}<ion-progress-bar type="indeterminate" />{/if}
+{#if loading}<ion-progress-bar type="indeterminate"></ion-progress-bar>{/if}
 
 <style>
     div {

@@ -17,7 +17,7 @@ export default class ZOSFileTable {
         }
     }
 
-    get(index: number): ZOSFileTableEntry {
+    get(index: number): ZOSFileTableEntry | undefined {
         return this.entries[index];
     }
 

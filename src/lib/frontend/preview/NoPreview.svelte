@@ -9,7 +9,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import ContentPreviewText from './ContentPreviewText.svelte';
     import type { ContentPreviewLoader } from './loader/ContentPreviewLoader';
 
-    export let loader: ContentPreviewLoader;
+    interface Props {
+        loader: ContentPreviewLoader;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let { loader }: Props = $props();
 </script>
 
 <ContentPreviewText icon={informationCircleOutline}>no preview available</ContentPreviewText>

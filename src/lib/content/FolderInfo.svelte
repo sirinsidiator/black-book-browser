@@ -13,24 +13,28 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import ExtractDialog from './ExtractDialog.svelte';
     import FolderDetails from './FolderDetails.svelte';
 
-    export let folder: FolderEntry;
+    interface Props {
+        folder: FolderEntry;
+    }
 
-    $: preview = folder.getPreviewLoader();
+    let { folder }: Props = $props();
+
+    let preview = $derived(folder.getPreviewLoader());
 </script>
 
 <ContentLayout {preview}>
-    <svelte:fragment slot="buttons">
+    {#snippet buttons()}
         <ExtractDialog target={folder} />
         <SavePreviewButton {preview}>save filelist</SavePreviewButton>
         <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}
             >save texturelist</SavePreviewButton
         >
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="details">
+    {#snippet details()}
         <DetailEntry icon={folderOpenOutline} label="archive path"
             >{folder.archive.path}</DetailEntry
         >
         <FolderDetails {folder} />
-    </svelte:fragment>
+    {/snippet}
 </ContentLayout>

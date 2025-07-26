@@ -5,84 +5,80 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
-    import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-    import VirtualList from 'svelte-virtual-list-ce';
+    import VirtualList from '$lib/frontend/component/VirtualList.svelte';
+    import { onDestroy, onMount } from 'svelte';
     import { get } from 'svelte/store';
     import FileTreeEntry from './FileTreeEntry.svelte';
     import type FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
-    const dispatch = createEventDispatcher();
-
-    export let entries: FileTreeEntryData<FileTreeEntryDataProvider>[];
-    export let selectedContent: FileTreeEntryDataProvider | null = null;
-    export let checkable = false;
-    export let levelOffset = 0;
-    export let keyboardNavigationTarget: HTMLElement | null = null;
-    export let ignorePattern: string | undefined = undefined;
-
-    let scrollToIndex: (index: number) => void;
-    let start: number;
-    let end: number;
-    let selectedIndex = -1;
-    let selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined;
-    let flattenedEntries: FileTreeEntryData<FileTreeEntryDataProvider>[] = [];
-
-    function onRefresh(
-        entries: FileTreeEntryData<FileTreeEntryDataProvider>[],
-        selectedContent: FileTreeEntryDataProvider | null
-    ) {
-        flattenedEntries = entries.flatMap(flattenTreeRecursive);
-        if (selectedContent) {
-            selectedIndex = flattenedEntries.findIndex((entry) => entry.data === selectedContent);
-            selected = flattenedEntries[selectedIndex];
-        } else {
-            selectedIndex = -1;
-            selected = undefined;
-        }
+    interface Props {
+        entries: FileTreeEntryData<FileTreeEntryDataProvider>[];
+        selectedContent?: FileTreeEntryDataProvider | null;
+        checkable?: boolean;
+        levelOffset?: number;
+        keyboardNavigationTarget?: HTMLElement | null;
+        ignorePattern?: string | undefined;
+        onchange?: () => void;
+        onselect?: (data: FileTreeEntryData<FileTreeEntryDataProvider>) => void;
     }
+
+    const noop = () => {
+        // do nothing
+    };
+
+    let {
+        entries,
+        selectedContent = null,
+        checkable = false,
+        levelOffset = 0,
+        keyboardNavigationTarget = null,
+        ignorePattern = undefined,
+        onchange = noop,
+        onselect = noop
+    }: Props = $props();
+
+    let flattenedEntries: FileTreeEntryData<FileTreeEntryDataProvider>[] = $derived(
+        entries.flatMap(flattenTreeRecursive)
+    );
+    let selectedIndex = $derived(
+        selectedContent ? flattenedEntries.findIndex((entry) => entry.data === selectedContent) : -1
+    );
+    let selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined = $derived(
+        selectedIndex >= 0 ? flattenedEntries[selectedIndex] : undefined
+    );
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+    let virtualList: VirtualList<FileTreeEntryData<FileTreeEntryDataProvider>> | null =
+        $state(null);
 
     function flattenTreeRecursive(
         entry: FileTreeEntryData<FileTreeEntryDataProvider>
     ): FileTreeEntryData<FileTreeEntryDataProvider>[] {
-        if (get(entry.opened) === false) return [entry];
+        if (!get(entry.opened)) return [entry];
         const children = get(entry.children);
         return [entry, ...children.flatMap(flattenTreeRecursive)];
     }
 
-    function toggleOpen(
-        entry:
-            | CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>
-            | FileTreeEntryData<FileTreeEntryDataProvider>
-    ) {
-        if (entry instanceof CustomEvent) entry = entry.detail;
-        entry.toggleOpen().then(() => onRefresh(entries, selectedContent), console.error);
+    function toggleOpen(entry: FileTreeEntryData<FileTreeEntryDataProvider>) {
+        entry.toggleOpen().then(() => {
+            flattenedEntries = entries.flatMap(flattenTreeRecursive);
+        }, console.error);
     }
 
-    function toggleChecked(
-        entry:
-            | CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>
-            | FileTreeEntryData<FileTreeEntryDataProvider>
-    ) {
-        if (entry instanceof CustomEvent) entry = entry.detail;
+    function toggleChecked(entry: FileTreeEntryData<FileTreeEntryDataProvider>) {
         entry.toggleChecked();
-        dispatch('change');
+        onchange();
     }
-
-    function select(
-        entry:
-            | CustomEvent<FileTreeEntryData<FileTreeEntryDataProvider>>
-            | FileTreeEntryData<FileTreeEntryDataProvider>
-    ) {
-        if (entry instanceof CustomEvent) entry = entry.detail;
-        dispatch('select', entry);
-    }
-
-    $: onRefresh(entries, selectedContent);
 
     function scrollToCurrent(index = selectedIndex) {
-        const offset = Math.floor((end - start) / 2);
-        scrollToIndex(index - offset);
+        try {
+            if (virtualList) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                virtualList.scrollToIndex(index);
+            }
+        } catch (e) {
+            console.error('Error scrolling to current index:', e);
+        }
     }
 
     function onKeyNavigation(event: KeyboardEvent) {
@@ -90,7 +86,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             const nextIndex = event.key === 'ArrowDown' ? selectedIndex + 1 : selectedIndex - 1;
             if (nextIndex >= 0 && nextIndex < flattenedEntries.length) {
-                select(flattenedEntries[nextIndex]);
+                onselect(flattenedEntries[nextIndex]);
                 scrollToCurrent(nextIndex);
             }
         } else if (event.key === 'ArrowRight') {
@@ -98,7 +94,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 if (!get(selected.opened)) {
                     toggleOpen(selected);
                 } else if (get(selected.children).length > 0) {
-                    select(get(selected.children)[0]);
+                    onselect(get(selected.children)[0]);
                     scrollToCurrent();
                 }
             }
@@ -107,7 +103,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 if (get(selected.opened)) {
                     toggleOpen(selected);
                 } else if (selected.parent) {
-                    select(selected.parent);
+                    onselect(selected.parent);
                     scrollToCurrent();
                 }
             }
@@ -132,24 +128,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </script>
 
 <div class="filetree">
-    <VirtualList
-        bind:scrollToIndex
-        bind:start
-        bind:end
-        items={flattenedEntries}
-        itemHeight={27}
-        let:item
-    >
-        <FileTreeEntry
-            data={item}
-            {selected}
-            {checkable}
-            {levelOffset}
-            {ignorePattern}
-            on:open={toggleOpen}
-            on:change={toggleChecked}
-            on:select={select}
-        />
+    <VirtualList bind:this={virtualList} items={flattenedEntries} itemHeight={27}>
+        {#snippet children(data)}
+            <FileTreeEntry
+                {data}
+                {selected}
+                {checkable}
+                {levelOffset}
+                {ignorePattern}
+                onopen={toggleOpen}
+                onchange={toggleChecked}
+                {onselect}
+            />
+        {/snippet}
     </VirtualList>
 </div>
 

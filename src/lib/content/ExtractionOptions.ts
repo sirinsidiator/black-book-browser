@@ -20,8 +20,10 @@ export default class ExtractionOptions {
         const folder = localStorage.getItem(TARGET_FOLDER_KEY);
         if (!folder) {
             path.desktopDir()
-                .then((desktopDir) => this.targetFolder.set(desktopDir))
-                .catch((error) => {
+                .then((desktopDir) => {
+                    this.targetFolder.set(desktopDir);
+                })
+                .catch((error: unknown) => {
                     console.error('Failed to set default target folder:', error);
                 });
         } else {
@@ -31,13 +33,17 @@ export default class ExtractionOptions {
         this.decompressFiles.set(localStorage.getItem(DECOMPRESS_FILES_KEY) !== 'false');
         this.ignorePattern.set(localStorage.getItem(IGNORE_PATTERN_KEY) ?? '');
 
-        this.targetFolder.subscribe((value) => localStorage.setItem(TARGET_FOLDER_KEY, value));
-        this.preserveParents.subscribe((value) =>
-            localStorage.setItem(PRESERVE_PARENTS_KEY, value.toString())
-        );
-        this.decompressFiles.subscribe((value) =>
-            localStorage.setItem(DECOMPRESS_FILES_KEY, value.toString())
-        );
-        this.ignorePattern.subscribe((value) => localStorage.setItem(IGNORE_PATTERN_KEY, value));
+        this.targetFolder.subscribe((value) => {
+            localStorage.setItem(TARGET_FOLDER_KEY, value);
+        });
+        this.preserveParents.subscribe((value) => {
+            localStorage.setItem(PRESERVE_PARENTS_KEY, value.toString());
+        });
+        this.decompressFiles.subscribe((value) => {
+            localStorage.setItem(DECOMPRESS_FILES_KEY, value.toString());
+        });
+        this.ignorePattern.subscribe((value) => {
+            localStorage.setItem(IGNORE_PATTERN_KEY, value);
+        });
     }
 }

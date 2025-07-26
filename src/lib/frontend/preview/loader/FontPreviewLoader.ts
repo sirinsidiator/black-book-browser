@@ -6,10 +6,14 @@ import type ContentEntry from '$lib/ContentEntry';
 import { FileEntry } from '$lib/FileEntry';
 import BackgroundService from '$lib/backend/BackgroundService';
 import FontFilePreview from '../FontFilePreview.svelte';
-import { ContentPreviewLoader, ContentPreviewLoaderFactory } from './ContentPreviewLoader';
+import {
+    ContentPreviewLoader,
+    ContentPreviewLoaderFactory,
+    type ContentPreviewLoaderComponent
+} from './ContentPreviewLoader';
 
 export default class FontPreviewLoader implements ContentPreviewLoader {
-    public readonly previewClass = FontFilePreview;
+    public readonly component = FontFilePreview as unknown as ContentPreviewLoaderComponent;
     public readonly canSave = true;
     private data?: Uint8Array;
     private fontFace?: FontFace;
@@ -26,9 +30,12 @@ export default class FontPreviewLoader implements ContentPreviewLoader {
     }
 
     public save(): void {
+        if (!this.data) {
+            throw new Error('No data available to save');
+        }
         const a = document.createElement('a');
         const type = this.file.label.endsWith('.ttf') ? 'font/ttf' : 'font/otf';
-        const file = new Blob([this.data!], { type });
+        const file = new Blob([this.data], { type });
         a.href = URL.createObjectURL(file);
         a.download = this.file.label;
         a.click();

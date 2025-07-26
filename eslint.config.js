@@ -10,11 +10,14 @@ import ts from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
 
 const extraFileExtensions = ['.svelte'];
+const svelteFilePattern = ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'];
 export default ts.config(
     globalIgnores(['**', '!src/**']),
     js.configs.recommended,
-    ...ts.configs.recommendedTypeChecked,
+    ts.configs.strictTypeChecked,
+    ts.configs.stylisticTypeChecked,
     ...svelte.configs.recommended,
+    ...svelte.configs.prettier,
     {
         languageOptions: {
             globals: {
@@ -24,18 +27,17 @@ export default ts.config(
         }
     },
     {
-        files: ['**/*.ts'],
+        ignores: svelteFilePattern,
         languageOptions: {
             parser: ts.parser,
             parserOptions: {
                 projectService: true,
-                project: ['./tsconfig.json'],
                 extraFileExtensions: extraFileExtensions
             }
         }
     },
     {
-        files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+        files: svelteFilePattern,
         languageOptions: {
             parserOptions: {
                 projectService: true,
@@ -47,7 +49,15 @@ export default ts.config(
     },
     {
         rules: {
-            'no-undef': 'off'
+            'no-undef': 'off',
+            '@typescript-eslint/no-unnecessary-type-parameters': 'off',
+            'svelte/valid-compile': [
+                'error',
+                {
+                    ignoreWarnings: false
+                }
+            ],
+            'svelte/no-target-blank': 'error'
         }
     }
 );

@@ -8,9 +8,13 @@ import BackgroundService from '$lib/backend/BackgroundService';
 import BufferReader from '$lib/util/BufferReader';
 import hljs, { type HighlightResult } from 'highlight.js';
 import TextFilePreview from '../TextFilePreview.svelte';
-import { ContentPreviewLoader, ContentPreviewLoaderFactory } from './ContentPreviewLoader';
+import {
+    ContentPreviewLoader,
+    ContentPreviewLoaderFactory,
+    type ContentPreviewLoaderComponent
+} from './ContentPreviewLoader';
 
-const EXT_TO_LANGUAGE: { [index: string]: string } = {
+const EXT_TO_LANGUAGE: Record<string, string | undefined> = {
     '.lua': 'lua',
     '.txt': 'ini',
     '.xml': 'xml',
@@ -22,16 +26,23 @@ const EXT_TO_LANGUAGE: { [index: string]: string } = {
     '.comp': 'c++'
 };
 
-export default class TextFilePreviewLoader implements ContentPreviewLoader {
-    public readonly previewClass = TextFilePreview;
+export default class TextFilePreviewLoader extends ContentPreviewLoader {
+    public readonly component = TextFilePreview as unknown as ContentPreviewLoaderComponent;
     public readonly canSave = true;
+    public readonly language: string;
     private result?: HighlightResult;
     private content?: string;
 
     constructor(
         public readonly file: FileEntry,
-        public readonly language: string
-    ) {}
+        language?: string
+    ) {
+        super();
+        if (!language) {
+            throw new Error(`Unsupported file type for preview: ${file.label}`);
+        }
+        this.language = language;
+    }
 
     public async prepare(): Promise<void> {
         const fileData = this.file.file;
@@ -42,11 +53,14 @@ export default class TextFilePreviewLoader implements ContentPreviewLoader {
     }
 
     public getText() {
-        return this.result!.value;
+        return this.result?.value ?? '';
     }
 
     public save(): void {
-        const file = new Blob([this.content!], { type: 'text/plain' });
+        if (!this.content) {
+            throw new Error('No content available to save');
+        }
+        const file = new Blob([this.content], { type: 'text/plain' });
         const url = URL.createObjectURL(file);
         const a = document.createElement('a');
         a.href = url;
@@ -61,7 +75,7 @@ class TextFilePreviewLoaderFactory extends ContentPreviewLoaderFactory {
         return content instanceof FileEntry && this.getLanguage(content.label) !== undefined;
     }
 
-    public create(content: ContentEntry) {
+    public create(content: ContentEntry): ContentPreviewLoader {
         return new TextFilePreviewLoader(content as FileEntry, this.getLanguage(content.label));
     }
 

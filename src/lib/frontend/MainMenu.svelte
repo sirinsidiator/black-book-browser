@@ -38,19 +38,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <ion-buttons>
     <ion-button href="/" class:selected={$page.route.id === '/'}>
         <div slot="icon-only">
-            <ion-icon icon={fileTrayFullOutline} />
+            <ion-icon icon={fileTrayFullOutline}></ion-icon>
             <div class="label">browse</div>
         </div></ion-button
     >
     <ion-button href="/search" class:selected={$page.route.id === '/search'}>
         <div slot="icon-only">
-            <ion-icon icon={searchOutline} />
+            <ion-icon icon={searchOutline}></ion-icon>
             <div class="label">search</div>
         </div>
     </ion-button>
     <ion-button href="/patrons" class:selected={$page.route.id === '/patrons'}>
         <div slot="icon-only">
-            <ion-icon icon={patreonIcon} />
+            <ion-icon icon={patreonIcon}></ion-icon>
             <div class="label">patrons</div>
         </div>
     </ion-button>

@@ -7,17 +7,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import ContentPreview from '$lib/frontend/preview/ContentPreview.svelte';
     import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';
+    import type { Snippet } from 'svelte';
 
-    export let preview: Promise<ContentPreviewLoader> | undefined = undefined;
+    interface Props {
+        preview?: Promise<ContentPreviewLoader> | undefined;
+        buttons?: Snippet;
+        details?: Snippet;
+    }
+
+    let { preview = undefined, buttons, details }: Props = $props();
 </script>
 
 <div class="container">
     <div class="buttons">
-        <slot name="buttons"></slot>
+        {@render buttons?.()}
     </div>
 
     <ion-list class="details">
-        <slot name="details"></slot>
+        {@render details?.()}
     </ion-list>
 
     {#if preview}

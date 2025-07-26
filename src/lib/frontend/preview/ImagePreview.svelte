@@ -7,7 +7,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import type ImageFilePreviewLoader from './loader/ImageFilePreviewLoader';
 
-    export let loader: ImageFilePreviewLoader;
+    interface Props {
+        loader: ImageFilePreviewLoader;
+    }
+
+    let { loader }: Props = $props();
 </script>
 
 <div class="image-viewer">

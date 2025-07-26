@@ -70,16 +70,14 @@ export class FolderEntry extends ContentEntry implements FileTreeEntryDataProvid
     public loadChildren(): Promise<FileTreeEntryDataProvider[]> {
         if (!this.loaded) {
             this.loaded = true;
-            const folders: { [key: string]: MnfFileData[] } = {};
+            const folders: Record<string, MnfFileData[] | undefined> = {};
             for (const file of this.files) {
                 const parts = file.fileName.split('/');
                 const label = parts[this.level];
                 if (this.level === parts.length - 1) {
                     this.children.push(new FileEntry(file, this, label));
                 } else {
-                    if (!folders[label]) {
-                        folders[label] = [];
-                    }
+                    folders[label] ??= [];
                     folders[label].push(file);
                 }
             }
@@ -88,7 +86,7 @@ export class FolderEntry extends ContentEntry implements FileTreeEntryDataProvid
                 const folder = new FolderEntry(
                     this.archive,
                     label,
-                    folders[label],
+                    folders[label] ?? [],
                     this,
                     this.level + 1
                 );

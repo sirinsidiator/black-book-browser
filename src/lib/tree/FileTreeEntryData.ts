@@ -101,9 +101,9 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
                     return file.fileName.startsWith(this.path);
                 });
             } else {
-                return get(this.children).reduce((files, child) => {
+                return get(this.children).reduce<MnfFileData[]>((files, child) => {
                     return files.concat(child.getSelectedFiles());
-                }, [] as MnfFileData[]);
+                }, []);
             }
         }
         return [];

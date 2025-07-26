@@ -7,7 +7,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import type FontPreviewLoader from './loader/FontPreviewLoader';
 
-    export let loader: FontPreviewLoader;
+    interface Props {
+        loader: FontPreviewLoader;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let { loader }: Props = $props();
 </script>
 
 <div>abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890.:,;'"(!=)+-*/=</div>

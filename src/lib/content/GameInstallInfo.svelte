@@ -15,16 +15,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
         settingsOutline,
         trashBinOutline
     } from 'ionicons/icons';
-    import { createEventDispatcher } from 'svelte';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        gameInstall: GameInstallEntry;
+        onremove: (gameInstall: GameInstallEntry) => void;
+    }
 
-    export let gameInstall: GameInstallEntry;
+    let { gameInstall, onremove }: Props = $props();
 
-    function onRemove() {
-        dispatch('remove', gameInstall);
+    function remove() {
+        onremove(gameInstall);
     }
 
     async function explore() {
@@ -34,21 +36,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </script>
 
 <ContentLayout>
-    <svelte:fragment slot="buttons">
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button color="danger" on:click={onRemove}>
-            <ion-icon slot="start" icon={trashBinOutline} />
+    {#snippet buttons()}
+        <ion-button color="danger" onclick={remove}>
+            <ion-icon slot="start" icon={trashBinOutline}></ion-icon>
             remove from list
         </ion-button>
 
-        <!-- eslint-disable-next-line svelte/valid-compile -->
-        <ion-button color="primary" on:click={explore}>
-            <ion-icon slot="start" icon={folderOpenOutline} />
+        <ion-button color="primary" onclick={explore}>
+            <ion-icon slot="start" icon={folderOpenOutline}></ion-icon>
             open folder
         </ion-button>
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="details">
+    {#snippet details()}
         <DetailEntry icon={folderOpenOutline} label="game path">{gameInstall.path}</DetailEntry>
         <DetailEntry icon={pricetagOutline} label="version"
             >{gameInstall.version.version}</DetailEntry
@@ -62,5 +62,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {#each gameInstall.settings as entry (entry[0])}
             <DetailEntry icon={settingsOutline} label={entry[0]}>{entry[1]}</DetailEntry>
         {/each}
-    </svelte:fragment>
+    {/snippet}
 </ContentLayout>

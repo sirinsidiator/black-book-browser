@@ -15,24 +15,28 @@ SPDX-License-Identifier: GPL-3.0-or-later
     } from 'ionicons/icons';
     import DetailEntry from './DetailEntry.svelte';
 
-    export let folder: FolderEntry;
+    interface Props {
+        folder: FolderEntry;
+    }
 
-    $: statsInit = folder.initStats();
+    let { folder }: Props = $props();
+
+    let statsInit = $derived(folder.initStats());
 </script>
 
 {#await statsInit}
     <DetailEntry icon={folderOpenOutline} label="folder path">{folder.path}</DetailEntry>
     <DetailEntry icon={folderOutline} label="folders"
-        ><ion-skeleton-text animated={true} /></DetailEntry
+        ><ion-skeleton-text animated={true}></ion-skeleton-text></DetailEntry
     >
     <DetailEntry icon={documentOutline} label="files"
-        ><ion-skeleton-text animated={true} /></DetailEntry
+        ><ion-skeleton-text animated={true}></ion-skeleton-text></DetailEntry
     >
     <DetailEntry icon={scaleOutline} label="compressed size"
-        ><ion-skeleton-text animated={true} /></DetailEntry
+        ><ion-skeleton-text animated={true}></ion-skeleton-text></DetailEntry
     >
     <DetailEntry icon={scaleOutline} label="decompressed size"
-        ><ion-skeleton-text animated={true} /></DetailEntry
+        ><ion-skeleton-text animated={true}></ion-skeleton-text></DetailEntry
     >
 {:then folder}
     <DetailEntry icon={folderOpenOutline} label="folder path">{folder.path}</DetailEntry>

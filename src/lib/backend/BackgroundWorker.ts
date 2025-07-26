@@ -64,7 +64,7 @@ function setupTauriInternals(key: string) {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     typeof val.id === 'number'
                 ) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unsafe-member-access
                     return `__CHANNEL__:${val.id}`;
                 } else {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -91,7 +91,7 @@ function setupTauriInternals(key: string) {
                 'Tauri-Callback': callback,
                 'Tauri-Error': error,
                 'Tauri-Invoke-Key': key,
-                ...(options?.headers || {})
+                ...(options?.headers ?? {})
             } as Record<string, string>
         })
             .then((response) => {
@@ -108,9 +108,9 @@ function setupTauriInternals(key: string) {
                 }
             })
             .then(([cb, data]) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
                 if (window[`_${cb}`]) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
                     window[`_${cb}`](data);
                 } else {
                     console.warn(
@@ -118,7 +118,7 @@ function setupTauriInternals(key: string) {
                     );
                 }
             })
-            .catch((e) => {
+            .catch((e: unknown) => {
                 console.error('failed to send', e);
             });
     }
@@ -128,8 +128,9 @@ function setupTauriInternals(key: string) {
         return `http://${protocol}.localhost/${path}`;
     }
 
-    function transformCallback(callback: (result: unknown) => void, once: boolean) {
+    function transformCallback(callback: undefined | ((result: unknown) => void), once: boolean) {
         const identifier = uid();
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         const prop = `_${identifier}`;
 
         Object.defineProperty(window, prop, {
@@ -139,7 +140,7 @@ function setupTauriInternals(key: string) {
                     Reflect.deleteProperty(window, prop);
                 }
 
-                return callback && callback(result);
+                return callback?.(result);
             },
             writable: false,
             configurable: true
@@ -152,12 +153,12 @@ function setupTauriInternals(key: string) {
         return new Promise(function (resolve, reject) {
             const callback = __TAURI_INTERNALS__.transformCallback(function (r) {
                 resolve(r);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
                 delete window[`_${error}`];
             }, true);
             const error = __TAURI_INTERNALS__.transformCallback(function (e) {
                 reject(e as Error);
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
                 delete window[`_${callback}`];
             }, true);
 
@@ -165,7 +166,7 @@ function setupTauriInternals(key: string) {
                 cmd,
                 callback,
                 error,
-                payload: payload || {},
+                payload: payload ?? {},
                 options
             });
         });
@@ -180,7 +181,7 @@ function setupTauriInternals(key: string) {
     };
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     window.__TAURI_INTERNALS__ = __TAURI_INTERNALS__;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     (globalThis as any).window = window;
 }
 
@@ -188,6 +189,7 @@ export default class BackgroundWorker {
     private static instance: BackgroundWorker;
 
     public static getInstance(): BackgroundWorker {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!this.instance) {
             console.error('worker not initialized');
         }
@@ -195,6 +197,7 @@ export default class BackgroundWorker {
     }
 
     public static initialize(message: BackgroundWorkerInitMessage) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this.instance) {
             console.warn('worker already initialized');
             return;
@@ -213,7 +216,9 @@ export default class BackgroundWorker {
 
     private constructor(public readonly config: BackgroundWorkerConfig) {
         this.transceiver = new BackgroundMessageTransceiver({
-            postMessage: (message) => postMessage(message)
+            postMessage: (message) => {
+                postMessage(message);
+            }
         } as Worker);
     }
 
@@ -247,7 +252,7 @@ export default class BackgroundWorker {
             (archive) => {
                 this.transceiver.sendSuccessResponse(message, archive);
             },
-            (reason) => {
+            (reason: unknown) => {
                 this.transceiver.sendErrorResponse(message, reason);
             }
         );
@@ -267,12 +272,17 @@ export default class BackgroundWorker {
 
             const fileList: MnfFileData[] = [];
             for (const [fileNumber, entry] of archive.mnfEntries) {
+                if (entry.fileSize === undefined || entry.compressedSize === undefined) {
+                    throw new Error(
+                        `Entry ${fileNumber.toString()} in archive ${path} is missing fileSize or compressedSize`
+                    );
+                }
                 fileList.push({
                     archivePath: path,
                     fileNumber,
                     fileName: entry.fileName ?? '<missing name>',
-                    size: entry.fileSize!,
-                    compressedSize: entry.compressedSize!
+                    size: entry.fileSize,
+                    compressedSize: entry.compressedSize
                 });
             }
             fileList.sort((a, b) => a.fileName.localeCompare(b.fileName));
@@ -289,7 +299,7 @@ export default class BackgroundWorker {
             (archive) => {
                 this.transceiver.sendSuccessResponse(message, archive);
             },
-            (reason) => {
+            (reason: unknown) => {
                 this.transceiver.sendErrorResponse(message, reason);
             }
         );
@@ -317,13 +327,13 @@ export default class BackgroundWorker {
     }
 
     private onExtractFiles(message: BackgroundMessage) {
-        this.extractFiles(message as BackgroundExtractFilesMessage, (progress) =>
-            this.transceiver.sendProgressResponse(message, progress)
-        ).then(
+        this.extractFiles(message as BackgroundExtractFilesMessage, (progress) => {
+            this.transceiver.sendProgressResponse(message, progress);
+        }).then(
             (result) => {
                 this.transceiver.sendSuccessResponse(message, result);
             },
-            (reason) => {
+            (reason: unknown) => {
                 this.transceiver.sendErrorResponse(message, reason);
             }
         );
@@ -339,7 +349,7 @@ export default class BackgroundWorker {
             if (!archive) {
                 throw new Error('archive not found');
             }
-            return archive.extractFiles(request, onprogress);
+            return await archive.extractFiles(request, onprogress);
         } catch (error) {
             console.warn('Failed to extract files:', error);
             throw error;

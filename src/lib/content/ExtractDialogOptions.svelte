@@ -11,8 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import type ExtractionOptions from './ExtractionOptions';
     import { openIgnorePatternHelp } from './ignoredFilesFilterHelper';
 
-    export let extracting: boolean;
-    export let options: ExtractionOptions;
+    interface Props {
+        extracting: boolean;
+        options: ExtractionOptions;
+    }
+
+    let { extracting, options }: Props = $props();
 
     const { targetFolder, preserveParents, decompressFiles, ignorePattern } = options;
 
@@ -62,13 +66,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </ion-card-header>
     <ion-card-content>
         <ion-item>
-            <ion-input
-                label="Extract to"
-                value={$targetFolder}
-                on:ionChange={onTargetFolderChanged}
-            />
-            <!-- eslint-disable-next-line svelte/valid-compile -->
-            <ion-button slot="end" fill="clear" color="primary" on:click={selectLocation}
+            <ion-input label="Extract to" value={$targetFolder} onionChange={onTargetFolderChanged}
+            ></ion-input>
+            <ion-button slot="end" fill="clear" color="primary" onclick={selectLocation}
                 >Choose</ion-button
             >
         </ion-item>
@@ -76,14 +76,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <ion-toggle
                 bind:this={preserveParentsControl}
                 checked={$preserveParents}
-                on:ionChange={onPreserveParentFoldersChanged}>Preserve parent folders</ion-toggle
+                onionChange={onPreserveParentFoldersChanged}>Preserve parent folders</ion-toggle
             >
         </ion-item>
         <ion-item>
             <ion-toggle
                 bind:this={decompressFilesControl}
                 checked={$decompressFiles}
-                on:ionChange={onDecompressFilesChanged}>Decompress files</ion-toggle
+                onionChange={onDecompressFilesChanged}>Decompress files</ion-toggle
             >
         </ion-item>
         <ion-item>
@@ -92,11 +92,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 label="Ignore pattern"
                 placeholder="e.g. !**/*.+(lua|xml|txt)"
                 value={$ignorePattern}
-                on:ionChange={onIgnorePatternChanged}
+                onionChange={onIgnorePatternChanged}
             >
             </ion-input>
-            <ion-button slot="end" fill="clear" on:click={openIgnorePatternHelp}>
-                <ion-icon icon={helpCircleOutline} slot="icon-only" />
+            <ion-button slot="end" fill="clear" onclick={openIgnorePatternHelp}>
+                <ion-icon icon={helpCircleOutline} slot="icon-only"></ion-icon>
             </ion-button>
         </ion-item>
     </ion-card-content>

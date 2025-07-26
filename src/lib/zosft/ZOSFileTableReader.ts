@@ -19,7 +19,7 @@ const ZOSFT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'entryCount' }
 ];
 
-const hasRows = (data: FieldData, index: number) => (data.get<number>(index) ?? 0) > 0;
+const hasRows = (data: FieldData, index: number) => data.get<number>(index) > 0;
 
 const BLOCK0_ROWS_INDEX = 2;
 const BLOCK1_ROWS_INDEX = 3;
@@ -159,13 +159,22 @@ export default class ZOSFileTableReader {
             console.log('block data inflated in', start3 - start2);
 
             for (const block of blocks) {
-                const blockReader = new BufferReader(block.inflated!);
+                if (!block.inflated) {
+                    throw new Error('Block is not decompressed');
+                }
+                const blockReader = new BufferReader(block.inflated);
                 for (let j = 0; j < block.rows; j++) {
                     const file = fileTable.get(j);
                     file?.readBlock(block.segment, block.block, blockReader);
                 }
                 if (!blockReader.hasReachedEnd()) {
-                    console.warn('not all data read', block, blockReader);
+                    console.warn(
+                        'not all data read,',
+                        blockReader.getRemainingSize(),
+                        'bytes left',
+                        block,
+                        blockReader
+                    );
                 }
             }
             const start4 = performance.now();
@@ -174,7 +183,7 @@ export default class ZOSFileTableReader {
             const offset = reader.readFields(ZOSFT_FILENAME_LIST_DEFINITIONS, data);
             const fileNames = data.get<string>(offset + FILE_NAME_LIST_INDEX);
             for (let i = 0; i < entryCount; ++i) {
-                fileTable.get(i).readFileName(fileNames);
+                fileTable.get(i)?.readFileName(fileNames);
             }
 
             const eofMarker = reader.readString(ZOSFT_FILE_ID.length);

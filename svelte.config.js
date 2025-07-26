@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import adapter from '@sveltejs/adapter-static';
-import preprocess from 'svelte-preprocess';
+import { sveltePreprocess } from 'svelte-preprocess';
 import { importAssets } from 'svelte-preprocess-import-assets';
 
-let version = process.env.npm_package_version;
+let version = process.env.npm_package_version || '0.0.0';
 if (process.env.NODE_ENV === 'development') {
     version = `${version}-dev`;
 }
@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'development') {
 const config = {
     preprocess: [
         importAssets(),
-        preprocess({
+        sveltePreprocess({
             replace: [['@version', version]]
         })
     ],
@@ -35,10 +35,11 @@ const config = {
         }
     },
 
-    onwarn: (warning, handler) => {
-        if (!warning.code.startsWith('a11y-')) {
-            handler(warning);
+    onwarn: (warning) => {
+        if (warning.code.startsWith('a11y')) {
+            return false;
         }
+        return true;
     }
 };
 export default config;

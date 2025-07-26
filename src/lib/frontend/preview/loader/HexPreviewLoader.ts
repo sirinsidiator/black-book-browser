@@ -7,10 +7,14 @@ import { FileEntry } from '$lib/FileEntry';
 import BackgroundService from '$lib/backend/BackgroundService';
 import BufferReader from '$lib/util/BufferReader';
 import HexPreview from '../HexPreview.svelte';
-import { ContentPreviewLoader, ContentPreviewLoaderFactory } from './ContentPreviewLoader';
+import {
+    ContentPreviewLoader,
+    ContentPreviewLoaderFactory,
+    type ContentPreviewLoaderComponent
+} from './ContentPreviewLoader';
 
 export class HexPreviewLoader implements ContentPreviewLoader {
-    public readonly previewClass = HexPreview;
+    public readonly component = HexPreview as unknown as ContentPreviewLoaderComponent;
     public readonly canSave = false;
     private _view?: BufferReader;
 

@@ -8,13 +8,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import type { SearchbarInputEventDetail } from '@ionic/core';
     import fuzzysort from 'fuzzysort';
     import { onDestroy, onMount } from 'svelte';
-    import VirtualList from 'svelte-virtual-list-ce';
     import { FileEntry } from './FileEntry';
     import type FileSearchEntry from './FileSearchEntry';
+    import VirtualList from './frontend/component/VirtualList.svelte';
     import type StateManager from './StateManager';
     import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
-    export let manager: StateManager;
+    interface Props {
+        manager: StateManager;
+    }
+
+    let { manager }: Props = $props();
 
     const gameInstallManager = manager.gameInstallManager;
     const selectedContent = manager.selectedContent;
@@ -23,14 +27,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     const searchDuration = gameInstallManager.searchDuration;
     const searching = gameInstallManager.searching;
 
-    let statsHidden = false;
-    let searchbar: HTMLIonSearchbarElement;
-    let inputElement: HTMLInputElement;
-    let scrollToIndex: (index: number) => void;
-    let start: number;
-    let end: number;
-    let selectedIndex = -1;
-    let selectedResult: Fuzzysort.KeysResult<FileSearchEntry> | undefined = undefined;
+    let statsHidden = $derived($searchResults === null || $searchResults.length === 0);
+    let searchbar: HTMLIonSearchbarElement | undefined = $state();
+    let inputElement: HTMLInputElement | undefined = $state();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-redundant-type-constituents
+    let virtualList: VirtualList<Fuzzysort.KeysResult<FileSearchEntry>> | undefined = $state();
+    let start = 0;
+    let end = 0;
+    let { selectedIndex, selectedResult } = $derived(refresh($searchResults, $selectedContent));
 
     function doSearch(input: string) {
         gameInstallManager.submitFileSearch(input).catch(console.error);
@@ -55,12 +59,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
     const dummyResult = fuzzysort.go('dummy', ['dummy']);
     function restoreResult(item: unknown): Fuzzysort.KeysResult<FileSearchEntry> {
         let result = item as Fuzzysort.KeysResult<FileSearchEntry>;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!result[0].highlight) {
-            result = Object.setPrototypeOf(result, dummyResult.constructor.prototype);
+            result = Object.setPrototypeOf(
+                result,
+                dummyResult.constructor.prototype as object
+            ) as Fuzzysort.KeysResult<FileSearchEntry>;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             (result as any)[0] = Object.setPrototypeOf(
-                result[0],
-                dummyResult[0].constructor.prototype
-            );
+                result[0] as unknown,
+                dummyResult[0].constructor.prototype as object
+            ) as Fuzzysort.Result;
         }
         return result;
     }
@@ -74,43 +83,43 @@ SPDX-License-Identifier: GPL-3.0-or-later
         selectedResult = item as Fuzzysort.KeysResult<FileSearchEntry>;
         const gameInstall = gameInstallManager.getGameInstallForArchive(selectedResult.obj.archive);
         if (!gameInstall) {
-            return console.warn('GameInstall not found for search result', selectedResult.obj);
+            console.warn('GameInstall not found for search result', selectedResult.obj);
+            return;
         }
         const archiveEntry = gameInstall.getMnfArchiveEntry(selectedResult.obj.archive);
         if (!archiveEntry) {
-            return console.warn('Archive entry not found for search result', selectedResult.obj);
+            console.warn('Archive entry not found for search result', selectedResult.obj);
+            return;
         }
         const fileEntry = await archiveEntry.getFileEntry(selectedResult.obj.file);
         if (!fileEntry) {
-            return console.warn('File entry not found for search result', selectedResult.obj);
+            console.warn('File entry not found for search result', selectedResult.obj);
+            return;
         }
         $selectedContent = fileEntry;
     }
-
-    function showStats(results: Fuzzysort.KeysResults<FileSearchEntry> | null) {
-        if (results) {
-            statsHidden = false;
-        }
-    }
-    $: showStats($searchResults);
 
     function refresh(
         results: Fuzzysort.KeysResults<FileSearchEntry> | null,
         selected: FileTreeEntryDataProvider | null
     ) {
         if (results && selected instanceof FileEntry) {
-            selectedIndex = results.findIndex(
+            const selectedIndex = results.findIndex(
                 (result) =>
                     result.obj.archive === selected.file.archivePath &&
                     result.obj.file === selected.path
             );
-            selectedResult = results[selectedIndex];
+            return {
+                selectedIndex,
+                selectedResult: results[selectedIndex]
+            };
         } else {
-            selectedIndex = -1;
-            selectedResult = undefined;
+            return {
+                selectedIndex: -1,
+                selectedResult: undefined
+            };
         }
     }
-    $: refresh($searchResults, $selectedContent);
 
     function isSelected(
         item: unknown,
@@ -120,8 +129,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     function scrollToCurrent(index = selectedIndex) {
-        const offset = Math.floor((end - start) / 2);
-        scrollToIndex(index - offset);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        virtualList?.scrollToIndex(index);
     }
 
     function selectAndScroll(index: number) {
@@ -146,7 +155,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             const visible = end - start;
             selectAndScroll(selectedIndex + visible);
         } else if (event.key === 'f' && event.ctrlKey) {
-            searchbar.setFocus().catch(console.error);
+            searchbar?.setFocus().catch(console.error);
         } else if (event.key === 'Enter') {
             inputElement?.blur();
         } else {
@@ -157,6 +166,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     onMount(async () => {
+        if (!searchbar) throw new Error('Searchbar is not defined');
         doSearch($searchTerm);
         searchbar.value = $searchTerm;
         inputElement = await searchbar.getInputElement();
@@ -175,32 +185,32 @@ SPDX-License-Identifier: GPL-3.0-or-later
             bind:this={searchbar}
             color="light"
             debounce={100}
-            on:ionInput={onSearch}
-            on:ionClear={onClear}
+            onionInput={onSearch}
+            onionClear={onClear}
         ></ion-searchbar>
         {#if $searching}
-            <ion-progress-bar type="indeterminate" />
+            <ion-progress-bar type="indeterminate"></ion-progress-bar>
         {/if}
     </ion-toolbar>
 </ion-header>
 <ion-content>
     {#if $searchResults}
-        <VirtualList bind:scrollToIndex bind:start bind:end items={$searchResults} let:item>
-            <!-- eslint-disable-next-line svelte/valid-compile -->
-            <div
-                class="result"
-                class:selected={isSelected(item, selectedResult)}
-                on:click={() => onSelect(item)}
-            >
-                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                {@html highlight(item)}
-            </div>
+        <VirtualList bind:this={virtualList} items={$searchResults}>
+            {#snippet children(data)}
+                <div
+                    class="result"
+                    class:selected={isSelected(data, selectedResult)}
+                    onclick={() => onSelect(data)}
+                >
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    {@html highlight(data)}
+                </div>
+            {/snippet}
         </VirtualList>
-        <!-- eslint-disable-next-line svelte/valid-compile -->
         <ion-chip
             class="result-stats"
             class:hidden={statsHidden}
-            on:click={() => (statsHidden = true)}
+            onclick={() => (statsHidden = true)}
         >
             {#if $searching}
                 Searching...

@@ -13,17 +13,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import DetailEntry from './DetailEntry.svelte';
     import ExtractDialog from './ExtractDialog.svelte';
 
-    export let file: FileEntry;
-    $: preview = file.getPreviewLoader();
+    interface Props {
+        file: FileEntry;
+    }
+
+    let { file }: Props = $props();
+    let preview = $derived(file.getPreviewLoader());
 </script>
 
 <ContentLayout {preview}>
-    <svelte:fragment slot="buttons">
+    {#snippet buttons()}
         <ExtractDialog target={file} />
         <SavePreviewButton {preview}>save preview</SavePreviewButton>
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="details">
+    {#snippet details()}
         <DetailEntry icon={folderOpenOutline} label="archive path"
             >{file.parent.archive.path}</DetailEntry
         >
@@ -34,5 +38,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <DetailEntry icon={scaleOutline} label="decompressed size"
             >{formatFileSize(file.decompressedSize)}</DetailEntry
         >
-    </svelte:fragment>
+    {/snippet}
 </ContentLayout>

@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { setupIonicBase } from 'ionic-svelte';
+    import type { Snippet } from 'svelte';
     /* Import all components - or do partial loading - see below */
     import 'ionic-svelte/components/all';
 
@@ -27,8 +28,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import '@ionic/core/css/palettes/dark.always.css';
     import '../theme/variables.css';
     /* Import the main menu */
-    import MainMenu from '$lib/frontend/MainMenu.svelte';
     import BackgroundService from '$lib/backend/BackgroundService';
+    import MainMenu from '$lib/frontend/MainMenu.svelte';
+
+    let { children }: { children?: Snippet } = $props();
 
     /* Call Ionic's setup routine */
     setupIonicBase();
@@ -68,7 +71,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         .then(() => {
             console.log('BackgroundService initialized successfully');
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
             console.error('Failed to initialize BackgroundService:', error);
         });
 </script>
@@ -76,7 +79,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <ion-app>
     <MainMenu />
     <ion-content>
-        <slot />
+        {@render children?.()}
     </ion-content>
 </ion-app>
 

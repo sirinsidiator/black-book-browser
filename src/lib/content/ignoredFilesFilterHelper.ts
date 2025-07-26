@@ -52,7 +52,7 @@ async function filterIgnoredFilesChunk(
 }
 
 export function openIgnorePatternHelp() {
-    openUrl(HELP_URL).catch((error) => {
+    openUrl(HELP_URL).catch((error: unknown) => {
         console.error('Failed to open ignore pattern help:', error);
     });
 }
