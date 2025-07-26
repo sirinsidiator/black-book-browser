@@ -6,6 +6,6 @@
         "vadimcn.vscode-lldb",
         "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
-        "Ionic.ionic"
+        "WebNative.webnative"
     ]
 }
