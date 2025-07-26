@@ -17,7 +17,7 @@
         "actions": "act --artifact-server-path ./artifacts --env CACHE_BIN=false",
         "postinstall": "node scripts/ionicComponentTypesToSvelte.js",
         "posti": "npm run postinstall",
-        "postversion": "node scripts/applyVersionToTauri.js"
+        "version": "node scripts/applyVersionToTauri.js"
     },
     "dependencies": {
         "@ionic/core": "^8.6.5",

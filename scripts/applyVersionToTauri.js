@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -13,3 +14,5 @@ const version = packageJson.version;
 writeFileSync(tauriConfPath, JSON.stringify({ ...JSON.parse(readFileSync(tauriConfPath, 'utf-8')), version }, null, 2));
 writeFileSync(cargoTomlPath, readFileSync(cargoTomlPath, 'utf-8').replace(/version = ".*?"/, `version = "${version}"`));
 writeFileSync(cargoLockPath, readFileSync(cargoLockPath, 'utf-8').replace(/(\[\[package\]\]\r?\nname = "black-book-browser"\r?\n)version = ".*?"/, `$1version = "${version}"`));
+
+execSync(`git add ${tauriConfPath} ${cargoTomlPath} ${cargoLockPath} ${packageJsonPath}`, { stdio: 'inherit' });
