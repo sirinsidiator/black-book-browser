@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         children?: Snippet;
     }
 
-    let { icon = undefined, loading = false, warning = false, children }: Props = $props();
+    let { icon, loading = false, warning = false, children }: Props = $props();
 </script>
 
 <div class:loading class:warning>

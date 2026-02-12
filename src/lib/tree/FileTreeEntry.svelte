@@ -23,10 +23,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     let {
         data,
-        selected = undefined,
-        checkable = false,
-        levelOffset = 0,
-        ignorePattern = undefined,
+        selected,
+        checkable,
+        levelOffset,
+        ignorePattern,
         onopen,
         onchange,
         onselect

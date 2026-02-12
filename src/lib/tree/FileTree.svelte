@@ -33,7 +33,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         checkable = false,
         levelOffset = 0,
         keyboardNavigationTarget = null,
-        ignorePattern = undefined,
+        ignorePattern,
         onchange = noop,
         onselect = noop
     }: Props = $props();

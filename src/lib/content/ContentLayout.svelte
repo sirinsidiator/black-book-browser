@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         details?: Snippet;
     }
 
-    let { preview = undefined, buttons, details }: Props = $props();
+    let { preview, buttons, details }: Props = $props();
 </script>
 
 <div class="container">

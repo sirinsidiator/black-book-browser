@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 sirinsidiator
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -11,8 +15,22 @@ const packageJsonPath = join(...projectRootDir, `package.json`);
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 const version = packageJson.version;
 
-writeFileSync(tauriConfPath, JSON.stringify({ ...JSON.parse(readFileSync(tauriConfPath, 'utf-8')), version }, null, 2));
-writeFileSync(cargoTomlPath, readFileSync(cargoTomlPath, 'utf-8').replace(/version = ".*?"/, `version = "${version}"`));
-writeFileSync(cargoLockPath, readFileSync(cargoLockPath, 'utf-8').replace(/(\[\[package\]\]\r?\nname = "black-book-browser"\r?\n)version = ".*?"/, `$1version = "${version}"`));
+writeFileSync(
+    tauriConfPath,
+    JSON.stringify({ ...JSON.parse(readFileSync(tauriConfPath, 'utf-8')), version }, null, 2)
+);
+writeFileSync(
+    cargoTomlPath,
+    readFileSync(cargoTomlPath, 'utf-8').replace(/version = ".*?"/, `version = "${version}"`)
+);
+writeFileSync(
+    cargoLockPath,
+    readFileSync(cargoLockPath, 'utf-8').replace(
+        /(\[\[package\]\]\r?\nname = "black-book-browser"\r?\n)version = ".*?"/,
+        `$1version = "${version}"`
+    )
+);
 
-execSync(`git add ${tauriConfPath} ${cargoTomlPath} ${cargoLockPath} ${packageJsonPath}`, { stdio: 'inherit' });
+execSync(`git add ${tauriConfPath} ${cargoTomlPath} ${cargoLockPath} ${packageJsonPath}`, {
+    stdio: 'inherit'
+});
