@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import type { NormalizeLineEndingsOption } from '$lib/content/ExtractionOptions';
 import type { ExtractFilesProgress, ExtractFilesResult } from '$lib/mnf/MnfArchive';
 import type MnfArchiveFile from '$lib/mnf/MnfArchiveFile';
 import type MnfEntry from '$lib/mnf/MnfEntry';
@@ -52,7 +53,8 @@ export async function extractFiles(
         archiveFile: MnfArchiveFile;
         fileEntry: MnfEntry;
     }[],
-    decompress: boolean
+    decompress: boolean,
+    normalizeLineEndings: NormalizeLineEndingsOption,
 ): Promise<ExtractFilesResult> {
     const response = await rustCall(
         'extract-files',
@@ -63,11 +65,17 @@ export async function extractFiles(
                 offset: file.fileEntry.offset,
                 compressedSize: file.fileEntry.compressedSize,
                 fileSize: file.fileEntry.fileSize,
-                compressionType: !decompress ? 0 : file.fileEntry.compressionType
+                compressionType: !decompress ? 0 : file.fileEntry.compressionType,
+                normalizeLineEndings: isTextFile(file.fileEntry.fileName ?? '') ? normalizeLineEndings : 'keep'
             }))
         )
     );
     return response.json() as Promise<ExtractFilesResult>;
+}
+
+function isTextFile(fileName: string): boolean {
+    const textFileExtensions = ['.txt', '.xml', '.lua', '.hlsl', '.frag', '.vert', '.fxh'];
+    return textFileExtensions.some((ext) => fileName.endsWith(ext));
 }
 
 export async function getExtractFileProgress(): Promise<ExtractFilesProgress> {

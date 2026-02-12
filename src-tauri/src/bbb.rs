@@ -54,6 +54,7 @@ fn extract_file(
     compressed_size: usize,
     file_size: usize,
     compression_type: u8,
+    normalize_line_endings: &str,
 ) -> Result<Vec<u8>, String> {
     let content;
     if compression_type == 0 {
@@ -64,6 +65,31 @@ fn extract_file(
 
     if content.is_err() {
         return Err(content.unwrap_err());
+    }
+
+    if normalize_line_endings != "keep" {
+        let content = content.unwrap();
+        let content = String::from_utf8(content);
+        if content.is_err() {
+            return Err(format!(
+                "Error: Failed to parse file content as UTF-8 for {:?}",
+                target_path
+            ));
+        }
+        let content = content.unwrap();
+        let content = if normalize_line_endings == "windows" {
+            content.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+        } else if normalize_line_endings == "linux" {
+            content.replace("\r\n", "\n").replace("\r", "\n")
+        } else if normalize_line_endings == "mac" {
+            content.replace("\r\n", "\r").replace("\n", "\r")
+        } else {
+            return Err(format!(
+                "Error: Invalid normalize line endings option {:?}",
+                normalize_line_endings
+            ));
+        };
+        return save_file(target_path, content.into_bytes());
     }
 
     return save_file(target_path, content.unwrap());
@@ -146,6 +172,7 @@ fn extract_files_parallel(files: &Vec<serde_json::Value>, progress: ExtractionPr
         let compressed_size = file["compressedSize"].as_u64().unwrap() as usize;
         let file_size = file["fileSize"].as_u64().unwrap() as usize;
         let compression_type = file["compressionType"].as_u64().unwrap() as u8;
+        let normalize_line_endings = file["normalizeLineEndings"].as_str().unwrap().to_owned();
         let progress = progress.clone();
 
         queue.push(Task(Box::new(
@@ -157,6 +184,7 @@ fn extract_files_parallel(files: &Vec<serde_json::Value>, progress: ExtractionPr
                     compressed_size,
                     file_size,
                     compression_type,
+                    &normalize_line_endings,
                 ) {
                     Ok(_) => {
                         local_progress.successes += 1;

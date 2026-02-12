@@ -28,7 +28,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let { target }: Props = $props();
 
     const options = new ExtractionOptions();
-    const { targetFolder, preserveParents, decompressFiles, ignorePattern } = options;
+    const { targetFolder, preserveParents, decompressFiles, ignorePattern, normalizeLineEndings } =
+        options;
 
     let dialog: HTMLIonModalElement | undefined = $state();
     let logContainer: HTMLDivElement | undefined = $state();
@@ -104,6 +105,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             rootPath: root.path,
             preserveParents: $preserveParents,
             decompressFiles: $decompressFiles,
+            normalizeLineEndings: $normalizeLineEndings,
             files: selectedFiles
         };
         console.log('extracting files', details);

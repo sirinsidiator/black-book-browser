@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { helpCircleOutline } from 'ionicons/icons';
     import type ExtractionOptions from './ExtractionOptions';
     import { openIgnorePatternHelp } from './ignoredFilesFilterHelper';
+    import type { NormalizeLineEndingsOption } from './ExtractionOptions';
 
     interface Props {
         extracting: boolean;
@@ -18,11 +19,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     let { extracting, options }: Props = $props();
 
-    const { targetFolder, preserveParents, decompressFiles, ignorePattern } = options;
+    const { targetFolder, preserveParents, decompressFiles, ignorePattern, normalizeLineEndings } =
+        options;
 
     let preserveParentsControl: HTMLIonToggleElement;
     let decompressFilesControl: HTMLIonToggleElement;
     let ignorePatternControl: HTMLIonInputElement;
+    let normalizeLineEndingsControl: HTMLIonSelectElement;
 
     function setTargetFolder(path: unknown) {
         if (typeof path === 'string') {
@@ -49,6 +52,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     function onIgnorePatternChanged() {
         $ignorePattern = (ignorePatternControl.value ?? '') as string;
+    }
+
+    function onNormalizeLineEndingsChanged() {
+        $normalizeLineEndings = normalizeLineEndingsControl.value as NormalizeLineEndingsOption;
     }
 
     async function selectLocation() {
@@ -99,7 +106,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <ion-icon icon={helpCircleOutline} slot="icon-only"></ion-icon>
             </ion-button>
         </ion-item>
-    </ion-card-content>
+        <ion-item>
+            <ion-select
+                bind:this={normalizeLineEndingsControl}
+                label="Normalize line endings"
+                value={$normalizeLineEndings}
+                onionChange={onNormalizeLineEndingsChanged}
+            >
+                <ion-select-option value="keep">Keep original</ion-select-option>
+                <ion-select-option value="windows">Convert to CRLF</ion-select-option>
+                <ion-select-option value="linux">Convert to LF</ion-select-option>
+                <ion-select-option value="mac">Convert to CR</ion-select-option>
+            </ion-select>
+        </ion-item></ion-card-content
+    >
 </ion-card>
 
 <style>

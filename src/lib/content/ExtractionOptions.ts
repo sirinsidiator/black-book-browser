@@ -9,12 +9,16 @@ const TARGET_FOLDER_KEY = 'extract-target-folder';
 const PRESERVE_PARENTS_KEY = 'extract-preserve-parents';
 const DECOMPRESS_FILES_KEY = 'extract-decompress-files';
 const IGNORE_PATTERN_KEY = 'extract-ignore-pattern';
+const NORMALIZE_LINE_ENDINGS_KEY = 'extract-normalize-line-endings';
+
+export type NormalizeLineEndingsOption = 'keep' | 'windows' | 'linux' | 'mac';
 
 export default class ExtractionOptions {
     public readonly targetFolder: Writable<string> = writable('');
     public readonly preserveParents: Writable<boolean> = writable(true);
     public readonly decompressFiles: Writable<boolean> = writable(true);
     public readonly ignorePattern: Writable<string> = writable('');
+    public readonly normalizeLineEndings: Writable<NormalizeLineEndingsOption> = writable('keep');
 
     constructor() {
         const folder = localStorage.getItem(TARGET_FOLDER_KEY);
@@ -32,6 +36,7 @@ export default class ExtractionOptions {
         this.preserveParents.set(localStorage.getItem(PRESERVE_PARENTS_KEY) !== 'false');
         this.decompressFiles.set(localStorage.getItem(DECOMPRESS_FILES_KEY) !== 'false');
         this.ignorePattern.set(localStorage.getItem(IGNORE_PATTERN_KEY) ?? '');
+        this.normalizeLineEndings.set((localStorage.getItem(NORMALIZE_LINE_ENDINGS_KEY) as NormalizeLineEndingsOption) ?? 'keep');
 
         this.targetFolder.subscribe((value) => {
             localStorage.setItem(TARGET_FOLDER_KEY, value);
@@ -44,6 +49,9 @@ export default class ExtractionOptions {
         });
         this.ignorePattern.subscribe((value) => {
             localStorage.setItem(IGNORE_PATTERN_KEY, value);
+        });
+        this.normalizeLineEndings.subscribe((value) => {
+            localStorage.setItem(NORMALIZE_LINE_ENDINGS_KEY, value);
         });
     }
 }

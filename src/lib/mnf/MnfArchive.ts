@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import type { NormalizeLineEndingsOption } from '$lib/content/ExtractionOptions.js';
 import type FileSearchEntry from '$lib/FileSearchEntry.js';
 import type { FolderStats } from '$lib/FolderEntry.js';
 import fuzzysort from 'fuzzysort';
@@ -29,6 +30,7 @@ export interface ExtractFilesRequest {
     rootPath: string;
     preserveParents: boolean;
     decompressFiles: boolean;
+    normalizeLineEndings: NormalizeLineEndingsOption;
     files: MnfFileData[];
 }
 
@@ -169,7 +171,7 @@ export default class MnfArchive {
                 onprogress(progress);
             }, console.error);
         }, 200);
-        const result = await extractFiles(files, request.decompressFiles);
+        const result = await extractFiles(files, request.decompressFiles, request.normalizeLineEndings);
         clearInterval(handle);
 
         // make sure we got all errors
