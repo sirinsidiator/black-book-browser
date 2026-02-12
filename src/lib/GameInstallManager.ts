@@ -106,8 +106,13 @@ export default class GameInstallManager {
         this.gameInstalls.set(gameInstalls);
     }
 
-    async findMnfFiles(path: string): Promise<string[]> {
-        return invoke('find_mnf_files_in_dir', { path });
+    async findMnfFiles(path: string): Promise<string[] | null> {
+        try {
+            return await invoke('find_mnf_files_in_dir', { path });
+        } catch (err) {
+            console.warn('Could not find MNF files', err, path);
+            return null;
+        }
     }
 
     async findGameVersion(path: string): Promise<GameVersionData> {

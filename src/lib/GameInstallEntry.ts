@@ -24,11 +24,15 @@ export class GameInstallEntry extends ContentEntry implements FileTreeEntryDataP
         public readonly path: string,
         public readonly version: GameVersionData,
         public readonly settings: Map<string, string>,
-        private readonly archiveFiles: string[]
+        private readonly archiveFiles: string[] | null
     ) {
         super();
         this.fileTreeEntry = new FileTreeEntryData(this);
         this.fileTreeEntry.toggleOpen().catch(console.error);
+    }
+
+    get failedToLoad() {
+        return this.archiveFiles === null;
     }
 
     public get mnfFiles(): MnfFileData[] {
@@ -36,6 +40,9 @@ export class GameInstallEntry extends ContentEntry implements FileTreeEntryDataP
     }
 
     public loadChildren(): Promise<FileTreeEntryDataProvider[]> {
+        if(!this.archiveFiles) {
+            return Promise.resolve([]);
+        }
         this.archiveFiles.forEach((file) => {
             const entry = new MnfArchiveEntry(this, file);
             this.mnfArchiveEntries.set(file, entry);

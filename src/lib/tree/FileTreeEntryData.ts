@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import { GameInstallEntry } from '$lib/GameInstallEntry';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { get, writable, type Writable } from 'svelte/store';
 import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
@@ -24,6 +25,9 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
         public readonly level = 0
     ) {
         this.hasChildren.set(data.hasChildren);
+        if (data instanceof GameInstallEntry && data.failedToLoad) {
+            this.failed.set(true);
+        }
     }
 
     public get icon() {

@@ -13,7 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
         folderOpenOutline,
         pricetagOutline,
         settingsOutline,
-        trashBinOutline
+        trashBinOutline,
+        warning
     } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
     import DetailEntry from './DetailEntry.svelte';
@@ -49,6 +50,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/snippet}
 
     {#snippet details()}
+        {#if gameInstall.failedToLoad}
+            <ion-text class="warning" color="warning">
+                <ion-icon icon={warning} color="warning"></ion-icon> Failed to scan for MNF files. The game
+                install may be broken or inaccessible.</ion-text
+            >
+        {/if}
+
         <DetailEntry icon={folderOpenOutline} label="game path">{gameInstall.path}</DetailEntry>
         <DetailEntry icon={pricetagOutline} label="version"
             >{gameInstall.version.version}</DetailEntry
@@ -64,3 +72,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {/each}
     {/snippet}
 </ContentLayout>
+
+<style>
+    .warning {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 1.1rem;
+        padding: 1rem;
+        border-radius: 5px;
+        border: 1px solid var(--ion-color-warning-tint);
+    }
+</style>

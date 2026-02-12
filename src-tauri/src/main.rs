@@ -11,10 +11,13 @@ use std::sync::{atomic::AtomicUsize, Arc, Mutex};
 mod bbb;
 
 #[tauri::command]
-fn find_mnf_files_in_dir(path: &str) -> Vec<String> {
+fn find_mnf_files_in_dir(path: &str) -> Result<Vec<String>, String> {
     let mut mnf_files = vec![];
+    if !std::path::Path::new(path).is_dir() {
+        return Err("Path is not a directory or does not exist".into());
+    }
     scan_for_mnf_files_recursivly(path, &mut mnf_files, 0);
-    return mnf_files;
+    return Ok(mnf_files);
 }
 
 #[tauri::command]
