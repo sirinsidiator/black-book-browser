@@ -22,7 +22,7 @@
   },
   "productName": "Black Book Browser",
   "mainBinaryName": "bbb",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "identifier": "at.insidi.black-book-browser",
   "plugins": {},
   "app": {
