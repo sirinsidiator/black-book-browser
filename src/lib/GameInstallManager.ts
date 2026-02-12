@@ -46,9 +46,15 @@ export default class GameInstallManager {
 
     private async load() {
         const gameInstalls = get(this.gameInstalls);
-        let storedPaths: string[] = JSON.parse(
-            localStorage.getItem(STORAGE_KEY_PATHS) ?? '[]'
-        ) as string[];
+        let storedPaths: string[] = [];
+        try {
+            storedPaths = JSON.parse(
+                localStorage.getItem(STORAGE_KEY_PATHS) ?? '[]'
+            ) as string[];
+        } catch (err) {
+            console.warn('Could not parse stored paths:', localStorage.getItem(STORAGE_KEY_PATHS), err);
+        }
+
         if (!Array.isArray(storedPaths)) {
             console.warn(
                 'Invalid stored paths:',
