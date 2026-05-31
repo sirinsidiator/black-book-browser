@@ -157,7 +157,7 @@ function setupTauriInternals(key: string) {
                 delete window[`_${error}`];
             }, true);
             const error = __TAURI_INTERNALS__.transformCallback(function (e) {
-                reject(e as Error);
+                reject(e instanceof Error ? e : new Error(String(e)));
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
                 delete window[`_${callback}`];
             }, true);

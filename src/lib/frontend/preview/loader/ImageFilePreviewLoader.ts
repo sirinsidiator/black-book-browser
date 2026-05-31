@@ -63,7 +63,9 @@ class PNGImagePreviewLoader extends ImageFilePreviewLoader {
             throw new Error('Invalid PNG data');
         }
 
-        const blob = new Blob([data], { type: 'image/png' });
+        const blobData = new Uint8Array(data.length);
+        blobData.set(data);
+        const blob = new Blob([blobData], { type: 'image/png' });
 
         this.dataUrl = await new Promise((resolve, reject) => {
             const reader = new FileReader();

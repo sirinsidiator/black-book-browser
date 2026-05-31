@@ -40,7 +40,7 @@ export class GameInstallEntry extends ContentEntry implements FileTreeEntryDataP
     }
 
     public loadChildren(): Promise<FileTreeEntryDataProvider[]> {
-        if(!this.archiveFiles) {
+        if (!this.archiveFiles) {
             return Promise.resolve([]);
         }
         this.archiveFiles.forEach((file) => {

@@ -41,11 +41,11 @@ export class FieldData {
         this.fields.push(field);
     }
 
-    get<T extends string | number | number[] | Uint8Array | undefined>(index: number): T {
-        return this.fields[index]?.value as T;
+    get(index: number): string | number | number[] | Uint8Array | undefined {
+        return this.fields[index]?.value;
     }
 
-    set<T extends string | number | number[] | Uint8Array | undefined>(index: number, value: T) {
+    set(index: number, value: string | number | number[] | Uint8Array | undefined) {
         this.fields[index].value = value;
     }
 }
@@ -121,7 +121,7 @@ export default class BufferReader {
     }
 
     private getReadSize(data: FieldData, definition: FieldDefinition): number {
-        return definition.size ?? data.get<number | undefined>(data.length - 1) ?? 0;
+        return definition.size ?? (data.get(data.length - 1) as number | undefined) ?? 0;
     }
 
     private readArray(data: FieldData, definition: FieldDefinition): number[] {

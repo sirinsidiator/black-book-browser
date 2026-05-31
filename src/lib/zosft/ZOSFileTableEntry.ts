@@ -93,25 +93,23 @@ export default class ZOSFileTableEntry {
         const data = this.data;
         if (block === 0) {
             let rowCount = 0;
-            let id = 0;
-            let type = 0;
-            do {
+            let id = -1;
+            let type = -1;
+            while (!reader.hasReachedEnd()) {
                 // need to skip empty rows
-                if (!reader.hasReachedEnd()) {
-                    rowCount++;
-                    const value = reader.readUInt32();
-                    id = value & 0xffffff;
-                    type = value >>> 24;
-                    if (!KNOWN_BLOCK1_VALUES[type] || (type !== 0x80 && id > 0)) {
-                        console.warn('Unexpected value in segmnet', segment, 'block', block, this);
-                    }
-                } else {
-                    // eso.mnf doesn't seem to have enough entrys that are not 0
-                    id = -1;
-                    type = -1;
+                rowCount++;
+                const value = reader.readUInt32();
+                const currentId = value & 0xffffff;
+                const currentType = value >>> 24;
+                if (!KNOWN_BLOCK1_VALUES[currentType] || (currentType !== 0x80 && currentId > 0)) {
+                    console.warn('Unexpected value in segmnet', segment, 'block', block, this);
+                }
+                if (currentType !== 0) {
+                    id = currentId;
+                    type = currentType;
                     break;
                 }
-            } while (type === 0);
+            }
 
             const rowCountField = new Field(BLOCK1_FIELD_DEFINITION_ROW_COUNT, -1);
             rowCountField.value = rowCount;
@@ -128,9 +126,9 @@ export default class ZOSFileTableEntry {
             const definitions = ENTRY_BLOCK_DEFINITIONS[segment][block];
             const offset = reader.readFields(definitions, data);
             if (segment === 0 && block === 2) {
-                this._fileNumber = data.get<number>(offset + FILE_NUMBER_INDEX);
+                this._fileNumber = data.get(offset + FILE_NUMBER_INDEX) as number;
             } else if (segment === 1 && block === 2) {
-                this.nameOffset = data.get<number>(offset + NAME_OFFSET_INDEX);
+                this.nameOffset = data.get(offset + NAME_OFFSET_INDEX) as number;
             }
         }
     }

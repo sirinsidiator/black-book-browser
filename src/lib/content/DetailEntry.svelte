@@ -5,7 +5,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
-    import { toastController } from 'ionic-svelte';
+    import { toastController } from '@ionic/core';
+    import { redirectKeydown } from '$lib/utils/common';
     import { copyOutline } from 'ionicons/icons';
     import type { Snippet } from 'svelte';
 
@@ -49,7 +50,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <ion-icon {icon}></ion-icon>
     <ion-label class="label">{label}</ion-label>
     <ion-label bind:this={value}>{@render children?.()}</ion-label>
-    <ion-button fill="clear" color="medium" slot="end" size="small" onclick={copy}>
+    <ion-button
+        fill="clear"
+        color="medium"
+        slot="end"
+        size="small"
+        role="button"
+        tabindex="0"
+        onclick={copy}
+        onkeydown={redirectKeydown(copy)}
+    >
         <ion-icon slot="icon-only" icon={copyOutline}></ion-icon>
     </ion-button>
 </ion-item>

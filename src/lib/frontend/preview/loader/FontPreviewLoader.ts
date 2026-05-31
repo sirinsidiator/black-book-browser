@@ -23,7 +23,9 @@ export default class FontPreviewLoader implements ContentPreviewLoader {
     public async prepare(): Promise<void> {
         const fileData = this.file.file;
         this.data = await BackgroundService.getInstance().loadFileContent(fileData);
-        const fontFace = new FontFace('FontPreview', this.data);
+        const fontData = new Uint8Array(this.data.length);
+        fontData.set(this.data);
+        const fontFace = new FontFace('FontPreview', fontData);
         this.fontFace = await fontFace.load();
         document.fonts.clear();
         document.fonts.add(this.fontFace);
@@ -35,7 +37,9 @@ export default class FontPreviewLoader implements ContentPreviewLoader {
         }
         const a = document.createElement('a');
         const type = this.file.label.endsWith('.ttf') ? 'font/ttf' : 'font/otf';
-        const file = new Blob([this.data], { type });
+        const data = new Uint8Array(this.data.length);
+        data.set(this.data);
+        const file = new Blob([data], { type });
         a.href = URL.createObjectURL(file);
         a.download = this.file.label;
         a.click();

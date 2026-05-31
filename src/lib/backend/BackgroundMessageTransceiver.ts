@@ -5,9 +5,7 @@
 import {
     isBackgroundProgressMessage,
     isBackgroundResponseMessage,
-    type BackgroundMessage,
-    type BackgroundProgressMessage,
-    type BackgroundResponseMessage
+    type BackgroundMessage
 } from './BackgroundMessage';
 import { BackgroundMessageType } from './BackgroundMessageType';
 
@@ -37,7 +35,7 @@ export default class BackgroundMessageTransceiver {
             id: message.id,
             type: BackgroundMessageType.RESPONSE,
             result
-        } as BackgroundResponseMessage);
+        });
     }
 
     public sendErrorResponse(message: BackgroundMessage, reason: unknown) {
@@ -46,7 +44,7 @@ export default class BackgroundMessageTransceiver {
             type: BackgroundMessageType.RESPONSE,
             result: reason,
             error: true
-        } as BackgroundResponseMessage);
+        });
     }
 
     public sendProgressResponse(message: BackgroundMessage, progress: unknown) {
@@ -54,7 +52,7 @@ export default class BackgroundMessageTransceiver {
             id: message.id,
             type: BackgroundMessageType.PROGRESS,
             progress
-        } as BackgroundProgressMessage);
+        });
     }
 
     public onMessage(message: BackgroundMessage) {

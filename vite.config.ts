@@ -5,9 +5,17 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+let version = process.env.npm_package_version || '0.0.0';
+if (process.env.NODE_ENV === 'development') {
+    version = `${version}-dev`;
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [sveltekit()],
+    define: {
+        __APP_VERSION__: JSON.stringify(version)
+    },
 
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     // prevent vite from obscuring rust errors

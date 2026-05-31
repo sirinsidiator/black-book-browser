@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import FileTree from '$lib/tree/FileTree.svelte';
     import FileTreeEntryData from '$lib/tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
+    import { redirectKeydown } from '$lib/utils/common';
     import { formatFileSize } from '$lib/util/FileUtil';
     import { openPath } from '@tauri-apps/plugin-opener';
     import { archiveOutline, closeOutline } from 'ionicons/icons';
@@ -170,9 +171,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         do {
             await currentEntry.toggleOpen();
             const children = get(currentEntry.children);
-            let nextEntry = children.find((entry) => target.path.startsWith(entry.data.path));
+            let nextEntry = children.find((entry) => target.path.startsWith(entry.data.path)) as
+                | FileTreeEntryData<FolderEntry>
+                | undefined;
             if (nextEntry) {
-                currentEntry = nextEntry as FileTreeEntryData<FolderEntry>;
+                currentEntry = nextEntry;
             } else {
                 break;
             }
@@ -314,7 +317,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <ion-title>Extract Files</ion-title>
                 {#if !extracting || extractionDone}
                     <ion-buttons slot="end">
-                        <ion-button onclick={close}>
+                        <ion-button
+                            role="button"
+                            tabindex="0"
+                            onclick={close}
+                            onkeydown={redirectKeydown(close)}
+                        >
                             <ion-icon slot="icon-only" icon={closeOutline}></ion-icon>
                         </ion-button>
                     </ion-buttons>
@@ -391,22 +399,31 @@ SPDX-License-Identifier: GPL-3.0-or-later
                             <ion-button
                                 expand="block"
                                 color="primary"
+                                role="button"
+                                tabindex="0"
                                 disabled={refreshingSummary || fileCount === 0}
-                                onclick={doExtract}>extract</ion-button
+                                onclick={doExtract}
+                                onkeydown={redirectKeydown(doExtract)}>extract</ion-button
                             >
                         {:else}
                             <ion-button
                                 expand="block"
                                 color="primary"
+                                role="button"
+                                tabindex="0"
                                 disabled={!extractionDone}
-                                onclick={close}>close</ion-button
+                                onclick={close}
+                                onkeydown={redirectKeydown(close)}>close</ion-button
                             >
                         {/if}
                         <ion-button
                             expand="block"
                             color="medium"
+                            role="button"
+                            tabindex="0"
                             disabled={!$targetFolder}
-                            onclick={openTargetFolder}>open folder</ion-button
+                            onclick={openTargetFolder}
+                            onkeydown={redirectKeydown(openTargetFolder)}>open folder</ion-button
                         >
                     </ion-card-content>
                 </ion-card>

@@ -36,7 +36,10 @@ export default class ExtractionOptions {
         this.preserveParents.set(localStorage.getItem(PRESERVE_PARENTS_KEY) !== 'false');
         this.decompressFiles.set(localStorage.getItem(DECOMPRESS_FILES_KEY) !== 'false');
         this.ignorePattern.set(localStorage.getItem(IGNORE_PATTERN_KEY) ?? '');
-        this.normalizeLineEndings.set((localStorage.getItem(NORMALIZE_LINE_ENDINGS_KEY) as NormalizeLineEndingsOption) ?? 'keep');
+        this.normalizeLineEndings.set(
+            (localStorage.getItem(NORMALIZE_LINE_ENDINGS_KEY) ??
+                'keep') as NormalizeLineEndingsOption
+        );
 
         this.targetFolder.subscribe((value) => {
             localStorage.setItem(TARGET_FOLDER_KEY, value);

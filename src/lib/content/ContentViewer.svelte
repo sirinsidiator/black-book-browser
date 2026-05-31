@@ -20,7 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     let { manager }: Props = $props();
-    const content = manager.selectedContent;
+    const content = $derived(manager.selectedContent);
 
     function onremove(entry: GameInstallEntry) {
         console.log('remove', entry);

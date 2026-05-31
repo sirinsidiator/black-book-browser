@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import FileTree from '$lib/tree/FileTree.svelte';
+    import { redirectKeydown } from '$lib/utils/common';
     import { open } from '@tauri-apps/plugin-dialog';
     import { add } from 'ionicons/icons';
     import type StateManager from './StateManager';
@@ -18,8 +19,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     let { manager }: Props = $props();
 
-    const gameInstalls = manager.gameInstallManager.gameInstalls;
-    const selectedContent = manager.selectedContent;
+    const gameInstalls = $derived(manager.gameInstallManager.gameInstalls);
+    const selectedContent = $derived(manager.selectedContent);
 
     async function addFolder() {
         const selected = await open({
@@ -65,7 +66,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {/if}
 
         <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-            <ion-fab-button onclick={addFolder}>
+            <ion-fab-button
+                role="button"
+                tabindex="0"
+                onclick={addFolder}
+                onkeydown={redirectKeydown(addFolder)}
+            >
                 <ion-icon icon={add}></ion-icon>
             </ion-fab-button>
         </ion-fab>

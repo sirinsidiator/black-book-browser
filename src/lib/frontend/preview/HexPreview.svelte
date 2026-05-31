@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
+    import { redirectKeydown } from '$lib/utils/common';
     import { informationCircleOutline } from 'ionicons/icons';
     import HexViewer from '../component/HexViewer.svelte';
     import ContentPreview from './ContentPreview.svelte';
@@ -27,8 +28,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {:else}
     <ContentPreviewText icon={informationCircleOutline}>
         no preview available<br />
-        <ion-button fill="clear" size="small" onclick={() => (showHex = true)}
-            >click to view as hex</ion-button
+        <ion-button
+            fill="clear"
+            size="small"
+            role="button"
+            tabindex="0"
+            onclick={() => {
+                showHex = true;
+            }}
+            onkeydown={redirectKeydown(() => {
+                showHex = true;
+            })}>click to view as hex</ion-button
         >
     </ContentPreviewText>
 {/if}

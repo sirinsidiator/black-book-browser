@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
     import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
     import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';
+    import { redirectKeydown } from '$lib/utils/common';
     import { dirname } from '$lib/util/FileUtil';
     import { openPath } from '@tauri-apps/plugin-opener';
     import { folderOpenOutline, folderOutline, refreshOutline } from 'ionicons/icons';
@@ -47,12 +48,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 >save texturelist</SavePreviewButton
             >
         {:else}
-            <ion-button color="primary" onclick={onLoad} disabled={$busy}>
+            <ion-button
+                color="primary"
+                role="button"
+                tabindex="0"
+                onclick={onLoad}
+                onkeydown={redirectKeydown(onLoad)}
+                disabled={$busy}
+            >
                 <ion-icon slot="start" icon={refreshOutline}></ion-icon>load</ion-button
             >
         {/if}
 
-        <ion-button color="primary" onclick={explore}>
+        <ion-button
+            color="primary"
+            role="button"
+            tabindex="0"
+            onclick={explore}
+            onkeydown={redirectKeydown(explore)}
+        >
             <ion-icon slot="start" icon={folderOpenOutline}></ion-icon>
             open folder
         </ion-button>

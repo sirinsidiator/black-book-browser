@@ -19,7 +19,7 @@ const ZOSFT_HEADER_DEFINITIONS: FieldDefinition[] = [
     { type: FieldType.UINT32, name: 'entryCount' }
 ];
 
-const hasRows = (data: FieldData, index: number) => data.get<number>(index) > 0;
+const hasRows = (data: FieldData, index: number) => (data.get(index) as number) > 0;
 
 const BLOCK0_ROWS_INDEX = 2;
 const BLOCK1_ROWS_INDEX = 3;
@@ -107,40 +107,40 @@ export default class ZOSFileTableReader {
             const start1 = performance.now();
             const data = new FieldData();
             reader.readFields(ZOSFT_HEADER_DEFINITIONS, data);
-            const entryCount = data.get<number>(ENTRY_COUNT_INDEX);
+            const entryCount = data.get(ENTRY_COUNT_INDEX) as number;
             const fileTable = new ZOSFileTable(data, entryCount);
 
             const blocks: BlockData[] = [];
             for (let i = 0; i < SEGMENT_COUNT; ++i) {
                 const offset = reader.readFields(ZOSFT_SEGMENT_HEADER_DEFINITIONS, data);
 
-                const block0Rows = data.get<number>(offset + BLOCK0_ROWS_INDEX);
+                const block0Rows = data.get(offset + BLOCK0_ROWS_INDEX) as number;
                 if (block0Rows > 0) {
                     blocks.push({
                         segment: i,
                         block: 0,
                         rows: block0Rows,
-                        data: data.get<Uint8Array>(offset + BLOCK0_DATA_INDEX)
+                        data: data.get(offset + BLOCK0_DATA_INDEX) as Uint8Array
                     });
                 }
 
-                const block1Rows = data.get<number>(offset + BLOCK1_ROWS_INDEX);
+                const block1Rows = data.get(offset + BLOCK1_ROWS_INDEX) as number;
                 if (block1Rows > 0) {
                     blocks.push({
                         segment: i,
                         block: 1,
                         rows: block1Rows,
-                        data: data.get<Uint8Array>(offset + BLOCK1_DATA_INDEX)
+                        data: data.get(offset + BLOCK1_DATA_INDEX) as Uint8Array
                     });
                 }
 
-                const block2Rows = data.get<number>(offset + BLOCK2_ROWS_INDEX);
+                const block2Rows = data.get(offset + BLOCK2_ROWS_INDEX) as number;
                 if (block2Rows > 0) {
                     blocks.push({
                         segment: i,
                         block: 2,
                         rows: block2Rows,
-                        data: data.get<Uint8Array>(offset + BLOCK2_DATA_INDEX)
+                        data: data.get(offset + BLOCK2_DATA_INDEX) as Uint8Array
                     });
                 }
             }
@@ -181,7 +181,7 @@ export default class ZOSFileTableReader {
             console.log('block data read in', start4 - start3);
 
             const offset = reader.readFields(ZOSFT_FILENAME_LIST_DEFINITIONS, data);
-            const fileNames = data.get<string>(offset + FILE_NAME_LIST_INDEX);
+            const fileNames = data.get(offset + FILE_NAME_LIST_INDEX) as string;
             for (let i = 0; i < entryCount; ++i) {
                 fileTable.get(i)?.readFileName(fileNames);
             }

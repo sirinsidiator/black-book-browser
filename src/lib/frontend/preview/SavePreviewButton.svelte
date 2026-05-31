@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
+    import { redirectKeydown } from '$lib/utils/common';
     import { downloadOutline } from 'ionicons/icons';
     import type { ContentPreviewLoader } from './loader/ContentPreviewLoader';
 
@@ -32,7 +33,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     });
 </script>
 
-<ion-button color="primary" {disabled} onclick={save}>
+<ion-button
+    color="primary"
+    {disabled}
+    role="button"
+    tabindex="0"
+    onclick={save}
+    onkeydown={redirectKeydown(save)}
+>
     <ion-icon slot="start" icon={downloadOutline}></ion-icon>
     {@render children?.()}
 </ion-button>

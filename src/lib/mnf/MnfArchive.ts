@@ -171,7 +171,11 @@ export default class MnfArchive {
                 onprogress(progress);
             }, console.error);
         }, 200);
-        const result = await extractFiles(files, request.decompressFiles, request.normalizeLineEndings);
+        const result = await extractFiles(
+            files,
+            request.decompressFiles,
+            request.normalizeLineEndings
+        );
         clearInterval(handle);
 
         // make sure we got all errors

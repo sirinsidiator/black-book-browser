@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type { GameInstallEntry } from '$lib/GameInstallEntry';
+    import { redirectKeydown } from '$lib/utils/common';
     import { openPath } from '@tauri-apps/plugin-opener';
     import {
         buildOutline,
@@ -38,12 +39,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <ContentLayout>
     {#snippet buttons()}
-        <ion-button color="danger" onclick={remove}>
+        <ion-button
+            color="danger"
+            role="button"
+            tabindex="0"
+            onclick={remove}
+            onkeydown={redirectKeydown(remove)}
+        >
             <ion-icon slot="start" icon={trashBinOutline}></ion-icon>
             remove from list
         </ion-button>
 
-        <ion-button color="primary" onclick={explore}>
+        <ion-button
+            color="primary"
+            role="button"
+            tabindex="0"
+            onclick={explore}
+            onkeydown={redirectKeydown(explore)}
+        >
             <ion-icon slot="start" icon={folderOpenOutline}></ion-icon>
             open folder
         </ion-button>
@@ -52,8 +65,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {#snippet details()}
         {#if gameInstall.failedToLoad}
             <ion-text class="warning" color="warning">
-                <ion-icon icon={warning} color="warning"></ion-icon> Failed to scan for MNF files. The game
-                install may be broken or inaccessible.</ion-text
+                <ion-icon icon={warning} color="warning"></ion-icon> Failed to scan for MNF files. The
+                game install may be broken or inaccessible.</ion-text
             >
         {/if}
 

@@ -49,15 +49,7 @@ export default ts.config(
     },
     {
         rules: {
-            'no-undef': 'off',
-            '@typescript-eslint/no-unnecessary-type-parameters': 'off',
-            'svelte/valid-compile': [
-                'error',
-                {
-                    ignoreWarnings: false
-                }
-            ],
-            'svelte/no-target-blank': 'error'
+            'no-undef': 'off'
         }
     }
 );

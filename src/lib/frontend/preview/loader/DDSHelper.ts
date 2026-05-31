@@ -261,7 +261,9 @@ export default class DDSHelper {
             throw new Error('Unsupported pixel format flags');
         }
 
-        return new ImageData(pixelData, header.width, header.height);
+        const imageDataPixels = new Uint8ClampedArray(pixelData.length);
+        imageDataPixels.set(pixelData);
+        return new ImageData(imageDataPixels, header.width, header.height);
     }
 
     readRGBA(

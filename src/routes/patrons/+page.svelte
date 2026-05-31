@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import patreonIcon from '$lib/assets/patreon.svg';
     import patrons from '$lib/assets/patrons.json';
+    import { redirectKeydown } from '$lib/utils/common';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { onMount } from 'svelte';
 
@@ -33,6 +34,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     onMount(() => (patronList = shuffleArray(patronList)));
+
+    function openPatreon() {
+        openUrl(PATREON_LINK).catch(console.error);
+    }
 </script>
 
 <ion-card>
@@ -55,7 +60,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
             fill="outline"
             color="primary"
             size="large"
-            onclick={() => openUrl(PATREON_LINK)}
+            role="button"
+            tabindex="0"
+            onclick={openPatreon}
+            onkeydown={redirectKeydown(openPatreon)}
             ><ion-icon icon={patreonIcon}></ion-icon> Become a Patron</ion-button
         >
     </ion-card-content>

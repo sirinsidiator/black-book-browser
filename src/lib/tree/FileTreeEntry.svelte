@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { isIgnoredPath } from '$lib/content/ignoredFilesFilterHelper';
+    import { redirectKeydown } from '$lib/utils/common';
     import { caretForwardOutline, warningOutline } from 'ionicons/icons';
     import FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
@@ -63,7 +64,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         color="medium"
         expand="block"
         disabled={$failed ? true : false}
+        role="button"
+        tabindex="0"
         onclick={toggleOpen}
+        onkeydown={redirectKeydown(toggleOpen)}
     >
         <ion-icon icon={caretForwardOutline}></ion-icon>
     </ion-button>
@@ -85,7 +89,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         size="small"
         color={$failed ? 'danger' : 'medium'}
         disabled={ignored}
+        role="button"
+        tabindex="0"
         onclick={select}
+        onkeydown={redirectKeydown(select)}
         ondblClick={toggleOpen}
     >
         {#if $busy}

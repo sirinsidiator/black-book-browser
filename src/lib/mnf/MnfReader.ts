@@ -107,16 +107,16 @@ const BLOCK2_FIELD_DEFINITIONS: FieldDefinition[] = [
 
 async function extractContent(archive: MnfArchive) {
     const data = archive.data;
-    const fileCount = data.get<number>(FILE_COUNT2_INDEX);
+    const fileCount = data.get(FILE_COUNT2_INDEX) as number;
     const startInflate = performance.now();
     await Promise.all([
-        inflate(data.get(BLOCK0_DATA_INDEX)).then((buffer) => {
+        inflate(data.get(BLOCK0_DATA_INDEX) as Uint8Array).then((buffer) => {
             data.set(BLOCK0_DATA_INDEX, buffer);
         }),
-        inflate(data.get(BLOCK1_DATA_INDEX)).then((buffer) => {
+        inflate(data.get(BLOCK1_DATA_INDEX) as Uint8Array).then((buffer) => {
             data.set(BLOCK1_DATA_INDEX, buffer);
         }),
-        inflate(data.get(BLOCK2_DATA_INDEX)).then((buffer) => {
+        inflate(data.get(BLOCK2_DATA_INDEX) as Uint8Array).then((buffer) => {
             data.set(BLOCK2_DATA_INDEX, buffer);
         })
     ]);
@@ -126,9 +126,9 @@ async function extractContent(archive: MnfArchive) {
     // first 3 byte are a unique number and 4th byte is a flag
     // 0x00 or 0x40 (as seen in eso.mnf) seems to indicate removed files
     // 0x80 otherwise for existing files
-    const block0 = new BufferReader(data.get(BLOCK0_DATA_INDEX));
-    const block1 = new BufferReader(data.get(BLOCK1_DATA_INDEX));
-    const block2 = new BufferReader(data.get(BLOCK2_DATA_INDEX));
+    const block0 = new BufferReader(data.get(BLOCK0_DATA_INDEX) as Uint8Array);
+    const block1 = new BufferReader(data.get(BLOCK1_DATA_INDEX) as Uint8Array);
+    const block2 = new BufferReader(data.get(BLOCK2_DATA_INDEX) as Uint8Array);
 
     let skipFlaggedEntries = true;
     let fileTableFileNumber = -1;
@@ -185,15 +185,15 @@ async function extractContent(archive: MnfArchive) {
         const offset1 = block1.readFields(BLOCK1_FIELD_DEFINITIONS, data);
         const offset2 = block2.readFields(BLOCK2_FIELD_DEFINITIONS, data);
 
-        const byteOffset = data.get<number>(offset2 + BLOCK2_OFFSET_INDEX);
-        const fileNumber = data.get<number>(offset1 + BLOCK1_FILE_NUMBER_INDEX);
-        const compressedSize = data.get<number>(offset2 + BLOCK2_COMPRESSED_SIZE_INDEX);
-        const flags = data.get<number>(offset1 + BLOCK1_FLAGS_INDEX);
-        entry.archiveNumber = data.get<number>(offset2 + BLOCK2_ARCHIVE_NUMBER_INDEX);
+        const byteOffset = data.get(offset2 + BLOCK2_OFFSET_INDEX) as number;
+        const fileNumber = data.get(offset1 + BLOCK1_FILE_NUMBER_INDEX) as number;
+        const compressedSize = data.get(offset2 + BLOCK2_COMPRESSED_SIZE_INDEX) as number;
+        const flags = data.get(offset1 + BLOCK1_FLAGS_INDEX) as number;
+        entry.archiveNumber = data.get(offset2 + BLOCK2_ARCHIVE_NUMBER_INDEX) as number;
         entry.offset = byteOffset;
         entry.compressedSize = compressedSize;
-        entry.fileSize = data.get<number>(offset2 + BLOCK2_DECOMPRESSED_SIZE_INDEX);
-        entry.compressionType = data.get<number>(offset2 + BLOCK2_COMPRESSION_TYPE_INDEX);
+        entry.fileSize = data.get(offset2 + BLOCK2_DECOMPRESSED_SIZE_INDEX) as number;
+        entry.compressionType = data.get(offset2 + BLOCK2_COMPRESSION_TYPE_INDEX) as number;
 
         const archiveFile = archive.getArchiveFile(entry);
         const prefix = UNMAPPED_DIR + archiveFile.prefix + '/file';
@@ -255,7 +255,7 @@ export default class MnfReader {
             file.readFields(MNF_FIELD_DEFINITIONS, fields);
             const archive = new MnfArchive(path, file, fields);
             const beforeInit = performance.now();
-            await archive.initArchiveFiles(fields.get<number>(NUM_ARCHIVE_FILES_INDEX));
+            await archive.initArchiveFiles(fields.get(NUM_ARCHIVE_FILES_INDEX) as number);
             const beforeExtract = performance.now();
             console.log('archive', archive, 'initialized in', beforeExtract - beforeInit, 'ms');
             await extractContent(archive);

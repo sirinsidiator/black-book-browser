@@ -55,7 +55,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <div class="label">patrons</div>
         </div>
     </ion-button>
-    <ion-label class="version" color="medium">@version</ion-label>
+    <ion-label class="version" color="medium">{__APP_VERSION__}</ion-label>
 </ion-buttons>
 
 <style>

@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// get patrons from https://sir.insidi.at/or/patrons.json and update the patrons.json file
+// get patrons from https://files.sir.insidi.at/static/patrons.json and update the patrons.json file
 // Usage: node scripts/update-patrons.js
 
 import { writeFileSync } from 'fs';
 import { get } from 'https';
 
-const patronsUrl = 'https://sir.insidi.at/or/patrons.json';
+const patronsUrl = 'https://files.sir.insidi.at/static/patrons.json';
 const patronsFile = 'src/lib/assets/patrons.json';
 
 get(patronsUrl, (res) => {

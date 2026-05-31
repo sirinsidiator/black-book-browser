@@ -27,7 +27,7 @@ export function formatFileSize(size: number, showBytes = true): string {
 }
 
 export async function inflate(buffer: Uint8Array): Promise<Uint8Array> {
-    const response = await rustCall('inflate', buffer);
+    const response = await rustCall('inflate', buffer.slice().buffer);
     const content = await response.arrayBuffer();
     return new Uint8Array(content);
 }
@@ -54,7 +54,7 @@ export async function extractFiles(
         fileEntry: MnfEntry;
     }[],
     decompress: boolean,
-    normalizeLineEndings: NormalizeLineEndingsOption,
+    normalizeLineEndings: NormalizeLineEndingsOption
 ): Promise<ExtractFilesResult> {
     const response = await rustCall(
         'extract-files',
@@ -66,7 +66,9 @@ export async function extractFiles(
                 compressedSize: file.fileEntry.compressedSize,
                 fileSize: file.fileEntry.fileSize,
                 compressionType: !decompress ? 0 : file.fileEntry.compressionType,
-                normalizeLineEndings: isTextFile(file.fileEntry.fileName ?? '') ? normalizeLineEndings : 'keep'
+                normalizeLineEndings: isTextFile(file.fileEntry.fileName ?? '')
+                    ? normalizeLineEndings
+                    : 'keep'
             }))
         )
     );

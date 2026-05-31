@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import fuzzysort from 'fuzzysort';
     import { onDestroy, onMount } from 'svelte';
     import { FileEntry } from './FileEntry';
+    import { redirectKeydown } from './utils/common';
     import type FileSearchEntry from './FileSearchEntry';
     import VirtualList from './frontend/component/VirtualList.svelte';
     import type StateManager from './StateManager';
@@ -20,12 +21,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     let { manager }: Props = $props();
 
-    const gameInstallManager = manager.gameInstallManager;
-    const selectedContent = manager.selectedContent;
-    const searchTerm = gameInstallManager.searchTerm;
-    const searchResults = gameInstallManager.searchResults;
-    const searchDuration = gameInstallManager.searchDuration;
-    const searching = gameInstallManager.searching;
+    const gameInstallManager = $derived(manager.gameInstallManager);
+    const selectedContent = $derived(manager.selectedContent);
+    const searchTerm = $derived(gameInstallManager.searchTerm);
+    const searchResults = $derived(gameInstallManager.searchResults);
+    const searchDuration = $derived(gameInstallManager.searchDuration);
+    const searching = $derived(gameInstallManager.searching);
 
     let statsHidden = $derived($searchResults === null || $searchResults.length === 0);
     let searchbar: HTMLIonSearchbarElement | undefined = $state();
@@ -67,7 +68,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             ) as Fuzzysort.KeysResult<FileSearchEntry>;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             (result as any)[0] = Object.setPrototypeOf(
-                result[0] as unknown,
+                result[0],
                 dummyResult[0].constructor.prototype as object
             ) as Fuzzysort.Result;
         }
@@ -200,7 +201,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <div
                     class="result"
                     class:selected={isSelected(data, selectedResult)}
+                    role="button"
+                    tabindex="0"
                     onclick={() => onSelect(data)}
+                    onkeydown={redirectKeydown(() => onSelect(data))}
                 >
                     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                     {@html highlight(data)}
@@ -210,7 +214,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <ion-chip
             class="result-stats"
             class:hidden={statsHidden}
-            onclick={() => (statsHidden = true)}
+            role="button"
+            tabindex="0"
+            onclick={() => {
+                statsHidden = true;
+            }}
+            onkeydown={redirectKeydown(() => {
+                statsHidden = true;
+            })}
         >
             {#if $searching}
                 Searching...

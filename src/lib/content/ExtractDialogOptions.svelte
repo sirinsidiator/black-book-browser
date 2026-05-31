@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type { InputChangeEventDetail } from '@ionic/core';
+    import { redirectKeydown } from '$lib/utils/common';
     import { open } from '@tauri-apps/plugin-dialog';
     import { helpCircleOutline } from 'ionicons/icons';
     import type ExtractionOptions from './ExtractionOptions';
@@ -20,7 +21,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let { extracting, options }: Props = $props();
 
     const { targetFolder, preserveParents, decompressFiles, ignorePattern, normalizeLineEndings } =
-        options;
+        $derived(options);
 
     let preserveParentsControl: HTMLIonToggleElement;
     let decompressFilesControl: HTMLIonToggleElement;
@@ -75,8 +76,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <ion-item>
             <ion-input label="Extract to" value={$targetFolder} onionChange={onTargetFolderChanged}
             ></ion-input>
-            <ion-button slot="end" fill="clear" color="primary" onclick={selectLocation}
-                >Choose</ion-button
+            <ion-button
+                slot="end"
+                fill="clear"
+                color="primary"
+                role="button"
+                tabindex="0"
+                onclick={selectLocation}
+                onkeydown={redirectKeydown(selectLocation)}>Choose</ion-button
             >
         </ion-item>
         <ion-item>
@@ -102,7 +109,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 onionChange={onIgnorePatternChanged}
             >
             </ion-input>
-            <ion-button slot="end" fill="clear" onclick={openIgnorePatternHelp}>
+            <ion-button
+                slot="end"
+                fill="clear"
+                role="button"
+                tabindex="0"
+                onclick={openIgnorePatternHelp}
+                onkeydown={redirectKeydown(openIgnorePatternHelp)}
+            >
                 <ion-icon icon={helpCircleOutline} slot="icon-only"></ion-icon>
             </ion-button>
         </ion-item>
