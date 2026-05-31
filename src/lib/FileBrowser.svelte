@@ -93,4 +93,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     .status {
         text-align: center;
     }
+
+    ion-fab {
+        margin-right: 15px;
+    }
 </style>
