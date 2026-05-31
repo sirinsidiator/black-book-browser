@@ -46,11 +46,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 </script>
 
-<!-- svelte-ignore a11y_interactive_supports_focus -->
 <ion-item>
     <ion-icon {icon}></ion-icon>
     <ion-label class="label">{label}</ion-label>
     <ion-label bind:this={value}>{@render children?.()}</ion-label>
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
     <ion-button
         fill="clear"
         color="medium"

@@ -4,7 +4,7 @@
 
 import { GameInstallEntry } from '$lib/GameInstallEntry';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
-import { get, writable, type Writable } from 'svelte/store';
+import { get, writable, type Unsubscriber, type Writable } from 'svelte/store';
 import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
 
 export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
@@ -18,6 +18,7 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
         []
     );
     private _parent?: FileTreeEntryData<FileTreeEntryDataProvider>;
+    private readonly treeChangeListeners = new Set<() => void>();
     private firstOpen = true;
 
     constructor(
@@ -46,13 +47,29 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
         return this._parent;
     }
 
+    public onTreeChange(listener: () => void): Unsubscriber {
+        this.treeChangeListeners.add(listener);
+        return () => {
+            this.treeChangeListeners.delete(listener);
+        };
+    }
+
+    private notifyTreeChange() {
+        this.treeChangeListeners.forEach((listener) => {
+            listener();
+        });
+        this.parent?.notifyTreeChange();
+    }
+
     public async toggleOpen() {
         this.opened.update((opened) => !opened);
+        this.notifyTreeChange();
         if (get(this.opened) && this.firstOpen) {
             this.firstOpen = false;
             this.busy.set(true);
             try {
-                const children = (await this.data.loadChildren()).map((data) => {
+                const loadedChildren = await this.data.loadChildren();
+                const children = loadedChildren.map((data) => {
                     const child = new FileTreeEntryData(data, this.level + 1);
                     child.setChecked(get(this.checked));
                     child._parent = this;
@@ -60,9 +77,11 @@ export default class FileTreeEntryData<T extends FileTreeEntryDataProvider> {
                 });
                 this.children.set(children);
                 this.hasChildren.set(children.length > 0);
+                this.notifyTreeChange();
             } catch (e) {
                 console.error('error loading children', e);
                 this.failed.set(true);
+                this.notifyTreeChange();
             }
             this.busy.set(false);
         }

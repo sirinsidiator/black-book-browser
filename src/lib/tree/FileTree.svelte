@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
     import { onDestroy, onMount, tick } from 'svelte';
-    import { get } from 'svelte/store';
+    import { get, type Unsubscriber } from 'svelte/store';
     import FileTreeEntry from './FileTreeEntry.svelte';
     import type FileTreeEntryData from './FileTreeEntryData';
     import type FileTreeEntryDataProvider from './FileTreeEntryDataProvider';
@@ -39,9 +39,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         onselect = noop
     }: Props = $props();
 
-    let flattenedEntries: FileTreeEntryData<FileTreeEntryDataProvider>[] = $derived(
-        entries.flatMap(flattenTreeRecursive)
-    );
+    let flattenedEntries: FileTreeEntryData<FileTreeEntryDataProvider>[] = $state([]);
     let selectedIndex = $derived(
         selectedContent ? flattenedEntries.findIndex((entry) => entry.data === selectedContent) : -1
     );
@@ -51,6 +49,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let fileTreeContainer: HTMLElement | null = $state(null);
     let virtualList: SvelteVirtualList<FileTreeEntryData<FileTreeEntryDataProvider>> | null =
         $state(null);
+    let treeSubscriptions: Unsubscriber[] = [];
 
     function flattenTreeRecursive(
         entry: FileTreeEntryData<FileTreeEntryDataProvider>
@@ -60,9 +59,32 @@ SPDX-License-Identifier: GPL-3.0-or-later
         return [entry, ...children.flatMap(flattenTreeRecursive)];
     }
 
+    function refreshFlattenedEntries() {
+        flattenedEntries = entries.flatMap(flattenTreeRecursive);
+    }
+
+    function clearTreeSubscriptions() {
+        treeSubscriptions.forEach((unsubscribe) => {
+            unsubscribe();
+        });
+        treeSubscriptions = [];
+    }
+
+    function setupTreeSubscriptions(nextEntries: FileTreeEntryData<FileTreeEntryDataProvider>[]) {
+        clearTreeSubscriptions();
+        treeSubscriptions = nextEntries.map((entry) => {
+            return entry.onTreeChange(refreshFlattenedEntries);
+        });
+        refreshFlattenedEntries();
+    }
+
+    $effect(() => {
+        setupTreeSubscriptions(entries);
+    });
+
     function toggleOpen(entry: FileTreeEntryData<FileTreeEntryDataProvider>) {
         entry.toggleOpen().then(() => {
-            flattenedEntries = entries.flatMap(flattenTreeRecursive);
+            refreshFlattenedEntries();
         }, console.error);
     }
 
@@ -154,6 +176,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     });
 
     onDestroy(() => {
+        clearTreeSubscriptions();
         document.removeEventListener('keydown', onKeyNavigation);
     });
 </script>
