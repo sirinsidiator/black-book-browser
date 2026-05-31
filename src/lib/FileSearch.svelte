@@ -7,12 +7,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import type { SearchbarInputEventDetail } from '@ionic/core';
     import fuzzysort from 'fuzzysort';
-    import { onDestroy, onMount } from 'svelte';
+    import { onDestroy, onMount, tick } from 'svelte';
     import { FileEntry } from './FileEntry';
     import { redirectKeydown } from './utils/common';
     import type FileSearchEntry from './FileSearchEntry';
-    import VirtualList from './frontend/component/VirtualList.svelte';
-    import type StateManager from './StateManager';
+    import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
+    import type StateManager from './StateManager.svelte';
     import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
     interface Props {
@@ -22,20 +22,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let { manager }: Props = $props();
 
     const gameInstallManager = $derived(manager.gameInstallManager);
-    const selectedContent = $derived(manager.selectedContent);
     const searchTerm = $derived(gameInstallManager.searchTerm);
     const searchResults = $derived(gameInstallManager.searchResults);
     const searchDuration = $derived(gameInstallManager.searchDuration);
     const searching = $derived(gameInstallManager.searching);
+    const extractDialogOpen = $derived(manager.extractDialogOpen);
+    const DEFAULT_HEIGHT = 36;
 
     let statsHidden = $derived($searchResults === null || $searchResults.length === 0);
     let searchbar: HTMLIonSearchbarElement | undefined = $state();
     let inputElement: HTMLInputElement | undefined = $state();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-redundant-type-constituents
-    let virtualList: VirtualList<Fuzzysort.KeysResult<FileSearchEntry>> | undefined = $state();
+    let searchResultsContainer: HTMLElement | undefined = $state();
+    let virtualList: SvelteVirtualList<Fuzzysort.KeysResult<FileSearchEntry>> | undefined =
+        $state();
     let start = 0;
     let end = 0;
-    let { selectedIndex, selectedResult } = $derived(refresh($searchResults, $selectedContent));
+    let { selectedIndex, selectedResult } = $derived(
+        refresh($searchResults, manager.selectedContent)
+    );
 
     function doSearch(input: string) {
         gameInstallManager.submitFileSearch(input).catch(console.error);
@@ -80,8 +84,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
         return result[0].highlight();
     }
 
-    async function onSelect(item: unknown) {
-        selectedResult = item as Fuzzysort.KeysResult<FileSearchEntry>;
+    async function onSelect(item: Fuzzysort.KeysResult<FileSearchEntry>, focusSelection = false) {
+        selectedResult = item;
+
+        const index = $searchResults?.findIndex((result) => result === item) ?? -1;
+        if (index >= 0) {
+            scrollToCurrent(index);
+        }
+
+        if (focusSelection) {
+            focusSelectedResult().catch(console.error);
+        }
+
         const gameInstall = gameInstallManager.getGameInstallForArchive(selectedResult.obj.archive);
         if (!gameInstall) {
             console.warn('GameInstall not found for search result', selectedResult.obj);
@@ -97,7 +111,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             console.warn('File entry not found for search result', selectedResult.obj);
             return;
         }
-        $selectedContent = fileEntry;
+        manager.selectedContent = fileEntry;
     }
 
     function refresh(
@@ -123,42 +137,71 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     function isSelected(
-        item: unknown,
+        item: Fuzzysort.KeysResult<FileSearchEntry>,
         selectedResult: Fuzzysort.KeysResult<FileSearchEntry> | undefined
     ) {
         return item === selectedResult;
     }
 
-    function scrollToCurrent(index = selectedIndex) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        virtualList?.scrollToIndex(index);
+    function scrollToCurrent(targetIndex = selectedIndex, smoothScroll = true) {
+        const containerHeight = searchResultsContainer?.clientHeight ?? window.innerHeight;
+        const visibleItems = Math.floor(containerHeight / DEFAULT_HEIGHT);
+        const offset = Math.floor(visibleItems / 2) - 1;
+        const index = Math.max(0, targetIndex - offset);
+        virtualList?.scroll({ index, align: 'top', smoothScroll }).catch((e: unknown) => {
+            console.error('Error scrolling to current index:', e);
+        });
     }
 
-    function selectAndScroll(index: number) {
+    function isFromInput(event: KeyboardEvent) {
+        return inputElement ? event.composedPath().includes(inputElement) : false;
+    }
+
+    async function focusSelectedResult() {
+        await tick();
+        searchResultsContainer
+            ?.querySelector<HTMLElement>('.result.selected')
+            ?.focus({ preventScroll: true });
+    }
+
+    function selectByIndex(index: number, focusSelection = false) {
         if ($searchResults) {
             index = Math.max(0, Math.min(index, $searchResults.length - 1));
-            onSelect($searchResults[index]).catch(console.error);
-            scrollToCurrent(index);
+            onSelect($searchResults[index], focusSelection).catch(console.error);
         }
     }
     function onKeyNavigation(event: KeyboardEvent) {
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const currentFocus = document.querySelector(':focus');
+        if (currentFocus && currentFocus.scrollHeight > currentFocus.clientHeight) {
+            return;
+        }
+
+        const fromInput = isFromInput(event);
+        if (event.key === 'Tab' || extractDialogOpen) {
+            return;
+        } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             const nextIndex = event.key === 'ArrowDown' ? selectedIndex + 1 : selectedIndex - 1;
-            selectAndScroll(nextIndex);
-        } else if (event.target !== inputElement && event.key === 'Home') {
-            selectAndScroll(0);
-        } else if (event.target !== inputElement && event.key === 'End') {
-            selectAndScroll(($searchResults?.length ?? 0) - 1);
+            selectByIndex(nextIndex, !fromInput);
+        } else if (event.key === 'Home' && inputElement && !fromInput) {
+            selectByIndex(0, true);
+        } else if (event.key === 'End' && inputElement && !fromInput) {
+            selectByIndex(($searchResults?.length ?? 0) - 1, true);
         } else if (event.key === 'PageUp') {
             const visible = end - start;
-            selectAndScroll(selectedIndex - visible);
+            selectByIndex(selectedIndex - visible, !fromInput);
         } else if (event.key === 'PageDown') {
             const visible = end - start;
-            selectAndScroll(selectedIndex + visible);
+            selectByIndex(selectedIndex + visible, !fromInput);
         } else if (event.key === 'f' && event.ctrlKey) {
             searchbar?.setFocus().catch(console.error);
         } else if (event.key === 'Enter') {
-            inputElement?.blur();
+            if (fromInput) {
+                inputElement?.blur();
+            } else if (selectedResult) {
+                onSelect(selectedResult).catch(console.error);
+            } else {
+                return;
+            }
         } else {
             return;
         }
@@ -173,6 +216,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
         inputElement = await searchbar.getInputElement();
         await searchbar.setFocus();
         document.addEventListener('keydown', onKeyNavigation);
+        setTimeout(() => {
+            scrollToCurrent(selectedIndex, false);
+        }, 0);
     });
 
     onDestroy(() => {
@@ -194,23 +240,33 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {/if}
     </ion-toolbar>
 </ion-header>
-<ion-content>
+<ion-content bind:this={searchResultsContainer}>
     {#if $searchResults}
-        <VirtualList bind:this={virtualList} items={$searchResults}>
-            {#snippet children(data)}
+        <SvelteVirtualList
+            bind:this={virtualList}
+            items={$searchResults as unknown as Fuzzysort.KeysResult<FileSearchEntry>[]}
+            defaultEstimatedItemHeight={DEFAULT_HEIGHT}
+            bufferSize={30}
+        >
+            {#snippet renderItem(item)}
                 <div
                     class="result"
-                    class:selected={isSelected(data, selectedResult)}
+                    class:selected={isSelected(
+                        item as Fuzzysort.KeysResult<FileSearchEntry>,
+                        selectedResult
+                    )}
                     role="button"
-                    tabindex="0"
-                    onclick={() => onSelect(data)}
-                    onkeydown={redirectKeydown(() => onSelect(data))}
+                    tabindex="-1"
+                    onclick={() => onSelect(item as Fuzzysort.KeysResult<FileSearchEntry>)}
+                    onkeydown={redirectKeydown(() =>
+                        onSelect(item as Fuzzysort.KeysResult<FileSearchEntry>)
+                    )}
                 >
                     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                    {@html highlight(data)}
+                    {@html highlight(item)}
                 </div>
             {/snippet}
-        </VirtualList>
+        </SvelteVirtualList>
         <ion-chip
             class="result-stats"
             class:hidden={statsHidden}

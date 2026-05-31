@@ -55,13 +55,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
             </div>
             <ion-label class="thanks" color="dark">Thank you for your continued support</ion-label>
         {/if}
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
         <ion-button
             id="becomePatron"
             fill="outline"
             color="primary"
             size="large"
             role="button"
-            tabindex="0"
             onclick={openPatreon}
             onkeydown={redirectKeydown(openPatreon)}
             ><ion-icon icon={patreonIcon}></ion-icon> Become a Patron</ion-button

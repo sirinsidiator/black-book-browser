@@ -18,6 +18,7 @@
         "version": "node scripts/applyVersionToTauri.js"
     },
     "dependencies": {
+        "@humanspeak/svelte-virtual-list": "^0.4.6",
         "@ionic/core": "^8.8.8",
         "@tauri-apps/api": "^2.11.0",
         "@tauri-apps/plugin-dialog": "^2.7.1",

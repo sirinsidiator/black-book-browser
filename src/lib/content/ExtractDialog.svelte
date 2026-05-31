@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import BackgroundService from '$lib/backend/BackgroundService';
     import type { ExtractFilesProgress, ExtractFilesRequest } from '$lib/mnf/MnfArchive';
     import type { MnfFileData } from '$lib/mnf/MnfFileData';
+    import type StateManager from '$lib/StateManager.svelte';
     import FileTree from '$lib/tree/FileTree.svelte';
     import FileTreeEntryData from '$lib/tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from '$lib/tree/FileTreeEntryDataProvider';
@@ -17,6 +18,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { formatFileSize } from '$lib/util/FileUtil';
     import { openPath } from '@tauri-apps/plugin-opener';
     import { archiveOutline, closeOutline } from 'ionicons/icons';
+    import { onDestroy } from 'svelte';
     import { get } from 'svelte/store';
     import ExtractDialogOptions from './ExtractDialogOptions.svelte';
     import ExtractionOptions from './ExtractionOptions';
@@ -24,9 +26,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     interface Props {
         target: FolderEntry | FileEntry;
+        manager: StateManager;
     }
 
-    let { target }: Props = $props();
+    let { target, manager }: Props = $props();
 
     const options = new ExtractionOptions();
     const { targetFolder, preserveParents, decompressFiles, ignorePattern, normalizeLineEndings } =
@@ -272,12 +275,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     function onShow() {
         dialogVisible = true;
+        manager.extractDialogOpen = true;
         selectedContent = target;
         refresh();
     }
 
     function onHide() {
         dialogVisible = false;
+        manager.extractDialogOpen = false;
     }
 
     function onselect(entry: FileTreeEntryData<FileTreeEntryDataProvider>) {
@@ -292,6 +297,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     });
     $effect(() => {
         onIgnorePatternChanged($ignorePattern);
+    });
+
+    onDestroy(() => {
+        if (dialogVisible) {
+            manager.extractDialogOpen = false;
+        }
     });
 </script>
 
@@ -317,9 +328,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <ion-title>Extract Files</ion-title>
                 {#if !extracting || extractionDone}
                     <ion-buttons slot="end">
+                        <!-- svelte-ignore a11y_interactive_supports_focus -->
                         <ion-button
                             role="button"
-                            tabindex="0"
                             onclick={close}
                             onkeydown={redirectKeydown(close)}
                         >
@@ -396,31 +407,31 @@ SPDX-License-Identifier: GPL-3.0-or-later
                                     )}
                                 {/if}
                             </ion-label>
+                            <!-- svelte-ignore a11y_interactive_supports_focus -->
                             <ion-button
                                 expand="block"
                                 color="primary"
                                 role="button"
-                                tabindex="0"
                                 disabled={refreshingSummary || fileCount === 0}
                                 onclick={doExtract}
                                 onkeydown={redirectKeydown(doExtract)}>extract</ion-button
                             >
                         {:else}
+                            <!-- svelte-ignore a11y_interactive_supports_focus -->
                             <ion-button
                                 expand="block"
                                 color="primary"
                                 role="button"
-                                tabindex="0"
                                 disabled={!extractionDone}
                                 onclick={close}
                                 onkeydown={redirectKeydown(close)}>close</ion-button
                             >
                         {/if}
+                        <!-- svelte-ignore a11y_interactive_supports_focus -->
                         <ion-button
                             expand="block"
                             color="medium"
                             role="button"
-                            tabindex="0"
                             disabled={!$targetFolder}
                             onclick={openTargetFolder}
                             onkeydown={redirectKeydown(openTargetFolder)}>open folder</ion-button
@@ -467,6 +478,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         flex-grow: 1;
         margin-top: 0;
         margin-bottom: 0;
+    }
+
+    .files ion-card-content {
+        height: calc(100% - 42px);
     }
 
     .summary {

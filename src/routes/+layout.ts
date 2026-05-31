@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import StateManager from '$lib/StateManager';
+import StateManager from '$lib/StateManager.svelte';
 import type { LayoutLoad } from './$types';
 
 export const ssr = false;

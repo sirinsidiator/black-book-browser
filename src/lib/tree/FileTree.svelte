@@ -5,8 +5,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
-    import VirtualList from '$lib/frontend/component/VirtualList.svelte';
-    import { onDestroy, onMount } from 'svelte';
+    import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
+    import { onDestroy, onMount, tick } from 'svelte';
     import { get } from 'svelte/store';
     import FileTreeEntry from './FileTreeEntry.svelte';
     import type FileTreeEntryData from './FileTreeEntryData';
@@ -26,6 +26,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     const noop = () => {
         // do nothing
     };
+    const DEFAULT_HEIGHT = 27;
 
     let {
         entries,
@@ -47,8 +48,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let selected: FileTreeEntryData<FileTreeEntryDataProvider> | undefined = $derived(
         selectedIndex >= 0 ? flattenedEntries[selectedIndex] : undefined
     );
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-    let virtualList: VirtualList<FileTreeEntryData<FileTreeEntryDataProvider>> | null =
+    let fileTreeContainer: HTMLElement | null = $state(null);
+    let virtualList: SvelteVirtualList<FileTreeEntryData<FileTreeEntryDataProvider>> | null =
         $state(null);
 
     function flattenTreeRecursive(
@@ -70,32 +71,60 @@ SPDX-License-Identifier: GPL-3.0-or-later
         onchange();
     }
 
-    function scrollToCurrent(index = selectedIndex) {
-        try {
-            if (virtualList) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                virtualList.scrollToIndex(index);
-            }
-        } catch (e) {
+    function scrollToCurrent(targetIndex = selectedIndex, smoothScroll = true) {
+        const containerHeight = fileTreeContainer?.clientHeight ?? window.innerHeight;
+        const visibleItems = Math.floor(containerHeight / DEFAULT_HEIGHT);
+        const offset = Math.floor(visibleItems / 2) - 1;
+        const index = Math.max(0, targetIndex - offset);
+        virtualList?.scroll({ index, align: 'top', smoothScroll }).catch((e: unknown) => {
             console.error('Error scrolling to current index:', e);
+        });
+    }
+
+    async function focusSelectedEntry() {
+        await tick();
+        fileTreeContainer
+            ?.querySelector<HTMLElement>('.content.selected')
+            ?.focus({ preventScroll: true });
+    }
+
+    function handleSelect(
+        entry: FileTreeEntryData<FileTreeEntryDataProvider>,
+        focusSelection = false
+    ) {
+        onselect(entry);
+        const index = flattenedEntries.findIndex((e) => e === entry);
+        if (index >= 0) {
+            scrollToCurrent(index);
+        }
+        if (focusSelection) {
+            focusSelectedEntry().catch(console.error);
         }
     }
 
     function onKeyNavigation(event: KeyboardEvent) {
-        if (!keyboardNavigationTarget || event.target !== keyboardNavigationTarget) return;
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const currentFocus = document.querySelector(':focus');
+        if (currentFocus && currentFocus.scrollHeight > currentFocus.clientHeight) {
+            return;
+        }
+
+        if (
+            event.key === 'Tab' ||
+            !keyboardNavigationTarget ||
+            !event.composedPath().includes(keyboardNavigationTarget)
+        ) {
+            return;
+        } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             const nextIndex = event.key === 'ArrowDown' ? selectedIndex + 1 : selectedIndex - 1;
             if (nextIndex >= 0 && nextIndex < flattenedEntries.length) {
-                onselect(flattenedEntries[nextIndex]);
-                scrollToCurrent(nextIndex);
+                handleSelect(flattenedEntries[nextIndex], true);
             }
         } else if (event.key === 'ArrowRight') {
             if (selected) {
                 if (!get(selected.opened)) {
                     toggleOpen(selected);
                 } else if (get(selected.children).length > 0) {
-                    onselect(get(selected.children)[0]);
-                    scrollToCurrent();
+                    handleSelect(get(selected.children)[0], true);
                 }
             }
         } else if (event.key === 'ArrowLeft') {
@@ -103,8 +132,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 if (get(selected.opened)) {
                     toggleOpen(selected);
                 } else if (selected.parent) {
-                    onselect(selected.parent);
-                    scrollToCurrent();
+                    handleSelect(selected.parent, true);
                 }
             }
         } else if (checkable && (event.key === 'Enter' || event.key === ' ')) {
@@ -120,6 +148,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     onMount(() => {
         document.addEventListener('keydown', onKeyNavigation);
+        setTimeout(() => {
+            scrollToCurrent(selectedIndex, false);
+        }, 0);
     });
 
     onDestroy(() => {
@@ -127,21 +158,26 @@ SPDX-License-Identifier: GPL-3.0-or-later
     });
 </script>
 
-<div class="filetree">
-    <VirtualList bind:this={virtualList} items={flattenedEntries} itemHeight={27}>
-        {#snippet children(data)}
+<div class="filetree" bind:this={fileTreeContainer}>
+    <SvelteVirtualList
+        bind:this={virtualList}
+        items={flattenedEntries}
+        defaultEstimatedItemHeight={DEFAULT_HEIGHT}
+        bufferSize={30}
+    >
+        {#snippet renderItem(item)}
             <FileTreeEntry
-                {data}
+                data={item}
                 {selected}
                 {checkable}
                 {levelOffset}
                 {ignorePattern}
                 onopen={toggleOpen}
                 onchange={toggleChecked}
-                {onselect}
+                onselect={handleSelect}
             />
         {/snippet}
-    </VirtualList>
+    </SvelteVirtualList>
 </div>
 
 <style>

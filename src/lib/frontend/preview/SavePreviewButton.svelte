@@ -33,11 +33,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     });
 </script>
 
+<!-- svelte-ignore a11y_interactive_supports_focus -->
 <ion-button
     color="primary"
     {disabled}
     role="button"
-    tabindex="0"
     onclick={save}
     onkeydown={redirectKeydown(save)}
 >

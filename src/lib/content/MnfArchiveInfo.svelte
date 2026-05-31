@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type MnfArchiveEntry from '$lib/MnfArchiveEntry';
+    import type StateManager from '$lib/StateManager.svelte';
     import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
     import type { ContentPreviewLoader } from '$lib/frontend/preview/loader/ContentPreviewLoader';
     import { redirectKeydown } from '$lib/utils/common';
@@ -19,9 +20,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     interface Props {
         archive: MnfArchiveEntry;
+        manager: StateManager;
     }
 
-    let { archive }: Props = $props();
+    let { archive, manager }: Props = $props();
     let loaded = $derived(archive.loaded);
     let busy = $derived(archive.busy);
     let root = $derived(archive.root);
@@ -42,16 +44,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <ContentLayout {preview}>
     {#snippet buttons()}
         {#if $loaded && $root && preview}
-            <ExtractDialog target={$root} />
+            <ExtractDialog target={$root} {manager} />
             <SavePreviewButton {preview}>save filelist</SavePreviewButton>
             <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}
                 >save texturelist</SavePreviewButton
             >
         {:else}
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
             <ion-button
                 color="primary"
                 role="button"
-                tabindex="0"
                 onclick={onLoad}
                 onkeydown={redirectKeydown(onLoad)}
                 disabled={$busy}
@@ -60,10 +62,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
             >
         {/if}
 
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
         <ion-button
             color="primary"
             role="button"
-            tabindex="0"
             onclick={explore}
             onkeydown={redirectKeydown(explore)}
         >

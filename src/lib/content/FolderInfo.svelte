@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type { FolderEntry } from '$lib/FolderEntry';
+    import type StateManager from '$lib/StateManager.svelte';
     import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
     import { folderOpenOutline } from 'ionicons/icons';
     import ContentLayout from './ContentLayout.svelte';
@@ -15,16 +16,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     interface Props {
         folder: FolderEntry;
+        manager: StateManager;
     }
 
-    let { folder }: Props = $props();
+    let { folder, manager }: Props = $props();
 
     let preview = $derived(folder.getPreviewLoader());
 </script>
 
 <ContentLayout {preview}>
     {#snippet buttons()}
-        <ExtractDialog target={folder} />
+        <ExtractDialog target={folder} {manager} />
         <SavePreviewButton {preview}>save filelist</SavePreviewButton>
         <SavePreviewButton {preview} options={['.dds', 'texturelist.txt']}
             >save texturelist</SavePreviewButton

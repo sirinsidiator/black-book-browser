@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import type BufferReader from '$lib/util/BufferReader';
     import type { InputChangeEventDetail } from '@ionic/core';
-    import VirtualList from './VirtualList.svelte';
+    import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
 
     interface Props {
         view: BufferReader;
@@ -65,12 +65,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 
     <div class="content">
-        <VirtualList {items} itemHeight={20}>
-            {#snippet children(data)}
-                {@const entry = getData(data as number)}
+        <SvelteVirtualList {items} defaultEstimatedItemHeight={20}>
+            {#snippet renderItem(item)}
+                {@const entry = getData(item as number)}
                 <div class="entry">
                     <div class="offset">
-                        {(data as number).toString(16).toUpperCase().padStart(8, '0')}
+                        {(item as number).toString(16).toUpperCase().padStart(8, '0')}
                     </div>
 
                     <div class="hex">
@@ -87,7 +87,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     </div>
                 </div>
             {/snippet}
-        </VirtualList>
+        </SvelteVirtualList>
     </div>
 </div>
 

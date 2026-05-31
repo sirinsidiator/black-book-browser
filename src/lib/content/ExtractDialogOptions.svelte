@@ -76,12 +76,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <ion-item>
             <ion-input label="Extract to" value={$targetFolder} onionChange={onTargetFolderChanged}
             ></ion-input>
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
             <ion-button
                 slot="end"
                 fill="clear"
                 color="primary"
                 role="button"
-                tabindex="0"
                 onclick={selectLocation}
                 onkeydown={redirectKeydown(selectLocation)}>Choose</ion-button
             >
@@ -109,11 +109,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 onionChange={onIgnorePatternChanged}
             >
             </ion-input>
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
             <ion-button
                 slot="end"
                 fill="clear"
                 role="button"
-                tabindex="0"
                 onclick={openIgnorePatternHelp}
                 onkeydown={redirectKeydown(openIgnorePatternHelp)}
             >

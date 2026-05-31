@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { FileEntry } from '$lib/FileEntry';
+    import type StateManager from '$lib/StateManager.svelte';
     import SavePreviewButton from '$lib/frontend/preview/SavePreviewButton.svelte';
     import { formatFileSize } from '$lib/util/FileUtil';
     import { documentOutline, folderOpenOutline, scaleOutline } from 'ionicons/icons';
@@ -15,15 +16,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     interface Props {
         file: FileEntry;
+        manager: StateManager;
     }
 
-    let { file }: Props = $props();
+    let { file, manager }: Props = $props();
     let preview = $derived(file.getPreviewLoader());
 </script>
 
 <ContentLayout {preview}>
     {#snippet buttons()}
-        <ExtractDialog target={file} />
+        <ExtractDialog target={file} {manager} />
         <SavePreviewButton {preview}>save preview</SavePreviewButton>
     {/snippet}
 

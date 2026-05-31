@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { redirectKeydown } from '$lib/utils/common';
     import { open } from '@tauri-apps/plugin-dialog';
     import { add } from 'ionicons/icons';
-    import type StateManager from './StateManager';
+    import type StateManager from './StateManager.svelte';
     import FileTreeEntryData from './tree/FileTreeEntryData';
     import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
 
@@ -20,7 +20,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let { manager }: Props = $props();
 
     const gameInstalls = $derived(manager.gameInstallManager.gameInstalls);
-    const selectedContent = $derived(manager.selectedContent);
 
     async function addFolder() {
         const selected = await open({
@@ -30,14 +29,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         if (typeof selected === 'string') {
             const gameInstall = await manager.gameInstallManager.add(selected);
             if (gameInstall) {
-                selectedContent.set(gameInstall);
+                manager.selectedContent = gameInstall;
             }
         }
     }
 
     function onselect(entry: FileTreeEntryData<FileTreeEntryDataProvider>) {
         console.log('Selected entry:', entry);
-        selectedContent.set(entry.data);
+        manager.selectedContent = entry.data;
     }
 
     let entries = $derived(
@@ -59,16 +58,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {:else}
             <FileTree
                 {entries}
-                selectedContent={$selectedContent}
+                selectedContent={manager.selectedContent}
                 {onselect}
-                keyboardNavigationTarget={document.body}
+                keyboardNavigationTarget={manager.extractDialogOpen ? null : document.body}
             />
         {/if}
 
         <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+            <!-- svelte-ignore a11y_interactive_supports_focus -->
             <ion-fab-button
                 role="button"
-                tabindex="0"
                 onclick={addFolder}
                 onkeydown={redirectKeydown(addFolder)}
             >

@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { FolderEntry } from '$lib/FolderEntry';
     import { GameInstallEntry } from '$lib/GameInstallEntry';
     import MnfArchiveEntry from '$lib/MnfArchiveEntry';
-    import type StateManager from '$lib/StateManager';
+    import type StateManager from '$lib/StateManager.svelte';
     import FileInfo from './FileInfo.svelte';
     import FolderInfo from './FolderInfo.svelte';
     import GameInstallInfo from './GameInstallInfo.svelte';
@@ -20,16 +20,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     let { manager }: Props = $props();
-    const content = $derived(manager.selectedContent);
 
     function onremove(entry: GameInstallEntry) {
         console.log('remove', entry);
         manager.gameInstallManager.remove(entry.path);
-        manager.selectedContent.set(null);
+        manager.selectedContent = null;
     }
 </script>
 
-{#if $content == null}
+{#if manager.selectedContent == null}
     <ion-text color="dark" class="welcome">
         Knowledge is only as wicked as the one who wields it.<br />
         Forsaking learning in fear of its misuse is the ultimate sin.<br />
@@ -38,17 +37,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {:else}
     <ion-card>
         <ion-card-header>
-            <ion-card-title color="dark">{$content.label}</ion-card-title>
+            <ion-card-title color="dark">{manager.selectedContent.label}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-            {#if $content instanceof GameInstallEntry}
-                <GameInstallInfo gameInstall={$content} {onremove} />
-            {:else if $content instanceof MnfArchiveEntry}
-                <MnfArchiveInfo archive={$content} />
-            {:else if $content instanceof FolderEntry}
-                <FolderInfo folder={$content} />
-            {:else if $content instanceof FileEntry}
-                <FileInfo file={$content} />
+            {#if manager.selectedContent instanceof GameInstallEntry}
+                <GameInstallInfo gameInstall={manager.selectedContent} {onremove} />
+            {:else if manager.selectedContent instanceof MnfArchiveEntry}
+                <MnfArchiveInfo archive={manager.selectedContent} {manager} />
+            {:else if manager.selectedContent instanceof FolderEntry}
+                <FolderInfo folder={manager.selectedContent} {manager} />
+            {:else if manager.selectedContent instanceof FileEntry}
+                <FileInfo file={manager.selectedContent} {manager} />
             {:else}
                 <p>Unsupported content type</p>
             {/if}

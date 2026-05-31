@@ -46,6 +46,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 </script>
 
+<!-- svelte-ignore a11y_interactive_supports_focus -->
 <ion-item>
     <ion-icon {icon}></ion-icon>
     <ion-label class="label">{label}</ion-label>
@@ -56,7 +57,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
         slot="end"
         size="small"
         role="button"
-        tabindex="0"
         onclick={copy}
         onkeydown={redirectKeydown(copy)}
     >

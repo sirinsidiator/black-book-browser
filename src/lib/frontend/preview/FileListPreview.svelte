@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
-    import VirtualList from '../component/VirtualList.svelte';
+    import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
     import type FileListPreviewLoader from './loader/FileListPreviewLoader';
 
     interface Props {
@@ -15,16 +15,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let { loader }: Props = $props();
 </script>
 
-<VirtualList items={loader.getFileList()} itemHeight={20}>
-    {#snippet children(data)}
-        {@const path = loader.getPathParts(data)}
+<SvelteVirtualList items={loader.getFileList()} defaultEstimatedItemHeight={20}>
+    {#snippet renderItem(item)}
+        {@const path = loader.getPathParts(item)}
         <div class="entry">
             {#each path.directoryParts as part (part)}{part}<span class="sep">/</span>{/each}<span
                 class="name">{path.fileName}</span
             ><span class="ext">.{path.extension}</span>
         </div>
     {/snippet}
-</VirtualList>
+</SvelteVirtualList>
 
 <style>
     .entry {

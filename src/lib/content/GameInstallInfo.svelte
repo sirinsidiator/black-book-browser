@@ -39,10 +39,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <ContentLayout>
     {#snippet buttons()}
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
         <ion-button
             color="danger"
             role="button"
-            tabindex="0"
             onclick={remove}
             onkeydown={redirectKeydown(remove)}
         >
@@ -50,10 +50,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
             remove from list
         </ion-button>
 
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
         <ion-button
             color="primary"
             role="button"
-            tabindex="0"
             onclick={explore}
             onkeydown={redirectKeydown(explore)}
         >

@@ -65,7 +65,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         expand="block"
         disabled={$failed ? true : false}
         role="button"
-        tabindex="0"
+        tabindex="-1"
         onclick={toggleOpen}
         onkeydown={redirectKeydown(toggleOpen)}
     >
@@ -90,7 +90,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         color={$failed ? 'danger' : 'medium'}
         disabled={ignored}
         role="button"
-        tabindex="0"
+        tabindex="-1"
         onclick={select}
         onkeydown={redirectKeydown(select)}
         ondblClick={toggleOpen}
