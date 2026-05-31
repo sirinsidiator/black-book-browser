@@ -12,17 +12,17 @@ on:
 jobs:
     build:
         name: Build Application
-        runs-on: windows-latest
+        runs-on: windows-2025-vs2026
         env:
             CACHE_BIN: 'true'
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v5
               with:
-                  node-version: 24
+                  node-version: 25
                   cache: 'npm'
 
             - name: Create target directory
