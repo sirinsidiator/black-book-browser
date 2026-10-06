@@ -20,7 +20,7 @@ jobs:
                       label: windows
                     - os: ubuntu-24.04
                       label: linux
-                    - os: macos-14
+                    - os: macos-latest
                       label: macos
         runs-on: ${{ matrix.os }}
         env:
@@ -57,14 +57,27 @@ jobs:
             - name: Update Patrons
               run: npm run update-patrons
 
+            - name: Add x86_64 macOS target
+              if: runner.os == 'macOS'
+              run: rustup target add x86_64-apple-darwin
+
+            - name: Build Application (macOS x86_64)
+              if: runner.os == 'macOS'
+              env:
+                  CARGO_BUILD_TARGET: x86_64-apple-darwin
+                  CFLAGS_x86_64_apple_darwin: -arch x86_64
+                  CXXFLAGS_x86_64_apple_darwin: -arch x86_64
+              run: npm run tauri build
+
             - name: Build Application
+              if: runner.os != 'macOS'
               run: npm run tauri build
 
             - name: Ad-hoc code sign
               if: runner.os == 'macOS'
-              run: codesign --force --deep --sign - ./src-tauri/target/release/bbb
+              run: codesign --force --deep --sign - ./src-tauri/target/x86_64-apple-darwin/release/bbb
 
             - uses: actions/upload-artifact@v7
               with:
-                  path: ./src-tauri/target/release/${{ runner.os == 'Windows' && 'bbb.exe' || 'bbb' }}
+                  path: ./src-tauri/target/${{ runner.os == 'macOS' && 'x86_64-apple-darwin/release/bbb' || (runner.os == 'Windows' && 'release/bbb.exe' || 'release/bbb') }}
                   name: bbb-${{ matrix.label }}
