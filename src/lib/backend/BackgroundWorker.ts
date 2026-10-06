@@ -125,7 +125,10 @@ function setupTauriInternals(key: string) {
 
     function convertFileSrc(filePath: string, protocol = 'asset') {
         const path = encodeURIComponent(filePath);
-        return `http://${protocol}.localhost/${path}`;
+        if (/Windows|Android/i.test(navigator.userAgent)) {
+            return `http://${protocol}.localhost/${path}`;
+        }
+        return `${protocol}://localhost/${path}`;
     }
 
     function transformCallback(callback: undefined | ((result: unknown) => void), once: boolean) {
