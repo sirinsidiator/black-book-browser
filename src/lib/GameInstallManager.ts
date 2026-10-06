@@ -199,10 +199,16 @@ export default class GameInstallManager {
 
     public getGameInstallForArchive(path: string): GameInstallEntry | undefined {
         const gameInstalls = get(this.gameInstalls);
+        const archive = this.normalizePath(path);
         for (const gameInstall of gameInstalls.values()) {
-            if (path.startsWith(gameInstall.path + '\\')) {
+            const gameInstallPath = this.normalizePath(gameInstall.path) + '/';
+            if (archive.startsWith(gameInstallPath)) {
                 return gameInstall;
             }
         }
+    }
+
+    private normalizePath(p: string): string {
+        return p.replace(/\\/g, '/');
     }
 }

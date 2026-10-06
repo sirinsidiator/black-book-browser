@@ -44,7 +44,7 @@ export default class FileListPreviewLoader implements ContentPreviewLoader {
         const url = URL.createObjectURL(file);
         const a = document.createElement('a');
         a.href = url;
-        const archivePrefix = folder.archive.label.split('\\').pop()?.split('.').shift() ?? '';
+        const archivePrefix = folder.archive.label.split(/[\\/]/).pop()?.split('.').shift() ?? '';
         a.download = archivePrefix + folder.path.replaceAll('/', '_') + (suffix ?? 'filelist.txt');
         a.click();
         URL.revokeObjectURL(url);
