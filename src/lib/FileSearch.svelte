@@ -5,15 +5,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <script lang="ts">
+    import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
     import type { SearchbarInputEventDetail } from '@ionic/core';
-    import fuzzysort from 'fuzzysort';
+    import fuzzysort, { type KeysResult, type KeysResults } from 'fuzzysort';
     import { onDestroy, onMount, tick } from 'svelte';
     import { FileEntry } from './FileEntry';
-    import { redirectKeydown } from './utils/common';
     import type FileSearchEntry from './FileSearchEntry';
-    import SvelteVirtualList from '@humanspeak/svelte-virtual-list';
     import type StateManager from './StateManager.svelte';
     import type FileTreeEntryDataProvider from './tree/FileTreeEntryDataProvider';
+    import { redirectKeydown } from './utils/common';
 
     interface Props {
         manager: StateManager;
@@ -33,8 +33,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let searchbar: HTMLIonSearchbarElement | undefined = $state();
     let inputElement: HTMLInputElement | undefined = $state();
     let searchResultsContainer: HTMLElement | undefined = $state();
-    let virtualList: SvelteVirtualList<Fuzzysort.KeysResult<FileSearchEntry>> | undefined =
-        $state();
+    let virtualList: SvelteVirtualList<KeysResult<FileSearchEntry>> | undefined = $state();
     let start = 0;
     let end = 0;
     let { selectedIndex, selectedResult } = $derived(
@@ -59,32 +58,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
         gameInstallManager.clearFileSearch();
     }
 
-    // fuzzysort moved the highlight method, but we only get a plain object from the BackgroundService
-    // so we need to restore the prototype to get the highlight method back.
-    const dummyResult = fuzzysort.go('dummy', ['dummy']);
-    function restoreResult(item: unknown): Fuzzysort.KeysResult<FileSearchEntry> {
-        let result = item as Fuzzysort.KeysResult<FileSearchEntry>;
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!result[0].highlight) {
-            result = Object.setPrototypeOf(
-                result,
-                dummyResult.constructor.prototype as object
-            ) as Fuzzysort.KeysResult<FileSearchEntry>;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-            (result as any)[0] = Object.setPrototypeOf(
-                result[0],
-                dummyResult[0].constructor.prototype as object
-            ) as Fuzzysort.Result;
-        }
+    function restoreResult(item: unknown): KeysResult<FileSearchEntry> {
+        let result = item as KeysResult<FileSearchEntry>;
         return result;
     }
 
     function highlight(item: unknown) {
         const result = restoreResult(item);
-        return result[0].highlight();
+        return fuzzysort.highlight(result[0]);
     }
 
-    async function onSelect(item: Fuzzysort.KeysResult<FileSearchEntry>, focusSelection = false) {
+    async function onSelect(item: KeysResult<FileSearchEntry>, focusSelection = false) {
         selectedResult = item;
 
         const index = $searchResults?.findIndex((result) => result === item) ?? -1;
@@ -115,7 +99,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     function refresh(
-        results: Fuzzysort.KeysResults<FileSearchEntry> | null,
+        results: KeysResults<FileSearchEntry> | null,
         selected: FileTreeEntryDataProvider | null
     ) {
         if (results && selected instanceof FileEntry) {
@@ -137,8 +121,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     function isSelected(
-        item: Fuzzysort.KeysResult<FileSearchEntry>,
-        selectedResult: Fuzzysort.KeysResult<FileSearchEntry> | undefined
+        item: KeysResult<FileSearchEntry>,
+        selectedResult: KeysResult<FileSearchEntry> | undefined
     ) {
         return item === selectedResult;
     }
@@ -244,23 +228,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {#if $searchResults}
         <SvelteVirtualList
             bind:this={virtualList}
-            items={$searchResults as unknown as Fuzzysort.KeysResult<FileSearchEntry>[]}
+            items={$searchResults as unknown as KeysResult<FileSearchEntry>[]}
             defaultEstimatedItemHeight={DEFAULT_HEIGHT}
             bufferSize={30}
         >
             {#snippet renderItem(item)}
                 <div
                     class="result"
-                    class:selected={isSelected(
-                        item as Fuzzysort.KeysResult<FileSearchEntry>,
-                        selectedResult
-                    )}
+                    class:selected={isSelected(item as KeysResult<FileSearchEntry>, selectedResult)}
                     role="button"
                     tabindex="-1"
-                    onclick={() => onSelect(item as Fuzzysort.KeysResult<FileSearchEntry>)}
-                    onkeydown={redirectKeydown(() =>
-                        onSelect(item as Fuzzysort.KeysResult<FileSearchEntry>)
-                    )}
+                    onclick={() => onSelect(item as KeysResult<FileSearchEntry>)}
+                    onkeydown={redirectKeydown(() => onSelect(item as KeysResult<FileSearchEntry>))}
                 >
                     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                     {@html highlight(item)}

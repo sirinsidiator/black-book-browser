@@ -4,6 +4,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { readTextFile } from '@tauri-apps/plugin-fs';
+import type { KeysResults } from 'fuzzysort';
 import { get, writable, type Writable } from 'svelte/store';
 import type FileSearchEntry from './FileSearchEntry';
 import { GameInstallEntry } from './GameInstallEntry';
@@ -30,11 +31,11 @@ export default class GameInstallManager {
         new Map<string, GameInstallEntry>()
     );
     public readonly searchTerm: Writable<string> = writable('');
-    public readonly searchResults: Writable<Fuzzysort.KeysResults<FileSearchEntry> | null> =
+    public readonly searchResults: Writable<KeysResults<FileSearchEntry> | null> =
         writable(null);
     public readonly searchDuration: Writable<number> = writable(0);
     public readonly searching: Writable<boolean> = writable(false);
-    private searchCache = new Map<string, WeakRef<Fuzzysort.KeysResults<FileSearchEntry>>>();
+    private searchCache = new Map<string, WeakRef<KeysResults<FileSearchEntry>>>();
     private initPromise?: Promise<void>;
 
     public async initialize() {

@@ -11,6 +11,7 @@ import type {
 } from '$lib/mnf/MnfArchive';
 import type { MnfFileData } from '$lib/mnf/MnfFileData';
 import { invoke } from '@tauri-apps/api/core';
+import type { KeysResults } from 'fuzzysort';
 import {
     isBackgroundMessage,
     type BackgroundExtractFilesMessage,
@@ -125,11 +126,11 @@ export default class BackgroundService {
         ) as Promise<ExtractFilesResult>;
     }
 
-    public searchFiles(searchTerm: string): Promise<Fuzzysort.KeysResults<FileSearchEntry>> {
+    public searchFiles(searchTerm: string): Promise<KeysResults<FileSearchEntry>> {
         return this.transceiver.sendMessage({
             type: BackgroundMessageType.SEARCH_FILES,
             searchTerm: searchTerm
-        } as BackgroundSearchFilesMessage) as Promise<Fuzzysort.KeysResults<FileSearchEntry>>;
+        } as BackgroundSearchFilesMessage) as Promise<KeysResults<FileSearchEntry>>;
     }
 
     public getFolderStats(archive: string, path: string): Promise<FolderStats> {
