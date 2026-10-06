@@ -10,9 +10,6 @@ if (process.env.NODE_ENV === 'development') {
     version = `${version}-dev`;
 }
 
-const tauriPlatform = process.env.TAURI_PLATFORM;
-const isWindowsBuild = tauriPlatform ? tauriPlatform === 'windows' : process.platform === 'win32';
-
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [sveltekit()],
@@ -36,7 +33,7 @@ export default defineConfig({
     envPrefix: ['VITE_', 'TAURI_'],
     build: {
         // Tauri supports es2021
-        target: isWindowsBuild ? 'chrome105' : 'safari13',
+        target: 'es2021',
         // don't minify for debug builds
         minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
         // produce sourcemaps for debug builds
