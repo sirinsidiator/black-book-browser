@@ -20,7 +20,7 @@ jobs:
                       label: windows
                     - os: ubuntu-24.04
                       label: linux
-                    - os: macos-latest
+                    - os: macos-14
                       label: macos
         runs-on: ${{ matrix.os }}
         env:
