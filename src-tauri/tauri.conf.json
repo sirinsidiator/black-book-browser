@@ -24,7 +24,14 @@
   "mainBinaryName": "bbb",
   "version": "4.6.0",
   "identifier": "at.insidi.black-book-browser",
-  "plugins": {},
+  "plugins": {
+    "fs": {
+      "requireLiteralLeadingDot": false
+    },
+    "opener": {
+      "requireLiteralLeadingDot": false
+    }
+  },
   "app": {
     "withGlobalTauri": false,
     "windows": [
