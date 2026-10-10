@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "black-book-browser"
-version = "4.6.0"
+version = "4.6.1"
 dependencies = [
  "num_cpus",
  "rust-ooz",
